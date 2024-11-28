@@ -1,4 +1,5 @@
 // layout.tsx
+import React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
@@ -53,6 +54,13 @@ export default function RootLayout({
                     <Link href="/contact" legacyBehavior passHref>
                       <NavigationMenuLink className="px-4 py-2">
                         Contact
+                      </NavigationMenuLink>
+                    </Link>
+                  </NavigationMenuItem>
+                  <NavigationMenuItem>
+                    <Link href="/playground" legacyBehavior passHref>
+                      <NavigationMenuLink className="px-4 py-2">
+                        Playground
                       </NavigationMenuLink>
                     </Link>
                   </NavigationMenuItem>
