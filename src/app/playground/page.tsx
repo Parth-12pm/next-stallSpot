@@ -50,7 +50,6 @@ const GUIDELINES_COLOR = "#000000";
 const GUIDELINES_STROKE_WIDTH = 1;
 
 
-
 // TypeScript Interfaces
 interface Shape {
   id: string;
@@ -1019,138 +1018,138 @@ function FP(): JSX.Element {
           </CardHeader>
           <CardContent className="border-2 border-dashed border-gray-400">
             <div>
-              <Stage
+                <Stage
                 width={950}
                 height={950}
-                ref={stageRef}
-                onDragMove={handleShapeUpdate}
-                onPointerUp={isSketching}
-                onClick={handleStageClick}
-              >
-                <Layer>
-                  {textBoxes.map((textBox) => (
-                    <Text
-                      key={textBox.id}
-                      id={textBox.id}
-                      x={textBox.x}
-                      y={textBox.y}
-                      text={textBox.text}
-                      fontSize={textBox.fontSize}
-                      fontFamily={textBox.fontFamily}
-                      fill={textBox.color}
-                      fontStyle={textBox.fontStyle}
-                      textDecoration={textBox.textDecoration}
-                      draggable={isDraggable && !editingText}
-                      visible={!editingText || selectedTextNode?.id !== textBox.id}
-                      onClick={handleShapeSelection}
-                      onDblClick={(e) => {
-                        const textNode = e.target;
-                        handleTextEdit({
-                          id: textBox.id,
-                          text: textBox.text,
-                          fontSize: textBox.fontSize,
-                          fontFamily: textBox.fontFamily,
-                          fontStyle: textBox.fontStyle,
-                          textDecoration: textBox.textDecoration,
-                          absolutePosition: textNode.absolutePosition(),
-                        });
+                  ref={stageRef}
+                  onDragMove={handleShapeUpdate}
+                  onPointerUp={isSketching}
+                  onClick={handleStageClick}
+                >
+                  <Layer>
+                    {textBoxes.map((textBox) => (
+                      <Text
+                        key={textBox.id}
+                        id={textBox.id}
+                        x={textBox.x}
+                        y={textBox.y}
+                        text={textBox.text}
+                        fontSize={textBox.fontSize}
+                        fontFamily={textBox.fontFamily}
+                        fill={textBox.color}
+                        fontStyle={textBox.fontStyle}
+                        textDecoration={textBox.textDecoration}
+                        draggable={isDraggable && !editingText}
+                        visible={!editingText || selectedTextNode?.id !== textBox.id}
+                        onClick={handleShapeSelection}
+                        onDblClick={(e) => {
+                          const textNode = e.target;
+                          handleTextEdit({
+                            id: textBox.id,
+                            text: textBox.text,
+                            fontSize: textBox.fontSize,
+                            fontFamily: textBox.fontFamily,
+                            fontStyle: textBox.fontStyle,
+                            textDecoration: textBox.textDecoration,
+                            absolutePosition: textNode.absolutePosition(),
+                          });
+                        }}
+                        onDragEnd={(e) => handleDragEnd(e, textBox.id, "textBox")}
+                        onDragMove={handleDragMove}
+                        width={getTextWidth(textBox.text, textBox.fontSize) + 20}
+                        align="left"
+                        padding={5}
+                      />
+                    ))}
+
+                    {squares.map((square) => (
+                      <Rect
+                        key={square.id}
+                        id={square.id}
+                        x={square.x}
+                        y={square.y}
+                        fill={square.color}
+                        height={square.height}
+                        width={square.width}
+                        draggable={isDraggable}
+                        onClick={handleShapeSelection}
+                        onDragEnd={(e) => handleDragEnd(e, square.id, "square")}
+                        onDragMove={handleDragMove}
+                      />
+                    ))}
+
+                    {circles.map((circle) => (
+                      <Circle
+                        key={circle.id}
+                        id={circle.id}
+                        radius={circle.radius}
+                        x={circle.x}
+                        y={circle.y}
+                        fill={circle.color}
+                        draggable={isDraggable}
+                        onClick={handleShapeSelection}
+                        onDragEnd={(e) => handleDragEnd(e, circle.id, "circle")}
+                        onDragMove={handleDragMove}
+                      />
+                    ))}
+
+                    {arrows.map((arrow) => (
+                      <Arrow
+                        key={arrow.id}
+                        id={arrow.id}
+                        points={arrow.points}
+                        stroke={strokeColor}
+                        strokeWidth={2}
+                        fill={arrow.color}
+                        draggable={isDraggable}
+                        onClick={handleShapeSelection}
+                        onDragEnd={(e) => handleDragEnd(e, arrow.id, "arrow")}
+                        onDragMove={handleDragMove}
+                      />
+                    ))}
+
+                    {/* Guidelines */}
+                    {guidelines.map((line, i) => (
+                      <Line
+                        key={i}
+                        points={line.points}
+                        stroke={GUIDELINES_COLOR}
+                        strokeWidth={GUIDELINES_STROKE_WIDTH}
+                        dash={[4, 4]}
+                        opacity={0.8}
+                      />
+                    ))}
+
+                    <Transformer
+                      ref={transformerRef}
+                      anchorCornerRadius={5}
+                      anchorStroke="black"
+                      borderStroke="black"
+                      anchorStyleFunc={(anchor) => {
+                        if (
+                          anchor.hasName("top-center") ||
+                          anchor.hasName("bottom-center")
+                        ) {
+                          anchor.height(6);
+                          anchor.offsetY(3);
+                          anchor.width(30);
+                          anchor.offsetX(15);
+                          anchor.setAttr('cursor', 'ns-resize');
+                        }
+                        if (
+                          anchor.hasName("middle-left") ||
+                          anchor.hasName("middle-right")
+                        ) {
+                          anchor.height(30);
+                          anchor.offsetY(15);
+                          anchor.width(6);
+                          anchor.offsetX(3);
+                          anchor.setAttr('cursor', 'ew-resize');
+                        }
                       }}
-                      onDragEnd={(e) => handleDragEnd(e, textBox.id, "textBox")}
-                      onDragMove={handleDragMove}
-                      width={getTextWidth(textBox.text, textBox.fontSize) + 20}
-                      align="left"
-                      padding={5}
                     />
-                  ))}
-
-                  {squares.map((square) => (
-                    <Rect
-                      key={square.id}
-                      id={square.id}
-                      x={square.x}
-                      y={square.y}
-                      fill={square.color}
-                      height={square.height}
-                      width={square.width}
-                      draggable={isDraggable}
-                      onClick={handleShapeSelection}
-                      onDragEnd={(e) => handleDragEnd(e, square.id, "square")}
-                      onDragMove={handleDragMove}
-                    />
-                  ))}
-
-                  {circles.map((circle) => (
-                    <Circle
-                      key={circle.id}
-                      id={circle.id}
-                      radius={circle.radius}
-                      x={circle.x}
-                      y={circle.y}
-                      fill={circle.color}
-                      draggable={isDraggable}
-                      onClick={handleShapeSelection}
-                      onDragEnd={(e) => handleDragEnd(e, circle.id, "circle")}
-                      onDragMove={handleDragMove}
-                    />
-                  ))}
-
-                  {arrows.map((arrow) => (
-                    <Arrow
-                      key={arrow.id}
-                      id={arrow.id}
-                      points={arrow.points}
-                      stroke={strokeColor}
-                      strokeWidth={2}
-                      fill={arrow.color}
-                      draggable={isDraggable}
-                      onClick={handleShapeSelection}
-                      onDragEnd={(e) => handleDragEnd(e, arrow.id, "arrow")}
-                      onDragMove={handleDragMove}
-                    />
-                  ))}
-
-                  {/* Guidelines */}
-                  {guidelines.map((line, i) => (
-                    <Line
-                      key={i}
-                      points={line.points}
-                      stroke={GUIDELINES_COLOR}
-                      strokeWidth={GUIDELINES_STROKE_WIDTH}
-                      dash={[4, 4]}
-                      opacity={0.8}
-                    />
-                  ))}
-
-                  <Transformer
-                    ref={transformerRef}
-                    anchorCornerRadius={5}
-                    anchorStroke="black"
-                    borderStroke="black"
-                    anchorStyleFunc={(anchor) => {
-                      if (
-                        anchor.hasName("top-center") ||
-                        anchor.hasName("bottom-center")
-                      ) {
-                        anchor.height(6);
-                        anchor.offsetY(3);
-                        anchor.width(30);
-                        anchor.offsetX(15);
-                        anchor.setAttr('cursor', 'ns-resize');
-                      }
-                      if (
-                        anchor.hasName("middle-left") ||
-                        anchor.hasName("middle-right")
-                      ) {
-                        anchor.height(30);
-                        anchor.offsetY(15);
-                        anchor.width(6);
-                        anchor.offsetX(3);
-                        anchor.setAttr('cursor', 'ew-resize');
-                      }
-                    }}
-                  />
-                </Layer>
-              </Stage>
+                  </Layer>
+                </Stage>
             </div>
           </CardContent>
         </Card>
