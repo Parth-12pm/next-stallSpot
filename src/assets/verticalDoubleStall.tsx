@@ -1,9 +1,13 @@
-function VerticalDoubleStall() {
+import { StallProps } from "@/components/stall";
+
+const VerticalDoubleStall = ({ className, width, height }: StallProps) => {
   return (
     <svg 
-      className="h-full"
+      className={className}
+      width={width}
+      height={height}
+      viewBox="0 0 100 200"
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 100 395"
     >
       <defs>
         <style>{`.cls-1 { opacity: 0.25; }`}</style>
@@ -20,6 +24,6 @@ function VerticalDoubleStall() {
       </g>
     </svg>
   );
-}
+};
 
 export default VerticalDoubleStall;

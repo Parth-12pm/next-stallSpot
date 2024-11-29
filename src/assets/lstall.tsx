@@ -1,6 +1,15 @@
+import { StallProps } from "@/components/stall";
 
-function Lstall() {
-    return (
+const Lstall = ({ className, width, height }: StallProps) => {
+  return (
+    <svg 
+      className={className}
+      width={width}
+      height={height}
+      viewBox="0 0 150 150"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/* Your SVG path */}
       <svg className="w-12" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 295">
         <defs>
           <style>{`.cls-1 { opacity: 0.25; }  `}</style>
@@ -16,8 +25,9 @@ function Lstall() {
           </g>
         </g>
       </svg>
-    );
-  }
-  
-  export default Lstall;
+    </svg>
+  );
+};
+
+export default Lstall;
   

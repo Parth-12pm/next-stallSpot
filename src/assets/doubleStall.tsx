@@ -1,6 +1,19 @@
-function DoubleStall() {
-    return (
-      <svg className="doubleStall" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 195">
+import { StallProps } from "@/components/stall";
+
+const DoubleStall = ({ className, width, height }: StallProps) => {
+  return (
+    <svg
+      className={className}
+      width={width}
+      height={height}
+      viewBox="0 0 200 100"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <svg
+        className="doubleStall"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 200 195"
+      >
         <defs>
           <style>{`.cls-1 { opacity: 0.25; }`}</style>
         </defs>
@@ -15,8 +28,8 @@ function DoubleStall() {
           </g>
         </g>
       </svg>
-    );
-  }
-  
-  export default DoubleStall;
-  
+    </svg>
+  );
+};
+
+export default DoubleStall;

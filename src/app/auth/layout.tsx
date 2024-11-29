@@ -9,8 +9,8 @@ export default function AuthLayout({
 }) {
   return (
     <div className="min-h-screen flex flex-col">
-      <div className="container mx-auto flex-1 flex items-center justify-center">
-        <div className="w-full max-w-md">
+      <div className="container mx-auto px-4 flex-1 flex items-center justify-center py-8">
+        <div className="w-full max-w-md mx-4">
           <div className="mb-8">
             <Link href="/" className="inline-block">
               <Button variant="ghost" className="px-0">

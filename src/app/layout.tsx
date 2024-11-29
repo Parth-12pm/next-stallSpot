@@ -29,13 +29,13 @@ export default function RootLayout({
       <body className={inter.className}>
         <header className="border-b">
           <div className="container mx-auto px-4 py-4">
-            <nav className="flex items-center justify-between">
+            <nav className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <Link href="/" className="text-xl font-bold">
                 StallSpot
               </Link>
               
-              <NavigationMenu>
-                <NavigationMenuList>
+              <NavigationMenu className="hidden md:block">
+                <NavigationMenuList className="flex-col md:flex-row">
                   <NavigationMenuItem>
                     <Link href="/exhibitions" legacyBehavior passHref>
                       <NavigationMenuLink className="px-4 py-2">
@@ -69,10 +69,10 @@ export default function RootLayout({
 
               <div className="flex items-center gap-4">
                 <Link href="/auth/login">
-                  <Button variant="outline">Login</Button>
+                  <Button variant="outline" className="w-full md:w-auto">Login</Button>
                 </Link>
                 <Link href="/auth/signup">
-                  <Button>Sign Up</Button>
+                  <Button className="w-full md:w-auto">Sign Up</Button>
                 </Link>
               </div>
             </nav>
@@ -85,7 +85,7 @@ export default function RootLayout({
 
         <footer className="border-t">
           <div className="container mx-auto px-4 py-8">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
               <div>
                 <h3 className="font-bold mb-4">StallSpot</h3>
                 <p className="text-sm text-gray-600">

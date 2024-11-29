@@ -12,6 +12,7 @@ import {
   Arrow,
   Text,
   Line,
+  Group,
 } from "react-konva";
 
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
@@ -35,14 +36,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import fonts from "./fonts";
-import SingleStall from "@/assets/singleStall";
-import Lstall from "@/assets/lstall";
-import DoubleStall from "@/assets/doubleStall";
-import VerticalDoubleStall from "@/assets/verticalDoubleStall";
+import HorizontalDouble from '@/assets/images/HorizontalDouble.png';
+import VerticalDouble from '@/assets/images/VerticalDouble.png';
+import Single from '@/assets/images/singleStall.png';
+import LShaped from '@/assets/images/LStall.png';
 import { KonvaEventObject } from 'konva/lib/Node';
 import { Stage as StageType } from 'konva/lib/Stage';
 import { Transformer as TransformerType } from 'konva/lib/shapes/Transformer';
 import Konva from "konva";
+import useImage from 'use-image';
+import NextImage from 'next/image';
+import { Image as KonvaImage } from 'react-konva';
 
 // Constants
 const SNAP_THRESHOLD = 10;
@@ -50,12 +54,25 @@ const GUIDELINES_COLOR = "#000000";
 const GUIDELINES_STROKE_WIDTH = 1;
 
 
+// Add these before your component
+const stallImages = {
+  'single': Single,
+  'l-shaped': LShaped,
+  'double': HorizontalDouble,
+  'vertical-double': VerticalDouble
+} as const;
+
 // TypeScript Interfaces
-interface Shape {
+interface BaseShape {
   id: string;
   x: number;
   y: number;
+}
+
+interface Shape extends BaseShape {
   color: string;
+  width: number;
+  height: number;
 }
 
 interface Square extends Shape {
@@ -68,18 +85,15 @@ interface Circle extends Shape {
 }
 
 interface Arrow extends Shape {
-  id: string;
   points: number[];
-  color: string;
-  x: number;
-  y: number;
 }
 
 interface TextBox extends Shape {
   text: string;
   fontSize: number;
-  width?: number;
-  fontFamily?: string;
+  width: number;
+  height: number;
+  fontFamily: string;
   fontStyle?: string;
   textDecoration?: string;
 }
@@ -122,6 +136,7 @@ interface FloorplanData {
     circles: Circle[];
     arrows: Arrow[];
     textBoxes: TextBox[];
+    stallShapes: StallShape[];
   };
 }
 
@@ -145,6 +160,22 @@ interface TextNode {
   absolutePosition: { x: number; y: number };
 }
 
+interface StallShape extends BaseShape {
+  stallType: 'single' | 'l-shaped' | 'double' | 'vertical-double';
+  width: number;
+  height: number;
+  stallNumber: number;
+}
+
+// Add type guards
+const isShape = (shape: Shape | StallShape | null): shape is Shape => {
+  return shape !== null && 'color' in shape;
+};
+
+const isStallShape = (shape: Shape | StallShape | null): shape is StallShape => {
+  return shape !== null && 'stallType' in shape;
+};
+
 function FP(): JSX.Element {
   // Refs
   const stageRef = useRef<StageType | null>(null);
@@ -163,7 +194,7 @@ function FP(): JSX.Element {
   const [textBoxes, setTextBoxes] = useState<TextBox[]>([]);
   const [selectedTextNode, setSelectedTextNode] = useState<SelectedTextNode | null>(null);
   const [editingText, setEditingText] = useState<boolean>(false);
-  const [selectedShape, setSelectedShape] = useState<Shape | null>(null);
+  const [selectedShape, setSelectedShape] = useState<Shape | StallShape | null>(null);
   const [selectedShapeType, setSelectedShapeType] = useState<string | null>(null);
   const [dimensions, setDimensions] = useState<Dimensions>({ width: 0, height: 0 });
   const [selectedFont, setSelectedFont] = useState<string>(fonts[0].value);
@@ -173,9 +204,12 @@ function FP(): JSX.Element {
     underline: false,
   });
   const [guidelines, setGuidelines] = useState<Guideline[]>([]);
+  const [stallShapes, setStallShapes] = useState<StallShape[]>([]);
+  const [stallCount, setStallCount] = useState<number>(0);
 
   const strokeColor = "#000000";
   const isDraggable = action === ACTIONS.SELECT;
+
   // Snapping helper functions
   const getShapeSnapPoints = (node: Konva.Node): SnapPoints => {
     const box = node.getClientRect();
@@ -192,6 +226,7 @@ function FP(): JSX.Element {
       ]
     };
   };
+
   const getStageSnapLines = (stage: StageType, skipShape: Shape): StageSnapLines => {
     const allShapes = stage.find('Shape, Text, Rect, Circle, Arrow').filter((shape) => 
       shape.id() !== skipShape?.id
@@ -299,98 +334,109 @@ function FP(): JSX.Element {
     setColor(newColor);
 
     if (!selectedShape || !selectedShapeType) return;
-
-    switch (selectedShapeType) {
-      case "square":
-        setSquares(prevSquares =>
-          prevSquares.map(square =>
-            square.id === selectedShape.id
-              ? { ...square, color: newColor }
-              : square
-          )
-        );
-        break;
-      case "circle":
-        setCircles(prevCircles =>
-          prevCircles.map(circle =>
-            circle.id === selectedShape.id
-              ? { ...circle, color: newColor }
-              : circle
-          )
-        );
-        break;
-      case "arrow":
-        setArrows(prevArrows =>
-          prevArrows.map(arrow =>
-            arrow.id === selectedShape.id
-              ? { ...arrow, color: newColor }
-              : arrow
-          )
-        );
-        break;
-      case "textBox":
-        setTextBoxes(prevTextBoxes =>
-          prevTextBoxes.map(textBox =>
-            textBox.id === selectedShape.id
-              ? { ...textBox, color: newColor }
-              : textBox
-          )
-        );
-        break;
+    
+    if (isShape(selectedShape)) {
+      switch (selectedShapeType) {
+        case "square":
+          setSquares(prevSquares =>
+            prevSquares.map(square =>
+              square.id === selectedShape.id
+                ? { ...square, color: newColor }
+                : square
+            )
+          );
+          break;
+        case "circle":
+          setCircles(prevCircles =>
+            prevCircles.map(circle =>
+              circle.id === selectedShape.id
+                ? { ...circle, color: newColor }
+                : circle
+            )
+          );
+          break;
+        case "arrow":
+          setArrows(prevArrows =>
+            prevArrows.map(arrow =>
+              arrow.id === selectedShape.id
+                ? { ...arrow, color: newColor }
+                : arrow
+            )
+          );
+          break;
+        case "textBox":
+          setTextBoxes(prevTextBoxes =>
+            prevTextBoxes.map(textBox =>
+              textBox.id === selectedShape.id
+                ? { ...textBox, color: newColor }
+                : textBox
+            )
+          );
+          break;
+      }
     }
   };
+
   const handleWidthChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const newWidth = Number(e.target.value);
     if (isNaN(newWidth) || !selectedShape || !selectedShapeType) return;
 
     setDimensions(prev => ({ ...prev, width: newWidth }));
 
-    switch (selectedShapeType) {
-      case "square":
-        setSquares(prevSquares =>
-          prevSquares.map(square =>
-            square.id === selectedShape.id
-              ? { ...square, width: newWidth }
-              : square
-          )
-        );
-        break;
-      case "circle":
-        setCircles(prevCircles =>
-          prevCircles.map(circle =>
-            circle.id === selectedShape.id
-              ? { ...circle, radius: newWidth / 2 }
-              : circle
-          )
-        );
-        break;
-      case "arrow":
-        setArrows(prevArrows =>
-          prevArrows.map(arrow => {
-            if (arrow.id === selectedShape.id) {
-              const [x1, y1, , y2] = arrow.points;
-              return {
-                ...arrow,
-                points: [x1, y1, x1 + newWidth, y2],
-              };
-            }
-            return arrow;
-          })
-        );
-        break;
-      case "textBox":
-        setTextBoxes(prevTextBoxes =>
-          prevTextBoxes.map(textBox =>
-            textBox.id === selectedShape.id
-              ? { ...textBox, width: newWidth }
-              : textBox
-          )
-        );
-        break;
+    if (isStallShape(selectedShape)) {
+      setStallShapes(prevStalls =>
+        prevStalls.map(stall =>
+          stall.id === selectedShape.id
+            ? { ...stall, width: newWidth }
+            : stall
+        )
+      );
+    } else if (isShape(selectedShape)) {
+      switch (selectedShapeType) {
+        case "square":
+          setSquares(prevSquares =>
+            prevSquares.map(square =>
+              square.id === selectedShape.id
+                ? { ...square, width: newWidth }
+                : square
+            )
+          );
+          break;
+        case "circle":
+          setCircles(prevCircles =>
+            prevCircles.map(circle =>
+              circle.id === selectedShape.id
+                ? { ...circle, radius: newWidth / 2 }
+                : circle
+            )
+          );
+          break;
+        case "arrow":
+          setArrows(prevArrows =>
+            prevArrows.map(arrow => {
+              if (arrow.id === selectedShape.id) {
+                const [x1, y1, , y2] = arrow.points;
+                return {
+                  ...arrow,
+                  points: [x1, y1, x1 + newWidth, y2],
+                };
+              }
+              return arrow;
+            })
+          );
+          break;
+        case "textBox":
+          setTextBoxes(prevTextBoxes =>
+            prevTextBoxes.map(textBox =>
+              textBox.id === selectedShape.id
+                ? { ...textBox, width: newWidth }
+                : textBox
+            )
+          );
+          break;
+      }
     }
   };
-
-
 
   const isSketching = (event: KonvaEventObject<MouseEvent>): void => {
     isPainting.current = false;
@@ -424,59 +470,57 @@ function FP(): JSX.Element {
     transformer.nodes([selectedNode]);
 
     const id = selectedNode.id();
-    let shape: Shape | null = null;
+    let shape: Shape | StallShape | null = null;
     let type: string | null = null;
     let shapeDimensions: Dimensions = { width: 0, height: 0 };
 
-    selectedNode.on('dragmove', handleDragMove);
-    selectedNode.on('transform', (e: KonvaEventObject<DragEvent>) => {
-      handleDragMove(e);
-    });
-
-    // Find the selected shape
-    const square = squares.find((s) => s.id === id);
-    if (square) {
-      shape = square;
-      type = "square";
-      setColor(square.color);
-      shapeDimensions = { width: square.width, height: square.height };
-    }
-
-    const circle = circles.find((c) => c.id === id);
-    if (circle) {
-      shape = circle;
-      type = "circle";
-      setColor(circle.color);
+    const stall = stallShapes.find((s) => s.id === id);
+    if (stall) {
+      shape = stall;
+      type = "stall";
       shapeDimensions = {
-        width: circle.radius * 2,
-        height: circle.radius * 2,
+        width: stall.width,
+        height: stall.height,
       };
-    }
+    } else {
+      const square = squares.find((s) => s.id === id);
+      if (square) {
+        shape = square;
+        type = "square";
+        setColor(square.color);
+        shapeDimensions = { width: square.width, height: square.height };
+      }
 
-    const arrow = arrows.find((a) => a.id === id);
-    if (arrow) {
-      shape = arrow;
-      type = "arrow";
-      setColor(arrow.color);
-      const [x1, y1, x2, y2] = arrow.points;
-      shapeDimensions = {
-        width: Math.abs(x2 - x1),
-        height: Math.abs(y2 - y1),
-      };
-    }
+      const circle = circles.find((c) => c.id === id);
+      if (circle) {
+        shape = circle;
+        type = "circle";
+        setColor(circle.color);
+        shapeDimensions = {
+          width: circle.radius * 2,
+          height: circle.radius * 2,
+        };
+      }
 
-    const textBox = textBoxes.find((t) => t.id === id);
-    if (textBox) {
-      shape = textBox;
-      type = "textBox";
-      setColor(textBox.color);
-      shapeDimensions = { width: textBox.width || 0, height: 0 };
+      const arrow = arrows.find((a) => a.id === id);
+      if (arrow) {
+        shape = arrow;
+        type = "arrow";
+        setColor(arrow.color);
+        const [x1, y1, x2, y2] = arrow.points;
+        shapeDimensions = {
+          width: Math.abs(x2 - x1),
+          height: Math.abs(y2 - y1),
+        };
+      }
 
-      setTextFormatting({
-        bold: textBox.fontStyle?.includes("bold") || false,
-        italic: textBox.fontStyle?.includes("italic") || false,
-        underline: textBox.textDecoration === "underline" || false,
-      });
+      const textBox = textBoxes.find((t) => t.id === id);
+      if (textBox) {
+        shape = textBox;
+        type = "textBox";
+        setColor(textBox.color);
+        shapeDimensions = { width: textBox.width || 0, height: 0 };
+      }
     }
 
     setSelectedShape(shape);
@@ -484,56 +528,56 @@ function FP(): JSX.Element {
     setDimensions(shapeDimensions);
   };
 
-
-
   const handleHeightChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const newHeight = Number(e.target.value);
     if (isNaN(newHeight) || !selectedShape || !selectedShapeType) return;
 
     setDimensions(prev => ({ ...prev, height: newHeight }));
 
-    switch (selectedShapeType) {
-      case "square":
-        setSquares(prevSquares =>
-          prevSquares.map(square =>
-            square.id === selectedShape.id
-              ? { ...square, height: newHeight }
-              : square
-          )
-        );
-        break;
-      case "circle":
-        setCircles(prevCircles =>
-          prevCircles.map(circle =>
-            circle.id === selectedShape.id
-              ? { ...circle, radius: newHeight / 2 }
-              : circle
-          )
-        );
-        break;
-      case "arrow":
-        setArrows(prevArrows =>
-          prevArrows.map(arrow => {
-            if (arrow.id === selectedShape.id) {
-              const [x1, y1, x2] = arrow.points;
-              return {
-                ...arrow,
-                points: [x1, y1, x2, y1 + newHeight],
-              };
-            }
-            return arrow;
-          })
-        );
-        break;
-      case "textBox":
-        setTextBoxes(prevTextBoxes =>
-          prevTextBoxes.map(textBox =>
-            textBox.id === selectedShape.id
-              ? { ...textBox, height: newHeight }
-              : textBox
-          )
-        );
-        break;
+    if ('height' in selectedShape) {
+      switch (selectedShapeType) {
+        case "square":
+          setSquares(prevSquares =>
+            prevSquares.map(square =>
+              square.id === selectedShape.id
+                ? { ...square, height: newHeight }
+                : square
+            )
+          );
+          break;
+        case "circle":
+          setCircles(prevCircles =>
+            prevCircles.map(circle =>
+              circle.id === selectedShape.id
+                ? { ...circle, radius: newHeight / 2 }
+                : circle
+            )
+          );
+          break;
+        case "arrow":
+          setArrows(prevArrows =>
+            prevArrows.map(arrow => {
+              if (arrow.id === selectedShape.id) {
+                const [x1, y1, x2] = arrow.points;
+                return {
+                  ...arrow,
+                  points: [x1, y1, x2, y1 + newHeight],
+                };
+              }
+              return arrow;
+            })
+          );
+          break;
+        case "textBox":
+          setTextBoxes(prevTextBoxes =>
+            prevTextBoxes.map(textBox =>
+              textBox.id === selectedShape.id
+                ? { ...textBox, height: newHeight }
+                : textBox
+            )
+          );
+          break;
+      }
     }
   };
 
@@ -590,8 +634,6 @@ function FP(): JSX.Element {
     }
   };
 
-
-
   const handleStageClick = (e: KonvaEventObject<MouseEvent>): void => {
     if (e.target === e.target.getStage()) {
       setSelectedShape(null);
@@ -612,19 +654,42 @@ function FP(): JSX.Element {
       case "square":
         setSquares(prevSquares => [
           ...prevSquares,
-          { id, x, y, height: 80, width: 80, color: color },
+          { 
+            id, 
+            x, 
+            y, 
+            height: 80, 
+            width: 80, 
+            color: color 
+          },
         ]);
         break;
       case "circle":
         setCircles(prevCircles => [
           ...prevCircles,
-          { id, x, y, radius: 50, color: color },
+          { 
+            id, 
+            x, 
+            y, 
+            radius: 50, 
+            color: color,
+            width: 100,    // Add width for Circle
+            height: 100    // Add height for Circle
+          },
         ]);
         break;
       case "arrow":
         setArrows(prevArrows => [
           ...prevArrows,
-          { id, x, y, points: [x, y, x + 40, y + 80], color: color },
+          { 
+            id, 
+            x, 
+            y, 
+            points: [x, y, x + 40, y + 80], 
+            color: color,
+            width: 40,     // Add width for Arrow
+            height: 80     // Add height for Arrow
+          },
         ]);
         break;
       case "textBox":
@@ -638,6 +703,8 @@ function FP(): JSX.Element {
             fontSize: 24,
             color: color,
             fontFamily: selectedFont,
+            width: 200,    // Add width for TextBox
+            height: 30     // Add height for TextBox
           },
         ]);
         break;
@@ -649,46 +716,56 @@ function FP(): JSX.Element {
 
   const handleDragEnd = (e: KonvaEventObject<DragEvent>, id: string, shapeType: string): void => {
     setGuidelines([]);
-    switch (shapeType) {
-      case "textBox": {
-        setTextBoxes(prevTextBoxes =>
-          prevTextBoxes.map(textBox =>
-            textBox.id === id
-              ? { ...textBox, x: e.target.x(), y: e.target.y() }
-              : textBox
-          )
-        );
-        break;
-      }
-      case "square": {
-        setSquares(prevSquares =>
-          prevSquares.map(square =>
-            square.id === id
-              ? { ...square, x: e.target.x(), y: e.target.y() }
-              : square
-          )
-        );
-        break;
-      }
-      case "circle": {
-        setCircles(prevCircles =>
-          prevCircles.map(circle =>
-            circle.id === id
-              ? { ...circle, x: e.target.x(), y: e.target.y() }
-              : circle
-          )
-        );
-        break;
-      }
-      case "arrow": {
-        setArrows(prevArrows =>
-          prevArrows.map(arrow =>
-            arrow.id === id
-              ? { ...arrow, x: e.target.x(), y: e.target.y() }
-              : arrow
-          )
-        );
-        break;
+    const newPosition = { x: e.target.x(), y: e.target.y() };
+
+    if (!selectedShape) return;
+
+    if (isStallShape(selectedShape)) {
+      setStallShapes(prevStalls =>
+        prevStalls.map(stall =>
+          stall.id === id
+            ? { ...stall, ...newPosition }
+            : stall
+        )
+      );
+    } else if (isShape(selectedShape)) {
+      switch (shapeType) {
+        case "square":
+          setSquares(prevSquares =>
+            prevSquares.map(square =>
+              square.id === id
+                ? { ...square, ...newPosition }
+                : square
+            )
+          );
+          break;
+        case "circle":
+          setCircles(prevCircles =>
+            prevCircles.map(circle =>
+              circle.id === id
+                ? { ...circle, ...newPosition }
+                : circle
+            )
+          );
+          break;
+        case "arrow":
+          setArrows(prevArrows =>
+            prevArrows.map(arrow =>
+              arrow.id === id
+                ? { ...arrow, ...newPosition }
+                : arrow
+            )
+          );
+          break;
+        case "textBox":
+          setTextBoxes(prevTextBoxes =>
+            prevTextBoxes.map(textBox =>
+              textBox.id === id
+                ? { ...textBox, ...newPosition }
+                : textBox
+            )
+          );
+          break;
       }
     }
   };
@@ -872,6 +949,7 @@ function FP(): JSX.Element {
         circles,
         arrows,
         textBoxes,
+        stallShapes,
       },
     };
 
@@ -912,6 +990,42 @@ function FP(): JSX.Element {
     }
   };
 
+  const onAddStallShape = (stallType: StallShape['stallType']): void => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    
+    const { x, y } = stage.getPointerPosition() || { x: 50, y: 20 };
+    const id = uuidv4();
+    
+    setStallCount(prev => prev + 1);
+    
+    const newStall: StallShape = {
+      id,
+      x,
+      y,
+      stallType,
+      width: 80,
+      height: 60,
+      stallNumber: stallCount + 1
+    };
+
+    setStallShapes(prev => [...prev, newStall]);
+  };
+
+  // Load images for Konva stage
+  const [singleImage] = useImage(stallImages['single'].src);
+  const [lShapedImage] = useImage(stallImages['l-shaped'].src);
+  const [doubleImage] = useImage(stallImages['double'].src);
+  const [verticalDoubleImage] = useImage(stallImages['vertical-double'].src);
+
+  // Create image map for Konva stage
+  const imageMap = {
+    'single': singleImage,
+    'l-shaped': lShapedImage,
+    'double': doubleImage,
+    'vertical-double': verticalDoubleImage
+  };
+
   useEffect(() => {
     return () => {
       if (textEditingRef.current) {
@@ -921,9 +1035,9 @@ function FP(): JSX.Element {
   }, []);
 
   return (
-    <div className="flex h-screen p-4 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-[300px_1fr_300px] gap-2 p-2">
       {/* Left Sidebar */}
-      <div className="w-1/5">
+      <div className="order-2 md:order-1">
         <Card className="w-full">
           <CardHeader>
             <h2 className="text-lg font-semibold">Tools</h2>
@@ -932,7 +1046,7 @@ function FP(): JSX.Element {
             <Accordion type="single" collapsible>
               <AccordionItem value="basic-shapes">
                 <AccordionTrigger>Basic Shapes</AccordionTrigger>
-                <AccordionContent className="grid grid-cols-3 gap-2">
+                <AccordionContent className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 gap-2">
                   <Button
                     variant="outline"
                     size="icon"
@@ -961,7 +1075,7 @@ function FP(): JSX.Element {
             <Accordion type="single" collapsible>
               <AccordionItem value="item-1">
                 <AccordionTrigger>Text</AccordionTrigger>
-                <AccordionContent className="grid grid-cols-3 gap-2">
+                <AccordionContent className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 gap-2">
                   <Button
                     variant="outline"
                     size="icon"
@@ -974,32 +1088,40 @@ function FP(): JSX.Element {
             </Accordion>
 
             <Accordion type="single" collapsible>
-              <AccordionItem value="basic-shapes">
+              <AccordionItem value="stall-shapes">
                 <AccordionTrigger>Stall Shapes</AccordionTrigger>
-                <AccordionContent className="grid grid-cols-2 gap-2">
+                <AccordionContent className="grid grid-cols-2 gap-4 p-2">
                   <Button
-                    style={{ width: "85px", height: "90px" }}
+                    className="flex flex-col items-center p-4 h-auto aspect-square hover:bg-accent transition-colors"
                     variant="outline"
+                    onClick={() => onAddStallShape("single")}
                   >
-                    <SingleStall />
+                    <NextImage src={Single} alt="Single Stall" width={50} height={50} />
+                    <span className="mt-2 text-sm">Single Stall</span>
                   </Button>
                   <Button
-                    style={{ width: "85px", height: "90px" }}
+                    className="flex flex-col items-center p-4 h-auto aspect-square hover:bg-accent transition-colors"
                     variant="outline"
+                    onClick={() => onAddStallShape("l-shaped")}
                   >
-                    <Lstall />
+                    <NextImage src={LShaped} alt="L-Shaped Stall" width={50} height={50} />
+                    <span className="mt-2 text-sm">L-Shaped</span>
                   </Button>
                   <Button
-                    style={{ width: "85px", height: "90px" }}
+                    className="flex flex-col items-center p-4 h-auto aspect-square hover:bg-accent transition-colors"
                     variant="outline"
+                    onClick={() => onAddStallShape("double")}
                   >
-                    <DoubleStall />
+                    <NextImage src={HorizontalDouble} alt="Double Stall" width={50} height={50} />
+                    <span className="mt-2 text-sm">Double Stall</span>
                   </Button>
                   <Button
-                    style={{ width: "85px", height: "90px" }}
+                    className="flex flex-col items-center p-4 h-auto aspect-square hover:bg-accent transition-colors"
                     variant="outline"
+                    onClick={() => onAddStallShape("vertical-double")}
                   >
-                    <VerticalDoubleStall />
+                    <NextImage src={VerticalDouble} alt="Vertical Double Stall" width={50} height={10} />
+                    <span className="mt-2 text-sm">Vertical Double</span>
                   </Button>
                 </AccordionContent>
               </AccordionItem>
@@ -1008,8 +1130,8 @@ function FP(): JSX.Element {
         </Card>
       </div>
 
-      {/* Canvas/Stage */}
-      <div className="flex-grow">
+      {/* Canvas/Stage - Center */}
+      <div className="order-1 md:order-2">
         <Card className="w-full">
           <CardHeader>
             <h2 className="text-lg font-semibold text-center">
@@ -1017,146 +1139,174 @@ function FP(): JSX.Element {
             </h2>
           </CardHeader>
           <CardContent className="border-2 border-dashed border-gray-400">
-            <div>
-                <Stage
-                width={950}
-                height={950}
-                  ref={stageRef}
-                  onDragMove={handleShapeUpdate}
-                  onPointerUp={isSketching}
-                  onClick={handleStageClick}
-                >
-                  <Layer>
-                    {textBoxes.map((textBox) => (
-                      <Text
-                        key={textBox.id}
-                        id={textBox.id}
-                        x={textBox.x}
-                        y={textBox.y}
-                        text={textBox.text}
-                        fontSize={textBox.fontSize}
-                        fontFamily={textBox.fontFamily}
-                        fill={textBox.color}
-                        fontStyle={textBox.fontStyle}
-                        textDecoration={textBox.textDecoration}
-                        draggable={isDraggable && !editingText}
-                        visible={!editingText || selectedTextNode?.id !== textBox.id}
-                        onClick={handleShapeSelection}
-                        onDblClick={(e) => {
-                          const textNode = e.target;
-                          handleTextEdit({
-                            id: textBox.id,
-                            text: textBox.text,
-                            fontSize: textBox.fontSize,
-                            fontFamily: textBox.fontFamily,
-                            fontStyle: textBox.fontStyle,
-                            textDecoration: textBox.textDecoration,
-                            absolutePosition: textNode.absolutePosition(),
-                          });
-                        }}
-                        onDragEnd={(e) => handleDragEnd(e, textBox.id, "textBox")}
-                        onDragMove={handleDragMove}
-                        width={getTextWidth(textBox.text, textBox.fontSize) + 20}
-                        align="left"
-                        padding={5}
-                      />
-                    ))}
-
-                    {squares.map((square) => (
-                      <Rect
-                        key={square.id}
-                        id={square.id}
-                        x={square.x}
-                        y={square.y}
-                        fill={square.color}
-                        height={square.height}
-                        width={square.width}
-                        draggable={isDraggable}
-                        onClick={handleShapeSelection}
-                        onDragEnd={(e) => handleDragEnd(e, square.id, "square")}
-                        onDragMove={handleDragMove}
-                      />
-                    ))}
-
-                    {circles.map((circle) => (
-                      <Circle
-                        key={circle.id}
-                        id={circle.id}
-                        radius={circle.radius}
-                        x={circle.x}
-                        y={circle.y}
-                        fill={circle.color}
-                        draggable={isDraggable}
-                        onClick={handleShapeSelection}
-                        onDragEnd={(e) => handleDragEnd(e, circle.id, "circle")}
-                        onDragMove={handleDragMove}
-                      />
-                    ))}
-
-                    {arrows.map((arrow) => (
-                      <Arrow
-                        key={arrow.id}
-                        id={arrow.id}
-                        points={arrow.points}
-                        stroke={strokeColor}
-                        strokeWidth={2}
-                        fill={arrow.color}
-                        draggable={isDraggable}
-                        onClick={handleShapeSelection}
-                        onDragEnd={(e) => handleDragEnd(e, arrow.id, "arrow")}
-                        onDragMove={handleDragMove}
-                      />
-                    ))}
-
-                    {/* Guidelines */}
-                    {guidelines.map((line, i) => (
-                      <Line
-                        key={i}
-                        points={line.points}
-                        stroke={GUIDELINES_COLOR}
-                        strokeWidth={GUIDELINES_STROKE_WIDTH}
-                        dash={[4, 4]}
-                        opacity={0.8}
-                      />
-                    ))}
-
-                    <Transformer
-                      ref={transformerRef}
-                      anchorCornerRadius={5}
-                      anchorStroke="black"
-                      borderStroke="black"
-                      anchorStyleFunc={(anchor) => {
-                        if (
-                          anchor.hasName("top-center") ||
-                          anchor.hasName("bottom-center")
-                        ) {
-                          anchor.height(6);
-                          anchor.offsetY(3);
-                          anchor.width(30);
-                          anchor.offsetX(15);
-                          anchor.setAttr('cursor', 'ns-resize');
-                        }
-                        if (
-                          anchor.hasName("middle-left") ||
-                          anchor.hasName("middle-right")
-                        ) {
-                          anchor.height(30);
-                          anchor.offsetY(15);
-                          anchor.width(6);
-                          anchor.offsetX(3);
-                          anchor.setAttr('cursor', 'ew-resize');
-                        }
+            <div className="w-full overflow-auto">
+              <Stage
+                width={Math.min(950, window.innerWidth - 40)}
+                height={Math.min(950, window.innerWidth - 40)}
+                ref={stageRef}
+                onDragMove={handleShapeUpdate}
+                onPointerUp={isSketching}
+                onClick={handleStageClick}
+                className="max-w-full"
+              >
+                <Layer>
+                  {textBoxes.map((textBox) => (
+                    <Text
+                      key={textBox.id}
+                      id={textBox.id}
+                      x={textBox.x}
+                      y={textBox.y}
+                      text={textBox.text}
+                      fontSize={textBox.fontSize}
+                      fontFamily={textBox.fontFamily}
+                      fill={textBox.color}
+                      fontStyle={textBox.fontStyle}
+                      textDecoration={textBox.textDecoration}
+                      draggable={isDraggable && !editingText}                      visible={!editingText || selectedTextNode?.id !== textBox.id}
+                      onClick={handleShapeSelection}
+                      onDblClick={(e) => {
+                        const textNode = e.target;
+                        handleTextEdit({
+                          id: textBox.id,
+                          text: textBox.text,
+                          fontSize: textBox.fontSize,
+                          fontFamily: textBox.fontFamily,
+                          fontStyle: textBox.fontStyle,
+                          textDecoration: textBox.textDecoration,
+                          absolutePosition: textNode.absolutePosition(),
+                        });
                       }}
+                      onDragEnd={(e) => handleDragEnd(e, textBox.id, "textBox")}
+                      onDragMove={handleDragMove}
+                      width={getTextWidth(textBox.text, textBox.fontSize) + 20}
+                      align="left"
+                      padding={5}
                     />
-                  </Layer>
-                </Stage>
+                  ))}
+
+                  {squares.map((square) => (
+                    <Rect
+                      key={square.id}
+                      id={square.id}
+                      x={square.x}
+                      y={square.y}
+                      fill={square.color}
+                      height={square.height}
+                      width={square.width}
+                      draggable={isDraggable}
+                      onClick={handleShapeSelection}
+                      onDragEnd={(e) => handleDragEnd(e, square.id, "square")}
+                      onDragMove={handleDragMove}
+                    />
+                  ))}
+
+                  {circles.map((circle) => (
+                    <Circle
+                      key={circle.id}
+                      id={circle.id}
+                      radius={circle.radius}
+                      x={circle.x}
+                      y={circle.y}
+                      fill={circle.color}
+                      draggable={isDraggable}
+                      onClick={handleShapeSelection}
+                      onDragEnd={(e) => handleDragEnd(e, circle.id, "circle")}
+                      onDragMove={handleDragMove}
+                    />
+                  ))}
+
+                  {arrows.map((arrow) => (
+                    <Arrow
+                      key={arrow.id}
+                      id={arrow.id}
+                      points={arrow.points}
+                      stroke={strokeColor}
+                      strokeWidth={2}
+                      fill={arrow.color}
+                      draggable={isDraggable}
+                      onClick={handleShapeSelection}
+                      onDragEnd={(e) => handleDragEnd(e, arrow.id, "arrow")}
+                      onDragMove={handleDragMove}
+                    />
+                  ))}
+
+                  {guidelines.map((line, i) => (
+                    <Line
+                      key={i}
+                      points={line.points}
+                      stroke={GUIDELINES_COLOR}
+                      strokeWidth={GUIDELINES_STROKE_WIDTH}
+                      dash={[4, 4]}
+                      opacity={0.8}
+                    />
+                  ))}
+
+                  {stallShapes.map((stall) => (
+                    <Group
+                      key={stall.id}
+                      id={stall.id}
+                      x={stall.x}
+                      y={stall.y}
+                      draggable={isDraggable}
+                      onClick={handleShapeSelection}
+                      onDragEnd={(e) => handleDragEnd(e, stall.id, "stall")}
+                      onDragMove={handleDragMove}
+                    >
+                      {imageMap[stall.stallType] && (
+                        <KonvaImage
+                          image={imageMap[stall.stallType]}
+                          width={80}
+                          height={60}
+                        />
+                      )}
+                      <Text
+                        text={`Stall ${stall.stallNumber}`}
+                        fontSize={12}
+                        fill="#000"
+                        align="center"
+                        width={80}
+                        y={30}
+                      />
+                    </Group>
+                  ))}
+
+                  <Transformer
+                    ref={transformerRef}
+                    anchorCornerRadius={5}
+                    anchorStroke="black"
+                    borderStroke="black"
+                    anchorStyleFunc={(anchor) => {
+                      if (
+                        anchor.hasName("top-center") ||
+                        anchor.hasName("bottom-center")
+                      ) {
+                        anchor.height(6);
+                        anchor.offsetY(3);
+                        anchor.width(30);
+                        anchor.offsetX(15);
+                        anchor.setAttr('cursor', 'ns-resize');
+                      }
+                      if (
+                        anchor.hasName("middle-left") ||
+                        anchor.hasName("middle-right")
+                      ) {
+                        anchor.height(30);
+                        anchor.offsetY(15);
+                        anchor.width(6);
+                        anchor.offsetX(3);
+                        anchor.setAttr('cursor', 'ew-resize');
+                      }
+                    }}
+                  />
+                </Layer>
+              </Stage>
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Right Sidebar */}
-      <div className="w-1/5">
+      <div className="order-3 md:order-3">
         <Card className="w-full">
           <CardHeader>
             <h2 className="text-lg font-semibold">Properties</h2>
@@ -1165,7 +1315,7 @@ function FP(): JSX.Element {
             <Accordion type="single" collapsible>
               <AccordionItem value="text-properties">
                 <AccordionTrigger>Basic Properties</AccordionTrigger>
-                <AccordionContent className="grid grid-cols-3 gap-2">
+                <AccordionContent className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   <div>
                     <Label className="block mb-1">Color</Label>
                     <Input
