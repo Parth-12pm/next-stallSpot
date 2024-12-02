@@ -119,7 +119,7 @@ export default function LoginPage() {
 
         <div className="py-4 px-8 text-center text-sm text-muted-foreground">
           <Link
-            href="/auth/forgot-password"
+            href="/auth/forgotPassword"
             className=" hover:text-primary underline underline-offset-4"
           >
             Forgot your password?
