@@ -17,15 +17,14 @@
     "@radix-ui/react-slot": "^1.1.0",
     "@radix-ui/react-toggle": "^1.1.0",
     "@radix-ui/react-toggle-group": "^1.1.0",
-    "canvas": "^2.11.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "konva": "^9.3.16",
-    "lucide-react": "^0.460.0",
+    "lucide-react": "^0.465.0",
     "mongodb": "^6.11.0",
     "next": "15.0.3",
-    "react": "19.0.0-rc-7670501b-20241124",
-    "react-dom": "19.0.0-rc-7670501b-20241124",
+    "react": "19.0.0-beta-26f2496093-20240514",
+    "react-dom": "19.0.0-beta-26f2496093-20240514",
     "react-hook-form": "^7.53.2",
     "react-konva": "19.0.0-1",
     "tailwind-merge": "^2.5.5",
@@ -35,13 +34,12 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@types/node": "^20.17.9",
+    "@types/node": "^22.10.1",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
-    "eslint": "^8.57.1",
     "eslint-config-next": "15.0.3",
     "postcss": "^8.4.49",
-    "tailwindcss": "^3.4.15",
+    "tailwindcss": "^3.4.16",
     "typescript": "^5.7.2"
   }
 }

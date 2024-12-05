@@ -1,8 +1,14 @@
-"use client"
+'use client'
 import React from 'react'
 import { useRef, useState, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { ACTIONS } from "./constants";
+// Import constants
+import {
+  ACTIONS,
+  SNAP_THRESHOLD,
+  GUIDELINES_COLOR,
+  GUIDELINES_STROKE_WIDTH,
+} from './constants';
 import {
   Stage,
   Layer,
@@ -13,6 +19,7 @@ import {
   Text,
   Line,
   Group,
+  Image as KonvaImage,
 } from "react-konva";
 
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
@@ -46,12 +53,22 @@ import { Transformer as TransformerType } from 'konva/lib/shapes/Transformer';
 import Konva from "konva";
 import useImage from 'use-image';
 import NextImage from 'next/image';
-import { Image as KonvaImage } from 'react-konva';
-
-// Constants
-const SNAP_THRESHOLD = 10;
-const GUIDELINES_COLOR = "#000000";
-const GUIDELINES_STROKE_WIDTH = 1;
+import { 
+  Shape, 
+  Square, 
+  TextBox, 
+  Dimensions, 
+  TextFormatting, 
+  Guideline, 
+  SnapPoints, 
+  StageSnapLines, 
+  FloorplanData, 
+  SelectedTextNode, 
+  TextNode, 
+  StallShape, 
+  isShape, 
+  isStallShape 
+} from './types';
 
 
 // Add these before your component
@@ -62,119 +79,19 @@ const stallImages = {
   'vertical-double': VerticalDouble
 } as const;
 
-// TypeScript Interfaces
-interface BaseShape {
-  id: string;
-  x: number;
-  y: number;
-}
-
-interface Shape extends BaseShape {
-  color: string;
-  width: number;
-  height: number;
-}
-
-interface Square extends Shape {
-  width: number;
-  height: number;
-}
-
+// Update the Circle interface in your types
 interface Circle extends Shape {
   radius: number;
+  width: number;
+  height: number;
 }
 
+// Update the Arrow interface in your types
 interface Arrow extends Shape {
   points: number[];
-}
-
-interface TextBox extends Shape {
-  text: string;
-  fontSize: number;
-  width: number;
-  height: number;
-  fontFamily: string;
-  fontStyle?: string;
-  textDecoration?: string;
-}
-
-interface Dimensions {
   width: number;
   height: number;
 }
-
-interface TextFormatting {
-  bold: boolean;
-  italic: boolean;
-  underline: boolean;
-}
-
-interface Guideline {
-  points: number[];
-  type: 'vertical' | 'horizontal';
-}
-
-interface SnapPoints {
-  vertical: Array<{ point: number; position: string }>;
-  horizontal: Array<{ point: number; position: string }>;
-}
-
-interface StageSnapLines {
-  vertical: number[];
-  horizontal: number[];
-}
-
-interface FloorplanData {
-  version: string;
-  timestamp: string;
-  canvas: {
-    width: number;
-    height: number;
-  };
-  elements: {
-    squares: Square[];
-    circles: Circle[];
-    arrows: Arrow[];
-    textBoxes: TextBox[];
-    stallShapes: StallShape[];
-  };
-}
-
-interface SelectedTextNode {
-  id: string;
-  text: string;
-  fontSize: number;
-  fontFamily?: string;
-  fontStyle?: string;
-  textDecoration?: string;
-  absolutePosition: { x: number; y: number };
-}
-
-interface TextNode {
-  id: string;
-  text: string;
-  fontSize: number;
-  fontFamily?: string;
-  fontStyle?: string;
-  textDecoration?: string;
-  absolutePosition: { x: number; y: number };
-}
-
-interface StallShape extends BaseShape {
-  stallType: 'single' | 'l-shaped' | 'double' | 'vertical-double';
-  width: number;
-  height: number;
-  stallNumber: number;
-}
-
-// Add type guards
-const isShape = (shape: Shape | StallShape | null): shape is Shape => {
-  return shape !== null && 'color' in shape;
-};
-
-const isStallShape = (shape: Shape | StallShape | null): shape is StallShape => {
-  return shape !== null && 'stallType' in shape;
-};
 
 function FP(): JSX.Element {
   // Refs
@@ -228,8 +145,11 @@ function FP(): JSX.Element {
   };
 
   const getStageSnapLines = (stage: StageType, skipShape: Shape): StageSnapLines => {
-    const allShapes = stage.find('Shape, Text, Rect, Circle, Arrow').filter((shape) => 
-      shape.id() !== skipShape?.id
+    const allShapes = stage.find('Shape, Text, Rect, Circle, Arrow, Image').filter((shape) => 
+      shape.id() !== skipShape?.id && 
+      !shape.hasName('transformer') && 
+      !shape.hasName('_anchor') &&
+      !shape.getParent()?.hasName('transformer')
     );
     
     const verticalLines = new Set<number>();
@@ -274,67 +194,52 @@ function FP(): JSX.Element {
     const guidelines: Guideline[] = [];
     const snapLines = getStageSnapLines(stage, shape);
     const shapePoints = getShapeSnapPoints(shape);
-    
-    shapePoints.vertical.forEach(({point, position}) => {
+
+    const addGuideline = (type: 'vertical' | 'horizontal', snapPoint: number) => {
+      const exists = guidelines.some(g => 
+        g.type === type && 
+        Math.abs(g.points[type === 'vertical' ? 0 : 1] - snapPoint) < 1
+      );
+
+      if (!exists) {
+        if (type === 'vertical') {
+          guidelines.push({
+            type,
+            points: [snapPoint, 0, snapPoint, stage.height()]
+          });
+        } else {
+          guidelines.push({
+            type,
+            points: [0, snapPoint, stage.width(), snapPoint]
+          });
+        }
+      }
+    };
+
+    shapePoints.vertical.forEach(({ point }) => {
       const snapPoint = getClosestSnapPoint(point, snapLines.vertical, SNAP_THRESHOLD);
       if (snapPoint !== null) {
-        const diff = snapPoint - point;
-        if (position === "start") {
-          shape.x(shape.x() as number + diff);
-        } else if (position === "end") {
-          shape.x(shape.x() as number + diff);
-        } else {
-          shape.x(shape.x() as number + diff);
-        }
-        
-        guidelines.push({
-          type: 'vertical',
-          points: [snapPoint, 0, snapPoint, stage.height()]
-        });
+        addGuideline('vertical', snapPoint);
       }
     });
-    
-    shapePoints.horizontal.forEach(({point, position}) => {
+
+    shapePoints.horizontal.forEach(({ point }) => {
       const snapPoint = getClosestSnapPoint(point, snapLines.horizontal, SNAP_THRESHOLD);
       if (snapPoint !== null) {
-        const diff = snapPoint - point;
-        if (position === "start") {
-          shape.y(shape.y() + diff);
-        } else if (position === "end") {
-          shape.y(shape.y() + diff);
-        } else {
-          shape.y(shape.y() + diff);
-        }
-        
-        guidelines.push({
-          type: 'horizontal',
-          points: [0, snapPoint, stage.width(), snapPoint]
-        });
+        addGuideline('horizontal', snapPoint);
       }
     });
-    
+
     return guidelines;
   };
 
   // Event Handlers
-  const handleDragMove = (e: KonvaEventObject<DragEvent>): void => {
-    const shape = e.target;
-    const stage = shape.getStage();
-    const isTransforming = transformerRef.current?.nodes().includes(shape);
-    if (!isTransforming && stage) {
-      const guidelines = getSnapGuidelines(shape as unknown as Shape & Konva.Node, stage);
-      setGuidelines(guidelines);
-    }
-    
-    stage?.batchDraw();
-  };
 
-  const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const newColor = e.target.value;
     setColor(newColor);
 
     if (!selectedShape || !selectedShapeType) return;
-    
     if (isShape(selectedShape)) {
       switch (selectedShapeType) {
         case "square":
@@ -723,7 +628,7 @@ function FP(): JSX.Element {
     if (isStallShape(selectedShape)) {
       setStallShapes(prevStalls =>
         prevStalls.map(stall =>
-          stall.id === id
+          stall.id === selectedShape.id
             ? { ...stall, ...newPosition }
             : stall
         )
@@ -768,6 +673,32 @@ function FP(): JSX.Element {
           break;
       }
     }
+  };
+
+  const handleDragMove = (e: KonvaEventObject<DragEvent>): void => {
+    const shape = e.target;
+    const stage = shape.getStage();
+    if (!stage) return;
+
+    const guidelines = getSnapGuidelines(shape as unknown as Shape & Konva.Node, stage);
+    
+    // Apply snapping based on guidelines
+    guidelines.forEach(guideline => {
+      if (guideline.type === 'vertical') {
+        const diff = guideline.points[0] - shape.x();
+        if (Math.abs(diff) < SNAP_THRESHOLD) {
+          shape.x(guideline.points[0]);
+        }
+      } else if (guideline.type === 'horizontal') {
+        const diff = guideline.points[1] - shape.y();
+        if (Math.abs(diff) < SNAP_THRESHOLD) {
+          shape.y(guideline.points[1]);
+        }
+      }
+    });
+
+    setGuidelines(guidelines);
+    stage.batchDraw();
   };
 
   const getTextWidth = (text: string, fontSize: number = 24): number => {
@@ -1035,9 +966,9 @@ function FP(): JSX.Element {
   }, []);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[300px_1fr_300px] gap-2 p-2">
+    <div className="h-[calc(100vh-1rem)] grid grid-cols-1 md:grid-cols-[250px_1fr_250px] gap-1 p-1 overflow-hidden">
       {/* Left Sidebar */}
-      <div className="order-2 md:order-1">
+      <div className="order-2 md:order-1 overflow-y-auto">
         <Card className="w-full">
           <CardHeader>
             <h2 className="text-lg font-semibold">Tools</h2>
@@ -1131,23 +1062,23 @@ function FP(): JSX.Element {
       </div>
 
       {/* Canvas/Stage - Center */}
-      <div className="order-1 md:order-2">
-        <Card className="w-full">
-          <CardHeader>
+      <div className="order-1 md:order-2 flex justify-center items-center">
+        <Card className="w-full h-full">
+          <CardHeader className="py-1">
             <h2 className="text-lg font-semibold text-center">
               Floorplan Canvas
             </h2>
           </CardHeader>
-          <CardContent className="border-2 border-dashed border-gray-400">
-            <div className="w-full overflow-auto">
+          <CardContent className="border border-dashed border-gray-400 p-1 h-[calc(100%-3rem)] flex items-center justify-center">
+            <div className="relative">
               <Stage
-                width={Math.min(950, window.innerWidth - 40)}
-                height={Math.min(950, window.innerWidth - 40)}
+                width={Math.min(900, window.innerWidth - 520)}
+                height={Math.min(900, window.innerHeight - 80)}
                 ref={stageRef}
-                onDragMove={handleShapeUpdate}
+                onDragMove={handleDragMove}
                 onPointerUp={isSketching}
                 onClick={handleStageClick}
-                className="max-w-full"
+                onMouseMove={handleShapeUpdate}
               >
                 <Layer>
                   {textBoxes.map((textBox) => (
@@ -1162,7 +1093,8 @@ function FP(): JSX.Element {
                       fill={textBox.color}
                       fontStyle={textBox.fontStyle}
                       textDecoration={textBox.textDecoration}
-                      draggable={isDraggable && !editingText}                      visible={!editingText || selectedTextNode?.id !== textBox.id}
+                      draggable={isDraggable && !editingText}
+                      visible={!editingText || selectedTextNode?.id !== textBox.id}
                       onClick={handleShapeSelection}
                       onDblClick={(e) => {
                         const textNode = e.target;
@@ -1306,7 +1238,7 @@ function FP(): JSX.Element {
       </div>
 
       {/* Right Sidebar */}
-      <div className="order-3 md:order-3">
+      <div className="order-3 md:order-3 overflow-y-auto">
         <Card className="w-full">
           <CardHeader>
             <h2 className="text-lg font-semibold">Properties</h2>
