@@ -20,7 +20,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "konva": "^9.3.16",
-    "lucide-react": "^0.465.0",
+    "lucide-react": "^0.468.0",
     "mongodb": "^6.11.0",
     "next": "15.0.3",
     "react": "19.0.0-beta-26f2496093-20240514",
