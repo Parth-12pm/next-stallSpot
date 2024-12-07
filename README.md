@@ -1,6 +1,6 @@
 # 🏢 Next StallSpot: Interactive Exhibition Management Platform
 
-![Project Banner](https://via.placeholder.com/1200x300.png?text=Next+StallSpot+Banner)
+![Project Banner](https://via.placeholder.com/1200x300.png?text=Next+StallSpot)
 
 ## 🌟 Project Overview
 
