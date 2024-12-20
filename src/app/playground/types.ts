@@ -52,9 +52,14 @@ export interface BaseShape {
     type: 'vertical' | 'horizontal';
   }
   
+  export interface SnapPoint {
+    point: number;
+    position: "start" | "middle" | "end";
+  }
+
   export interface SnapPoints {
-    vertical: Array<{ point: number; position: string }>;
-    horizontal: Array<{ point: number; position: string }>;
+    vertical: SnapPoint[];
+    horizontal: SnapPoint[];
   }
   
   export interface StageSnapLines {

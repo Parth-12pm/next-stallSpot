@@ -19,10 +19,10 @@ export default function Home() {
               Streamline your exhibition planning, management, and execution with our comprehensive platform.
             </p>
             <div className="flex gap-4 justify-center">
-              <Link href="/auth/signup">
+              <Link href="/signup">
                 <Button size="lg">Get Started</Button>
               </Link>
-              <Link href="/exhibitions/1">
+              <Link href="/exhibitions">
                 <Button variant="outline" size="lg">
                   Browse Exhibitions
                 </Button>

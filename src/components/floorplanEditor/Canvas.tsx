@@ -93,6 +93,10 @@ interface Arrow extends Shape {
   height: number;
 }
 
+// Keep existing interfaces and types
+
+
+
 function FP(): JSX.Element {
   // Refs
   const stageRef = useRef<StageType | null>(null);
@@ -145,91 +149,78 @@ function FP(): JSX.Element {
   };
 
   const getStageSnapLines = (stage: StageType, skipShape: Shape): StageSnapLines => {
-    const allShapes = stage.find('Shape, Text, Rect, Circle, Arrow, Image').filter((shape) => 
+    const verticalLines = new Set<number>();
+    const horizontalLines = new Set<number>();
+
+    // Add stage boundaries and center lines
+    const stageBounds = {
+      vertical: [0, stage.width() / 2, stage.width()],
+      horizontal: [0, stage.height() / 2, stage.height()]
+    };
+
+    stageBounds.vertical.forEach(point => verticalLines.add(point));
+    stageBounds.horizontal.forEach(point => horizontalLines.add(point));
+
+    // Get all shapes except the one being dragged
+    const shapes = stage.find('Shape, Text, Rect, Circle, Arrow, Image').filter(shape => 
       shape.id() !== skipShape?.id && 
       !shape.hasName('transformer') && 
       !shape.hasName('_anchor') &&
       !shape.getParent()?.hasName('transformer')
     );
-    
-    const verticalLines = new Set<number>();
-    const horizontalLines = new Set<number>();
-    
-    const stageBounds = {
-      vertical: [0, stage.width() / 2, stage.width()],
-      horizontal: [0, stage.height() / 2, stage.height()]
-    };
-    
-    stageBounds.vertical.forEach(point => verticalLines.add(point));
-    stageBounds.horizontal.forEach(point => horizontalLines.add(point));
-    
-    allShapes.forEach((shape: Konva.Node) => {
+
+    // Add snap points from other shapes
+    shapes.forEach(shape => {
       const snapPoints = getShapeSnapPoints(shape);
       snapPoints.vertical.forEach(({point}) => verticalLines.add(point));
       snapPoints.horizontal.forEach(({point}) => horizontalLines.add(point));
     });
-    
+
     return {
       vertical: Array.from(verticalLines).sort((a, b) => a - b),
       horizontal: Array.from(horizontalLines).sort((a, b) => a - b)
     };
   };
 
-  const getClosestSnapPoint = (value: number, snapPoints: number[], threshold: number): number | null => {
-    let minDist = threshold;
-    let closestPoint = null;
-    
-    snapPoints.forEach(point => {
-      const dist = Math.abs(point - value);
-      if (dist < minDist) {
-        minDist = dist;
-        closestPoint = point;
-      }
-    });
-    
-    return closestPoint;
-  };
 
-  const getSnapGuidelines = (shape: Shape & Konva.Node, stage: StageType): Guideline[] => {
+  // Merge the functionality into one cohesive system
+  const getSnapGuidelines = (
+    draggedShape: Konva.Node,
+    stage: Konva.Stage,
+    threshold: number = SNAP_THRESHOLD
+  ): Guideline[] => {
     const guidelines: Guideline[] = [];
-    const snapLines = getStageSnapLines(stage, shape);
-    const shapePoints = getShapeSnapPoints(shape);
-
-    const addGuideline = (type: 'vertical' | 'horizontal', snapPoint: number) => {
-      const exists = guidelines.some(g => 
-        g.type === type && 
-        Math.abs(g.points[type === 'vertical' ? 0 : 1] - snapPoint) < 1
+    const snapLines = getStageSnapLines(stage, draggedShape as unknown as Shape);
+    const shapeSnapPoints = getShapeSnapPoints(draggedShape);
+  
+    // Check vertical alignments
+    shapeSnapPoints.vertical.forEach(({point}) => {
+      const closest = snapLines.vertical.find(snapPoint => 
+        Math.abs(snapPoint - point) < threshold
       );
-
-      if (!exists) {
-        if (type === 'vertical') {
-          guidelines.push({
-            type,
-            points: [snapPoint, 0, snapPoint, stage.height()]
-          });
-        } else {
-          guidelines.push({
-            type,
-            points: [0, snapPoint, stage.width(), snapPoint]
-          });
-        }
-      }
-    };
-
-    shapePoints.vertical.forEach(({ point }) => {
-      const snapPoint = getClosestSnapPoint(point, snapLines.vertical, SNAP_THRESHOLD);
-      if (snapPoint !== null) {
-        addGuideline('vertical', snapPoint);
+      
+      if (closest !== undefined) {
+        guidelines.push({
+          points: [closest, 0, closest, stage.height()],
+          type: 'vertical'
+        });
       }
     });
-
-    shapePoints.horizontal.forEach(({ point }) => {
-      const snapPoint = getClosestSnapPoint(point, snapLines.horizontal, SNAP_THRESHOLD);
-      if (snapPoint !== null) {
-        addGuideline('horizontal', snapPoint);
+  
+    // Check horizontal alignments
+    shapeSnapPoints.horizontal.forEach(({point}) => {
+      const closest = snapLines.horizontal.find(snapPoint => 
+        Math.abs(snapPoint - point) < threshold
+      );
+      
+      if (closest !== undefined) {
+        guidelines.push({
+          points: [0, closest, stage.width(), closest],
+          type: 'horizontal'
+        });
       }
     });
-
+  
     return guidelines;
   };
 
@@ -675,29 +666,35 @@ function FP(): JSX.Element {
     }
   };
 
+  // Update handleDragMove to use the merged system
   const handleDragMove = (e: KonvaEventObject<DragEvent>): void => {
     const shape = e.target;
     const stage = shape.getStage();
     if (!stage) return;
-
-    const guidelines = getSnapGuidelines(shape as unknown as Shape & Konva.Node, stage);
-    
+  
+    // Get guidelines and apply snapping
+    const guidelines = getSnapGuidelines(shape, stage);
+    setGuidelines(guidelines);
+  
     // Apply snapping based on guidelines
     guidelines.forEach(guideline => {
       if (guideline.type === 'vertical') {
-        const diff = guideline.points[0] - shape.x();
-        if (Math.abs(diff) < SNAP_THRESHOLD) {
-          shape.x(guideline.points[0]);
+        const snapX = guideline.points[0];
+        const shapeBox = shape.getClientRect();
+        const centerX = shapeBox.x + shapeBox.width / 2;
+        if (Math.abs(centerX - snapX) < SNAP_THRESHOLD) {
+          shape.x(shape.x() + (snapX - centerX));
         }
-      } else if (guideline.type === 'horizontal') {
-        const diff = guideline.points[1] - shape.y();
-        if (Math.abs(diff) < SNAP_THRESHOLD) {
-          shape.y(guideline.points[1]);
+      } else {
+        const snapY = guideline.points[1];
+        const shapeBox = shape.getClientRect();
+        const centerY = shapeBox.y + shapeBox.height / 2;
+        if (Math.abs(centerY - snapY) < SNAP_THRESHOLD) {
+          shape.y(shape.y() + (snapY - centerY));
         }
       }
     });
-
-    setGuidelines(guidelines);
+  
     stage.batchDraw();
   };
 

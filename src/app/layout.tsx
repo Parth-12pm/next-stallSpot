@@ -33,7 +33,6 @@ export default function RootLayout({
               <Link href="/" className="text-xl font-bold">
                 StallSpot
               </Link>
-              
               <NavigationMenu className="hidden md:block">
                 <NavigationMenuList className="flex-col md:flex-row">
                   <NavigationMenuItem>
@@ -68,10 +67,10 @@ export default function RootLayout({
               </NavigationMenu>
 
               <div className="flex items-center gap-4">
-                <Link href="/auth/login">
-                  <Button variant="outline" className="w-full md:w-auto">Login</Button>
+                <Link href="/login">
+                  <Button variant={"outline"} className="w-full md:w-auto">Login</Button>
                 </Link>
-                <Link href="/auth/signup">
+                <Link href="/signup">
                   <Button className="w-full md:w-auto">Sign Up</Button>
                 </Link>
               </div>
