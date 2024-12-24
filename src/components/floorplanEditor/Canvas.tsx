@@ -5,10 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 // Import constants
 import {
   ACTIONS,
-  SNAP_THRESHOLD,
-  GUIDELINES_COLOR,
-  GUIDELINES_STROKE_WIDTH,
-} from '@/app/playground/constants';
+} from '@/components/floorplanEditor/constants';
 import {
   Stage,
   Layer,
@@ -17,7 +14,6 @@ import {
   Transformer,
   Arrow,
   Text,
-  Line,
   Group,
   Image as KonvaImage,
 } from "react-konva";
@@ -59,16 +55,13 @@ import {
   TextBox, 
   Dimensions, 
   TextFormatting, 
-  Guideline, 
-  SnapPoints, 
-  StageSnapLines, 
   FloorplanData, 
   SelectedTextNode, 
   TextNode, 
   StallShape, 
   isShape, 
   isStallShape 
-} from '@/app/playground/types';
+} from '@/components/floorplanEditor/types';
 
 
 // Add these before your component
@@ -124,105 +117,20 @@ function FP(): JSX.Element {
     italic: false,
     underline: false,
   });
-  const [guidelines, setGuidelines] = useState<Guideline[]>([]);
   const [stallShapes, setStallShapes] = useState<StallShape[]>([]);
   const [stallCount, setStallCount] = useState<number>(0);
 
   const strokeColor = "#000000";
   const isDraggable = action === ACTIONS.SELECT;
 
-  // Snapping helper functions
-  const getShapeSnapPoints = (node: Konva.Node): SnapPoints => {
-    const box = node.getClientRect();
-    return {
-      vertical: [
-        { point: box.x, position: "start" },
-        { point: box.x + box.width / 2, position: "middle" },
-        { point: box.x + box.width, position: "end" }
-      ],
-      horizontal: [
-        { point: box.y, position: "start" },
-        { point: box.y + box.height / 2, position: "middle" },
-        { point: box.y + box.height, position: "end" }
-      ]
-    };
-  };
 
-  const getStageSnapLines = (stage: StageType, skipShape: Shape): StageSnapLines => {
-    const verticalLines = new Set<number>();
-    const horizontalLines = new Set<number>();
-
-    // Add stage boundaries and center lines
-    const stageBounds = {
-      vertical: [0, stage.width() / 2, stage.width()],
-      horizontal: [0, stage.height() / 2, stage.height()]
-    };
-
-    stageBounds.vertical.forEach(point => verticalLines.add(point));
-    stageBounds.horizontal.forEach(point => horizontalLines.add(point));
-
-    // Get all shapes except the one being dragged
-    const shapes = stage.find('Shape, Text, Rect, Circle, Arrow, Image').filter(shape => 
-      shape.id() !== skipShape?.id && 
-      !shape.hasName('transformer') && 
-      !shape.hasName('_anchor') &&
-      !shape.getParent()?.hasName('transformer')
-    );
-
-    // Add snap points from other shapes
-    shapes.forEach(shape => {
-      const snapPoints = getShapeSnapPoints(shape);
-      snapPoints.vertical.forEach(({point}) => verticalLines.add(point));
-      snapPoints.horizontal.forEach(({point}) => horizontalLines.add(point));
-    });
-
-    return {
-      vertical: Array.from(verticalLines).sort((a, b) => a - b),
-      horizontal: Array.from(horizontalLines).sort((a, b) => a - b)
-    };
-  };
-
-
-  // Merge the functionality into one cohesive system
-  const getSnapGuidelines = (
-    draggedShape: Konva.Node,
-    stage: Konva.Stage,
-    threshold: number = SNAP_THRESHOLD
-  ): Guideline[] => {
-    const guidelines: Guideline[] = [];
-    const snapLines = getStageSnapLines(stage, draggedShape as unknown as Shape);
-    const shapeSnapPoints = getShapeSnapPoints(draggedShape);
-  
-    // Check vertical alignments
-    shapeSnapPoints.vertical.forEach(({point}) => {
-      const closest = snapLines.vertical.find(snapPoint => 
-        Math.abs(snapPoint - point) < threshold
-      );
-      
-      if (closest !== undefined) {
-        guidelines.push({
-          points: [closest, 0, closest, stage.height()],
-          type: 'vertical'
-        });
-      }
-    });
-  
-    // Check horizontal alignments
-    shapeSnapPoints.horizontal.forEach(({point}) => {
-      const closest = snapLines.horizontal.find(snapPoint => 
-        Math.abs(snapPoint - point) < threshold
-      );
-      
-      if (closest !== undefined) {
-        guidelines.push({
-          points: [0, closest, stage.width(), closest],
-          type: 'horizontal'
-        });
-      }
-    });
-  
-    return guidelines;
-  };
+// Update handleDragMove to use the optimized getSnapGuidelines
+const handleDragMove = (e: KonvaEventObject<DragEvent>): void => {
+  const shape = e.target;
+  const stage = shape.getStage();
+  if (!stage) return;
+  stage.batchDraw();
+};
 
   // Event Handlers
 
@@ -611,7 +519,6 @@ function FP(): JSX.Element {
   };
 
   const handleDragEnd = (e: KonvaEventObject<DragEvent>, id: string, shapeType: string): void => {
-    setGuidelines([]);
     const newPosition = { x: e.target.x(), y: e.target.y() };
 
     if (!selectedShape) return;
@@ -667,36 +574,6 @@ function FP(): JSX.Element {
   };
 
   // Update handleDragMove to use the merged system
-  const handleDragMove = (e: KonvaEventObject<DragEvent>): void => {
-    const shape = e.target;
-    const stage = shape.getStage();
-    if (!stage) return;
-  
-    // Get guidelines and apply snapping
-    const guidelines = getSnapGuidelines(shape, stage);
-    setGuidelines(guidelines);
-  
-    // Apply snapping based on guidelines
-    guidelines.forEach(guideline => {
-      if (guideline.type === 'vertical') {
-        const snapX = guideline.points[0];
-        const shapeBox = shape.getClientRect();
-        const centerX = shapeBox.x + shapeBox.width / 2;
-        if (Math.abs(centerX - snapX) < SNAP_THRESHOLD) {
-          shape.x(shape.x() + (snapX - centerX));
-        }
-      } else {
-        const snapY = guideline.points[1];
-        const shapeBox = shape.getClientRect();
-        const centerY = shapeBox.y + shapeBox.height / 2;
-        if (Math.abs(centerY - snapY) < SNAP_THRESHOLD) {
-          shape.y(shape.y() + (snapY - centerY));
-        }
-      }
-    });
-  
-    stage.batchDraw();
-  };
 
   const getTextWidth = (text: string, fontSize: number = 24): number => {
     const canvas = document.createElement("canvas");
@@ -1158,18 +1035,6 @@ function FP(): JSX.Element {
                       onDragMove={handleDragMove}
                     />
                   ))}
-
-                  {guidelines.map((line, i) => (
-                    <Line
-                      key={i}
-                      points={line.points}
-                      stroke={GUIDELINES_COLOR}
-                      strokeWidth={GUIDELINES_STROKE_WIDTH}
-                      dash={[4, 4]}
-                      opacity={0.8}
-                    />
-                  ))}
-
                   {stallShapes.map((stall) => (
                     <Group
                       key={stall.id}
