@@ -5,6 +5,11 @@ import { useState } from 'react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Label } from '@/components/ui/label';
 
 const resetPasswordSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
@@ -22,7 +27,7 @@ export default function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
 
-  const { register, handleSubmit, formState: { errors } } = useForm<ResetPasswordFormData>({
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<ResetPasswordFormData>({
     resolver: zodResolver(resetPasswordSchema)
   });
 
@@ -48,47 +53,50 @@ export default function ResetPasswordForm() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-8 p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-6">Reset Password</h2>
-      
-      {error && (
-        <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
-          {error}
-        </div>
-      )}
+    <Card className="max-w-md w-full mx-auto mt-8">
+      <CardHeader>
+        <CardTitle>Reset Password</CardTitle>
+        <CardDescription>Enter your new password</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div>
-          <label className="block mb-2">New Password</label>
-          <input
-            {...register('password')}
-            type="password"
-            className="w-full p-2 border rounded"
-          />
-          {errors.password && (
-            <span className="text-red-500">{errors.password.message}</span>
-          )}
-        </div>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="password">New Password</Label>
+            <Input
+              id="password"
+              {...register('password')}
+              type="password"
+              placeholder="Enter new password"
+            />
+            {errors.password && (
+              <p className="text-sm text-destructive">{errors.password.message}</p>
+            )}
+          </div>
 
-        <div>
-          <label className="block mb-2">Confirm Password</label>
-          <input
-            {...register('confirmPassword')}
-            type="password"
-            className="w-full p-2 border rounded"
-          />
-          {errors.confirmPassword && (
-            <span className="text-red-500">{errors.confirmPassword.message}</span>
-          )}
-        </div>
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Input
+              id="confirmPassword"
+              {...register('confirmPassword')}
+              type="password"
+              placeholder="Confirm new password"
+            />
+            {errors.confirmPassword && (
+              <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
+            )}
+          </div>
 
-        <button
-          type="submit"
-          className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
-        >
-          Reset Password
-        </button>
-      </form>
-    </div>
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? 'Resetting...' : 'Reset Password'}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }
