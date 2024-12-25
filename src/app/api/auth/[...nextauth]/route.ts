@@ -1,4 +1,4 @@
-import NextAuth, { Session } from 'next-auth';
+import NextAuth from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
@@ -13,6 +13,16 @@ declare module 'next-auth' {
       image?: string | null;
       role?: string | null;
     };
+  }
+
+  interface User {
+    role?: string;
+  }
+}
+
+declare module 'next-auth/jwt' {
+  interface JWT {
+    role?: string;
   }
 }
 
@@ -39,7 +49,7 @@ const handler = NextAuth({
         if (!isValid) return null;
         
         return {
-          id: user._id,
+          id: user._id.toString(),
           email: user.email,
           name: user.name,
           role: user.role,
@@ -50,13 +60,13 @@ const handler = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = (user as any).role;
+        token.role = user.role;
       }
       return token;
     },
     async session({ session, token }) {
       if (session?.user) {
-        session.user.role = token.role as string;
+        session.user.role = token.role;
       }
       return session;
     }
