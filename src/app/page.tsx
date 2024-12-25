@@ -41,7 +41,7 @@ export default function Home() {
         <Container>
           <div className="space-y-8">
             <div className="max-w-2xl mx-auto text-center">
-              <h2 className="text-3xl font-bold tracking-tight">Why Choose ExhibitFlow?</h2>
+              <h2 className="text-3xl font-bold tracking-tight">Why Choose StallSpot?</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <FeatureCard
