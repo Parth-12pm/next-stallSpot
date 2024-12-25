@@ -110,6 +110,7 @@ export default function SignupForm() {
               {...register('confirmPassword')}
               type="password"
               placeholder="Confirm your password"
+              autoComplete={'password'}
             />
             {errors.confirmPassword && (
               <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
