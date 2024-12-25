@@ -1,3 +1,5 @@
+/* eslint-disable prefer-const */
+/* eslint-disable no-var */
 // File: src/lib/mongodb.ts
 import mongoose from 'mongoose';
 
