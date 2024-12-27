@@ -121,9 +121,9 @@ export default function SignupForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="role">Role</Label>
+            <Label htmlFor="role-select">Role</Label>
             <Select defaultValue="visitor" {...register('role')}>
-              <SelectTrigger>
+              <SelectTrigger id='role-select'>
                 <SelectValue placeholder="Select your role" />
               </SelectTrigger>
               <SelectContent>
