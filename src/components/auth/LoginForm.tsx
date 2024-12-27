@@ -85,6 +85,7 @@ export default function LoginForm() {
               id="password"
               type="password"
               {...register("password")}
+              autoComplete="new-password"
             />
             {errors.password && (
               <p className="text-sm text-destructive">{errors.password.message}</p>
