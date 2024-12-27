@@ -66,11 +66,12 @@ export default function SignupForm() {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name-input">Name</Label>
             <Input
-              id="name"
+              id="name-input"
               {...register('name')}
               placeholder="Enter your name"
+              autoComplete="name"
             />
             {errors.name && (
               <p className="text-sm text-destructive">{errors.name.message}</p>
