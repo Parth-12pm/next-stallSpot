@@ -84,6 +84,7 @@ export default function SignupForm() {
               {...register('email')}
               type="email"
               placeholder="Enter your email"
+              autoComplete='username'
             />
             {errors.email && (
               <p className="text-sm text-destructive">{errors.email.message}</p>
@@ -97,6 +98,7 @@ export default function SignupForm() {
               {...register('password')}
               type="password"
               placeholder="Create a password"
+              autoComplete="new-password"
             />
             {errors.password && (
               <p className="text-sm text-destructive">{errors.password.message}</p>

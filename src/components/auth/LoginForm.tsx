@@ -73,6 +73,7 @@ export default function LoginForm() {
               id="email"
               type="email"
               {...register("email")}
+              autoComplete="username"
             />
             {errors.email && (
               <p className="text-sm text-destructive">{errors.email.message}</p>

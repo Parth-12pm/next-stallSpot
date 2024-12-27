@@ -73,6 +73,7 @@ export default function ResetPasswordForm() {
               {...register('password')}
               type="password"
               placeholder="Enter new password"
+              autoComplete='new-password'
             />
             {errors.password && (
               <p className="text-sm text-destructive">{errors.password.message}</p>
@@ -86,6 +87,7 @@ export default function ResetPasswordForm() {
               {...register('confirmPassword')}
               type="password"
               placeholder="Confirm new password"
+              autoComplete='new-password'
             />
             {errors.confirmPassword && (
               <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>

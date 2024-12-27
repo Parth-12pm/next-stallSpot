@@ -68,6 +68,7 @@ export default function ForgotPasswordForm() {
               {...register('email')}
               type="email"
               placeholder="Enter your email"
+              autoComplete='username'
             />
             {errors.email && (
               <p className="text-sm text-destructive">{errors.email.message}</p>
