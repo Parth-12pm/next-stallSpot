@@ -1,6 +1,6 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { useState } from 'react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -26,8 +26,11 @@ type SignupFormData = z.infer<typeof signupSchema>;
 
 export default function SignupForm() {
   const [error, setError] = useState('');
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<SignupFormData>({
-    resolver: zodResolver(signupSchema)
+  const { control, register, handleSubmit, formState: { errors, isSubmitting } } = useForm<SignupFormData>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: {
+      role: 'visitor'
+    }
   });
 
   const onSubmit = async (data: SignupFormData) => {
@@ -44,7 +47,6 @@ export default function SignupForm() {
         throw new Error(result.message || 'Something went wrong');
       }
 
-      // Redirect to login page on success
       window.location.href = '/auth/login?registered=true';
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An error occurred');
@@ -113,7 +115,7 @@ export default function SignupForm() {
               {...register('confirmPassword')}
               type="password"
               placeholder="Confirm your password"
-              autoComplete="new-password"      
+              autoComplete="new-password"
             />
             {errors.confirmPassword && (
               <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
@@ -122,16 +124,22 @@ export default function SignupForm() {
 
           <div className="space-y-2">
             <Label htmlFor="role-select">Role</Label>
-            <Select defaultValue="visitor" {...register('role')}>
-              <SelectTrigger id='role-select'>
-                <SelectValue placeholder="Select your role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="visitor">Visitor</SelectItem>
-                <SelectItem value="organizer">Organizer</SelectItem>
-                <SelectItem value="vendor">Vendor</SelectItem>
-              </SelectContent>
-            </Select>
+            <Controller
+              name="role"
+              control={control}
+              render={({ field }) => (
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <SelectTrigger id="role-select">
+                    <SelectValue placeholder="Select your role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="visitor">Visitor</SelectItem>
+                    <SelectItem value="organizer">Organizer</SelectItem>
+                    <SelectItem value="vendor">Vendor</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
             {errors.role && (
               <p className="text-sm text-destructive">{errors.role.message}</p>
             )}
