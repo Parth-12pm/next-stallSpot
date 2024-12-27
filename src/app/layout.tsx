@@ -5,6 +5,7 @@ import { AuthProvider } from "@/providers/auth-provider";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/react"
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,7 +21,9 @@ export default async function RootLayout({
       <body className={inter.className}>
         <AuthProvider session={session}>
           <Navigation />
-          <main className="min-h-screen">{children}</main>
+          <main className="min-h-screen">{children}
+          <Analytics />
+          </main>
           <Footer />
         </AuthProvider>
       </body>
