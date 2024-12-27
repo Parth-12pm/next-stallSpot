@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 
+
 declare module 'next-auth' {
   interface Session {
     user: {

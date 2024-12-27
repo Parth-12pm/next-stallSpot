@@ -20,6 +20,7 @@ export async function POST(req: Request) {
       resetPasswordExpires: { $gt: Date.now() }
     });
 
+    // Check if user exists
     if (!user) {
       return NextResponse.json(
         { message: 'Invalid or expired reset token' },

@@ -10,6 +10,7 @@ export async function POST(req: Request) {
     const { email } = await req.json();
     await dbConnect();
 
+    // Check if user exists
     const user = await User.findOne({ email });
     if (!user) {
       return NextResponse.json(
