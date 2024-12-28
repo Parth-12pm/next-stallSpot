@@ -72,7 +72,7 @@ npm run dev
 
 ## 📂 Project Structure
 
-```
+```bash
 
 next-stallSpot/
 ├── 🗂️ components/      # Reusable UI components

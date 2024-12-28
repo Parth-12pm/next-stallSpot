@@ -1,7 +1,11 @@
 // components/Navigation.tsx
+"use client";
+
 import React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useSession,signOut } from "next-auth/react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -11,10 +15,17 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Sheet,
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { ModeToggle } from "@/components/mode-toggle";
 import { Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { memo } from "react";
@@ -51,7 +62,6 @@ export const Navigation = memo(function Navigation() {
           <Link href="/" className="text-xl font-bold">
             StallSpot
           </Link>
-
           <MobileNav />
           <DesktopNav />
         </nav>
@@ -61,6 +71,8 @@ export const Navigation = memo(function Navigation() {
 });
 
 const MobileNav = memo(function MobileNav() {
+  const { data: session } = useSession();
+
   return (
     <Sheet>
       <SheetTrigger className="md:hidden">
@@ -73,12 +85,29 @@ const MobileNav = memo(function MobileNav() {
           <Link href="/contact" className="block py-2">Contact</Link>
           <Link href="/playground" className="block py-2">Playground</Link>
           <div className="flex flex-col gap-2 mt-4">
-            <Link href="/auth/login">
-              <Button variant="outline" className="w-full">Login</Button>
-            </Link>
-            <Link href="/auth/signup">
-              <Button className="w-full">Sign Up</Button>
-            </Link>
+            {session?.user ? (
+              <>
+                <div className="flex items-center gap-2 py-2">
+                  <Avatar>
+                    <AvatarImage src={session.user.image || ''} alt={session.user.name || ''} />
+                    <AvatarFallback>{session.user.name?.charAt(0).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <span>{session.user.name}</span>
+                </div>
+                <Button variant="outline" className="w-full" onClick={() => signOut()}>
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link href="/auth/login">
+                  <Button variant="outline" className="w-full">Login</Button>
+                </Link>
+                <Link href="/auth/signup">
+                  <Button className="w-full">Sign Up</Button>
+                </Link>
+              </>
+            )}
           </div>
         </nav>
       </SheetContent>
@@ -87,6 +116,7 @@ const MobileNav = memo(function MobileNav() {
 });
 
 const DesktopNav = memo(function DesktopNav() {
+  const { data: session } = useSession();
   return (
     <>
       <NavigationMenu className="hidden md:block">
@@ -124,12 +154,31 @@ const DesktopNav = memo(function DesktopNav() {
       </NavigationMenu>
 
       <div className="hidden md:flex items-center gap-4">
-        <Link href="/auth/login">
-          <Button variant="outline">Login</Button>
-        </Link>
-        <Link href="/auth/signup">
-          <Button>Sign Up</Button>
-        </Link>
+        {session?.user ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger>
+              <Avatar>
+                <AvatarImage src={session.user.image || ''} alt={session.user.name || ''} />
+                <AvatarFallback>{session.user.name?.charAt(0).toUpperCase()}</AvatarFallback>
+              </Avatar>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <Link href="/profile"><DropdownMenuItem>Profile</DropdownMenuItem></Link>
+              <Link href="/dashboard" ><DropdownMenuItem>Dashboard</DropdownMenuItem></Link>
+              <DropdownMenuItem onClick={() => signOut()}>Logout</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <>
+            <Link href="/auth/login">
+              <Button variant="outline">Login</Button>
+            </Link>
+            <Link href="/auth/signup">
+              <Button>Sign Up</Button>
+            </Link>
+          </>
+        )}
+        <ModeToggle />
       </div>
     </>
   );

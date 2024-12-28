@@ -6,6 +6,7 @@ import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react"
+import { ThemeProvider } from "@/components/theme-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,13 +20,21 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <AuthProvider session={session}>
-          <Navigation />
-          <main className="min-h-screen">{children}
-          <Analytics />
-          </main>
-          <Footer />
-        </AuthProvider>
+        <ThemeProvider 
+          attribute="class" 
+          defaultTheme="system" 
+          enableSystem 
+          disableTransitionOnChange
+        >
+          <AuthProvider session={session}>
+            <Navigation />
+            <main className="min-h-screen">
+              {children}
+              <Analytics />
+            </main>
+            <Footer />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

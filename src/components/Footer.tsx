@@ -1,80 +1,74 @@
 import Link from "next/link";
 import { memo } from "react";
 
+const sections = [
+  {
+    title: "Quick Links",
+    links: [
+      { name: "Exhibitions", href: "/exhibitions" },
+      { name: "About Us", href: "/about" },
+      { name: "Contact", href: "/contact" },
+    ],
+  },
+  {
+    title: "For Businesses",
+    links: [
+      { name: "Organizers", href: "/organizer/dashboard" },
+      { name: "Vendors", href: "/vendor/dashboard" },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      { name: "Privacy Policy", href: "/privacy" },
+      { name: "Terms of Service", href: "/terms" },
+    ],
+  },
+];
+
 export const Footer = memo(function Footer() {
   return (
-    <footer className="border-t bg-muted/50">
-      <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
-          <div className="pr-10">
-            <h3 className="font-bold mb-3">StallSpot</h3>
-            <p className="text-sm text-muted-foreground">
-              Making exhibition management 
-              simple and efficient.
-            </p>
+    <section className="py-12 bg-muted/50 border-t border-border/40 shadow-[0_-1px_3px_rgba(0,0,0,0.05)]">
+      <div className="container mx-auto px-6">
+        <footer>
+          <div className="grid grid-cols-2 gap-x-12 gap-y-8 lg:grid-cols-5">
+            <div className="col-span-2 lg:pr-12">
+              <h3 className="font-bold mb-3">StallSpot</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Making exhibition management simple and efficient.
+              </p>
+            </div>
+            
+            {sections.map((section, sectionIdx) => (
+              <div key={sectionIdx}>
+                <h3 className="mb-3 font-semibold text-sm">{section.title}</h3>
+                <ul className="space-y-2.5 text-muted-foreground">
+                  {section.links.map((link, linkIdx) => (
+                    <li
+                      key={linkIdx}
+                      className="text-sm font-medium hover:text-primary transition-colors duration-200"
+                    >
+                      <Link href={link.href}>{link.name}</Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
-          <FooterLinks />
-          <BusinessLinks />
-          <LegalLinks />
-        </div>
-        <div className="mt-6 pt-6 border-t text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} StallSpot. All rights reserved.
-        </div>
-      </div>
-    </footer>
-  );
-});
 
-const FooterLinks = memo(function FooterLinks() {
-  return (
-    <div>
-      <h4 className="font-semibold mb-3">Quick Links</h4>
-      <div className="space-y-1.5">
-        <FooterLink href="/exhibitions">Exhibitions</FooterLink>
-        <FooterLink href="/about">About Us</FooterLink>
-        <FooterLink href="/contact">Contact</FooterLink>
+          <div className="mt-12 flex flex-col justify-between gap-4 border-t pt-6 text-sm font-medium text-muted-foreground md:flex-row md:items-center">
+            <p>© {new Date().getFullYear()} StallSpot. All rights reserved.</p>
+            <ul className="flex gap-6">
+              <li className="hover:text-primary transition-colors duration-200">
+                <Link href="/terms">Terms and Conditions</Link>
+              </li>
+              <li className="hover:text-primary transition-colors duration-200">
+                <Link href="/privacy">Privacy Policy</Link>
+              </li>
+            </ul>
+          </div>
+        </footer>
       </div>
-    </div>
-  );
-});
-
-const BusinessLinks = memo(function BusinessLinks() {
-  return (
-    <div>
-      <h4 className="font-semibold mb-3">For Businesses</h4>
-      <div className="space-y-1.5">
-        <FooterLink href="/organizer/dashboard">Organizers</FooterLink>
-        <FooterLink href="/vendor/dashboard">Vendors</FooterLink>
-      </div>
-    </div>
-  );
-});
-
-const LegalLinks = memo(function LegalLinks() {
-  return (
-    <div>
-      <h4 className="font-semibold mb-3">Legal</h4>
-      <div className="space-y-1.5">
-        <FooterLink href="/privacy">Privacy Policy</FooterLink>
-        <FooterLink href="/terms">Terms of Service</FooterLink>
-      </div>
-    </div>
-  );
-});
-
-const FooterLink = memo(function FooterLink({ 
-  href, 
-  children 
-}: { 
-  href: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <Link
-      href={href}
-      className="block text-sm text-muted-foreground hover:text-foreground transition-colors"
-    >
-      {children}
-    </Link>
+    </section>
   );
 });

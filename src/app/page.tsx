@@ -14,7 +14,7 @@ import { ArrowRight, Layout, Users, Map } from "lucide-react";
 export default function Home() {
   return (
     <div className="flex flex-col gap-16">
-      <section className="py-16 lg:py-20 bg-gradient-to-b from-background to-muted">
+      <section className="py-16 lg:py-20">
         <Container>
           <div className="max-w-3xl mx-auto text-center space-y-6">
             <h1 className="text-4xl font-bold tracking-tight lg:text-5xl">

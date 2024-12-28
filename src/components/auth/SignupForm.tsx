@@ -28,9 +28,6 @@ export default function SignupForm() {
   const [error, setError] = useState('');
   const { control, register, handleSubmit, formState: { errors, isSubmitting } } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
-    defaultValues: {
-      role: 'visitor'
-    }
   });
 
   const onSubmit = async (data: SignupFormData) => {
