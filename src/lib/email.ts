@@ -4,7 +4,7 @@ import { Resend } from 'resend';
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function sendPasswordResetEmail(email: string, resetToken: string) {
-  const resetUrl = `${process.env.NEXTAUTH_URL}/auth/reset-password?token=${resetToken}`;
+  const resetUrl = `${process.env.NEXTAUTH_PUBLIC_URL}/auth/reset-password?token=${resetToken}`;
   
   try {
     await resend.emails.send({
