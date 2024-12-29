@@ -6,6 +6,7 @@ import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import { ThemeProvider } from "@/components/theme-provider";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -31,6 +32,7 @@ export default async function RootLayout({
             <main className="min-h-screen">
               {children}
               <Analytics />
+              <SpeedInsights />
             </main>
             <Footer />
           </AuthProvider>

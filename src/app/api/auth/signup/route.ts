@@ -18,7 +18,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Hash passwor
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const user = await User.create({
