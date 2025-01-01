@@ -1,0 +1,126 @@
+StallSpot FloorPlan System - Two Page Architecture
+
+1. FLOORPLAN EDITOR PAGE (Creator Studio) 
+   I want to make this as good as Coral or autocad where professional floor plans are created also you can consider SmartDraw as example too but its UI and every thing is boring we don't need that we will be using konva for this as its a good graphical library in Canvas libraries 
+   A. Core Canvas Features
+      - Multi-layer support like Figma
+      - Infinite canvas with zoom/pan
+      - grid and rulers
+      - Smart guides and snap points
+      - History management (undo/redo)
+      - Keyboard shortcuts
+
+   B. Shape Tools
+      - Basic Shapes: Rectangle, Circle, Arrow
+      - Advanced Shapes: Polygon, Line, Curve
+      - Stall Shapes: this shapes will be used for the floorplan and create them in konva as custom shape and
+        their Measurement should be shown around it , Measurement can be customized 
+            1. **Standard Booth** (10x10 ft)  
+            2. **Corner Booth** (10x10 ft)  
+            3. **Inline Booth** (10x10 ft or 10x20 ft)  
+            4. **Island Booth** (20x20 ft or larger)  
+            5. **Peninsula Booth** (20x10 ft or 20x20 ft)  
+            6. **Pop-Up Booth** (8x8 ft or 10x10 ft)  
+            7. **Canopy Booth** (10x10 ft or 10x15 ft)  
+            8. **L-Shaped Booth** (10x10 ft with an additional 10x10 ft corner)  
+            9. **Octanorm Booth** (10x10 ft or customizable modular sizes)  
+            10. **Double-Decker Booth** (20x20 ft or larger, depending on design)  
+            11. **Custom Booth** (Varies based on requirements)  
+            12. **Kiosk Booth** (4x4 ft or 6x6 ft)  
+            while creating this ask me more questions about there Visualization 
+      - Furniture Shpes : 
+         shapes like Doors,Fans,chair etc  (we will be using images of these but as Image component of Konva)
+      - Shape Operations:
+        * Group/Ungroup
+        * Align and distribute
+        * Lock/Unlock
+        * Copy/Paste with properties
+      - Shape Properties:
+        * Fill with gradients/patterns
+        * Border styles
+        * Shadow effects
+        * Opacity controls
+
+   C. Custom Stall System
+      - Stall Properties:
+        * Auto-numbering system
+        * Customizable dimensions
+        * Category assignment
+        * Price tier marking
+      - Batch Operations:
+        * Duplicate with increment
+        * Mass property updates
+        * Auto-arrangement
+
+   D. Enhanced UI (shadcn/ui)
+      - Collapsible toolbars
+      - Property inspector panel
+      - Layer management panel
+      - Color picker with saved palettes
+      - Component library
+      - Quick access toolbar
+      - Context menus
+      - Enhanced viewport 
+
+2. FLOORPLAN VIEWER PAGE (Interactive Booking View) :
+   For this we will do 2 parts in 1st part the floorplan will be shown and in 2nd part only  buttons or divs showing their number when clicked on it 
+   stall details will be shown and also these can be filtered according to below filters so the user will click on this and see in the floorplan to locate where its stall is located in the part 1 by this we can make things easy for backend and also we cannot convert existing floorplan of user it can be in any file format jpeg,png,dwg,dxf we will just provide an option to add the 2nd part buttons or divs so that we don't have to bear the interactivity for the floorplan 
+   (note : ask me as many questions for this as this is very complex)
+
+   A. Display Features
+      - Interactive stall highlighting
+      - Zoom/Pan controls
+      - Search and filter stalls
+      - Category-based color coding
+      - Price tier indicators
+      - Minimap for navigation
+
+   B. Stall Interaction
+      - Hover effects:
+        * Quick info tooltip
+        * Highlight connected stalls
+        * Show dimensions
+      - Click actions:
+        * Detailed stall information
+        * Availability status
+        * Price information
+        * Location details
+      - Visual States: ( Real Time states of stalls)
+        * Available
+        * Reserved
+        * Booked
+        * Selected
+        * Premium spots
+
+   C. Enhanced Viewer Features
+      - Category filters
+      - Price range filters
+      - Stall comparison
+      - Share view state
+      - Download floor plan
+      - Print optimized view
+
+Future Enhancements:
+(we will go through this when core things are completed but if any of these can be added while doing core things we can do it)
+1. Editor Enhancements
+   - Template system
+   - Asset library
+   - Measurement tools
+   - Auto-layout features
+   - Style presets
+   - Plugin system
+
+2. Viewer Enhancements
+   - Interactive walkthrough
+   - Accessibility features
+
+Technical Stack:
+- Next js 15
+- React js 19 + TypeScript
+- Konva.js 18 for canvas
+- shadcn/ui components
+- Responsive design
+- Performance optimizations
+- Browser compatibility
+
+

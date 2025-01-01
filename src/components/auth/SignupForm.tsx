@@ -16,7 +16,7 @@ const signupSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   confirmPassword: z.string(),
-  role: z.enum(['visitor', 'organizer', 'vendor']),
+  role: z.enum(['organizer', 'vendor']),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -130,7 +130,6 @@ export default function SignupForm() {
                     <SelectValue placeholder="Select your role" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="visitor">Visitor</SelectItem>
                     <SelectItem value="organizer">Organizer</SelectItem>
                     <SelectItem value="vendor">Vendor</SelectItem>
                   </SelectContent>
