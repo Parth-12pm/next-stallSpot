@@ -131,7 +131,7 @@ const DesktopNav = memo(function DesktopNav() {
                 <ListItem href="/vendors" title="Vendors">
                   Connect with exhibition vendors
                 </ListItem>
-                <ListItem href="/organizers" title="Organizers">
+                <ListItem href="/orgprofile" title="Organizers">
                   Find exhibition organizers
                 </ListItem>
                 <ListItem href="/playground" title="Playground">
