@@ -83,7 +83,7 @@ const MobileNav = memo(function MobileNav() {
           <Link href="/exhibitions" className="block py-2">Exhibitions</Link>
           <Link href="/about" className="block py-2">About</Link>
           <Link href="/contact" className="block py-2">Contact</Link>
-          <Link href="/playground" className="block py-2">Playground</Link>
+          <Link href="/creator-studio" className="block py-2">Playground</Link>
           <div className="flex flex-col gap-2 mt-4">
             {session?.user ? (
               <>
@@ -134,7 +134,7 @@ const DesktopNav = memo(function DesktopNav() {
                 <ListItem href="/organizers" title="Organizers">
                   Find exhibition organizers
                 </ListItem>
-                <ListItem href="/playground" title="Playground">
+                <ListItem href="/creator-studio" title="Playground">
                   Test our features
                 </ListItem>
               </ul>

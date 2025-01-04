@@ -29,7 +29,7 @@ export default async function RootLayout({
         >
           <AuthProvider session={session}>
             <Navigation />
-            <main className="min-h-screen">
+            <main className="min-h-full">
               {children}
               <Analytics />
               <SpeedInsights />
