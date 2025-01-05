@@ -5,7 +5,6 @@ import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FaGoogle } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +16,7 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useRouter } from "next/navigation";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -27,10 +27,12 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginForm() {
   const [error, setError] = useState("");
+  const router = useRouter();
+  
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
@@ -46,7 +48,17 @@ export default function LoginForm() {
       if (result?.error) {
         setError("Invalid credentials");
       } else {
-        window.location.href = "/dashboard";
+        // After successful login, fetch user data to check profile completion
+        const profileResponse = await fetch('/api/profile');
+        const profileData = await profileResponse.json();
+
+        if (!profileData.profileComplete) {
+          // If profile is incomplete, redirect to profile completion page
+          router.push('/profile');
+        } else {
+          // If profile is complete, redirect to dashboard
+          router.push('/dashboard');
+        }
       }
     } catch {
       setError("An error occurred");
@@ -54,7 +66,7 @@ export default function LoginForm() {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto mt-8">
+    <Card className="w-full max-w-md mx-auto mt-20 mb-20">
       <CardHeader>
         <CardTitle>Login</CardTitle>
       </CardHeader>
@@ -86,33 +98,25 @@ export default function LoginForm() {
               id="password"
               type="password"
               {...register("password")}
-              autoComplete="new-password"
+              autoComplete="current-password"
             />
             {errors.password && (
               <p className="text-sm text-destructive">{errors.password.message}</p>
             )}
           </div>
 
-          <Button type="submit" className="w-full">
-            Login
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? "Logging in..." : "Login"}
           </Button>
         </form>
-
-        <div className="mt-4">
-          <Button
-            variant="outline"
-            onClick={() => signIn("google")}
-            className="w-full"
-          >
-            <FaGoogle className="mr-2" />
-            Continue with Google
-          </Button>
-        </div>
       </CardContent>
 
-      <CardFooter className="flex justify-center">
+      <CardFooter className="flex flex-col gap-2">
         <Button variant="link" asChild>
           <a href="/auth/forgot-password">Forgot Password?</a>
+        </Button>
+        <Button variant="link" asChild>
+          <a href="/auth/role-select">Don&apos;t have an account? Sign up</a>
         </Button>
       </CardFooter>
     </Card>

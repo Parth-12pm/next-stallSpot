@@ -1,10 +1,10 @@
+// app/api/auth/[...nextauth]/route.ts
 import NextAuth from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
-
 
 declare module 'next-auth' {
   interface Session {
@@ -13,17 +13,20 @@ declare module 'next-auth' {
       email?: string | null;
       image?: string | null;
       role?: string | null;
+      profileComplete?: boolean;
     };
   }
 
   interface User {
     role?: string;
+    profileComplete?: boolean;
   }
 }
 
 declare module 'next-auth/jwt' {
   interface JWT {
     role?: string;
+    profileComplete?: boolean;
   }
 }
 
@@ -54,6 +57,7 @@ const handler = NextAuth({
           email: user.email,
           name: user.name,
           role: user.role,
+          profileComplete: user.profileComplete,
         };
       }
     })
@@ -62,14 +66,14 @@ const handler = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.role = user.role;
-        console.log("jwt callback: ", token);
+        token.profileComplete = user.profileComplete;
       }
       return token;
     },
     async session({ session, token }) {
       if (session?.user) {
         session.user.role = token.role;
-        console.log("session callback: ", session);
+        session.user.profileComplete = token.profileComplete;
       }
       return session;
     }

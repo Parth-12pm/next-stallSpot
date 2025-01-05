@@ -103,7 +103,7 @@ const MobileNav = memo(function MobileNav() {
                 <Link href="/auth/login">
                   <Button variant="outline" className="w-full">Login</Button>
                 </Link>
-                <Link href="/auth/signup">
+                <Link href="/auth/role-select">
                   <Button className="w-full">Sign Up</Button>
                 </Link>
               </>

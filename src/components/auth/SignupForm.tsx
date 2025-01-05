@@ -1,7 +1,8 @@
 'use client';
 
-import { useForm, Controller } from 'react-hook-form';
-import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { useState, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
@@ -9,14 +10,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const signupSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   confirmPassword: z.string(),
-  role: z.enum(['organizer', 'vendor']),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -26,16 +25,34 @@ type SignupFormData = z.infer<typeof signupSchema>;
 
 export default function SignupForm() {
   const [error, setError] = useState('');
-  const { control, register, handleSubmit, formState: { errors, isSubmitting } } = useForm<SignupFormData>({
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const role = searchParams.get('role');
+  
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
   });
+
+  useEffect(() => {
+    if (!role || !['organizer', 'vendor'].includes(role)) {
+      router.push('/auth/role-select');
+    }
+  }, [role, router]);
+
+  // Don't render the form if no valid role
+  if (!role || !['organizer', 'vendor'].includes(role)) {
+    return null;
+  }
 
   const onSubmit = async (data: SignupFormData) => {
     try {
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          role,
+        }),
       });
 
       const result = await response.json();
@@ -44,7 +61,7 @@ export default function SignupForm() {
         throw new Error(result.message || 'Something went wrong');
       }
 
-      window.location.href = '/auth/login?registered=true';
+      router.push('/auth/login?registered=true');
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An error occurred');
     }
@@ -53,8 +70,10 @@ export default function SignupForm() {
   return (
     <Card className="max-w-md w-full mx-auto mt-8">
       <CardHeader>
-        <CardTitle>Create an Account</CardTitle>
-        <CardDescription>Sign up to get started with StallSpot</CardDescription>
+        <CardTitle>Create your account</CardTitle>
+        <CardDescription>
+          Sign up as a {role === 'organizer' ? 'Exhibition Organizer' : 'Vendor'}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {error && (
@@ -65,9 +84,9 @@ export default function SignupForm() {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name-input">Name</Label>
+            <Label htmlFor="name">Name</Label>
             <Input
-              id="name-input"
+              id="name"
               {...register('name')}
               placeholder="Enter your name"
               autoComplete="name"
@@ -84,7 +103,7 @@ export default function SignupForm() {
               {...register('email')}
               type="email"
               placeholder="Enter your email"
-              autoComplete='username'
+              autoComplete="email"
             />
             {errors.email && (
               <p className="text-sm text-destructive">{errors.email.message}</p>
@@ -116,28 +135,6 @@ export default function SignupForm() {
             />
             {errors.confirmPassword && (
               <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="role-select">Role</Label>
-            <Controller
-              name="role"
-              control={control}
-              render={({ field }) => (
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <SelectTrigger id="role-select">
-                    <SelectValue placeholder="Select your role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="organizer">Organizer</SelectItem>
-                    <SelectItem value="vendor">Vendor</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-            />
-            {errors.role && (
-              <p className="text-sm text-destructive">{errors.role.message}</p>
             )}
           </div>
 
