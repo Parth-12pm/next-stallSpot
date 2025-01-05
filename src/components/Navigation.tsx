@@ -150,6 +150,11 @@ const DesktopNav = memo(function DesktopNav() {
               <NavigationMenuLink className="px-4 py-2">Contact</NavigationMenuLink>
             </Link>
           </NavigationMenuItem>
+          <NavigationMenuItem>
+            <Link href="/landingpage" legacyBehavior passHref>
+              <NavigationMenuLink className="px-4 py-2">Landing Page</NavigationMenuLink>
+            </Link>
+          </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>
 
