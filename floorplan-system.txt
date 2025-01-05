@@ -3,7 +3,6 @@ StallSpot FloorPlan System - Two Page Architecture
 1. FLOORPLAN EDITOR PAGE (Creator Studio) 
    I want to make this as good as Coral or autocad where professional floor plans are created also you can consider SmartDraw as example too but its UI and every thing is boring we don't need that we will be using konva for this as its a good graphical library in Canvas libraries 
    A. Core Canvas Features
-      - Multi-layer support like Figma
       - Infinite canvas with zoom/pan
       - grid and rulers
       - Smart guides and snap points

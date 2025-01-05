@@ -1,14 +1,17 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
+// next.config.mjs
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   images: {
     unoptimized: true,
   },
   webpack: (config) => {
-    config.externals = [...(config.externals || []), { canvas: 'canvas' }]; // required to make Konva & react-konva work
-    config.cache = false;
+    config.externals = [...(config.externals || []), { canvas: 'canvas' }];
     return config;
   },
-}
+  // Add this to handle Konva's SSR issues
+  experimental: {
+    esmExternals: 'loose', // required to make Konva & react-konva work
+  },
+};
 
 export default nextConfig;
