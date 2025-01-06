@@ -4,6 +4,8 @@ import { StatCard } from '@/components/StatCard';
 import { ValueCard } from '@/components/ValueCard';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import Image from 'next/image';
+
 
 export default function AboutPage() {
   return (
@@ -27,16 +29,18 @@ export default function AboutPage() {
                 Founded in 2024, StallSpot emerged from a simple observation: exhibition management needed a digital transformation. Our founders, experienced in both technology and event management, saw the opportunity to bridge this gap.
               </p>
               <p>
-                What started as a simple floor plan tool has evolved into a comprehensive platform that serves exhibition organizers, vendors, and visitors alike. Today, we're proud to be partnering with leading exhibition centers and event organizers worldwide.
+                What started as a simple floor plan tool has evolved into a comprehensive platform that serves exhibition organizers, vendors, and visitors alike. Today, we&apos;re proud to be partnering with leading exhibition centers and event organizers worldwide.
               </p>
             </div>
           </div>
           <div className="lg:w-1/2">
             <div className="relative">
               <div className="absolute inset-0 -translate-x-8 -translate-y-8 bg-primary rounded-lg" />
-              <img
+              <Image
                 src="/api/placeholder/800/400"
                 alt="Exhibition hall"
+                width={800}
+                height={400}
                 className="relative rounded-lg shadow-xl w-full h-[400px] object-cover"
               />
             </div>
@@ -92,13 +96,13 @@ export default function AboutPage() {
       {/* CTA Section */}
       <div className="relative bg-primary text-primary-foreground py-24 overflow-hidden">
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-[url('/api/placeholder/1920/1080')] mix-blend-overlay opacity-10" />
-          <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary/80" />
+        <div className="absolute inset-0 bg-[url(&apos;/api/placeholder/1920/1080&apos;)] mix-blend-overlay opacity-10" />         
+         <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary/80" />
         </div>
         <div className="container mx-auto px-4 text-center relative">
           <h2 className="text-4xl font-bold mb-6">Join Us in Shaping the Future of Exhibitions</h2>
           <p className="text-xl text-primary-foreground/80 max-w-3xl mx-auto mb-10">
-            Whether you're an organizer, vendor, or visitor, we're here to make your exhibition experience better. Our team is constantly working on new features and improvements based on your feedback.
+            Whether you&apos;re an organizer, vendor, or visitor, we&apos;re here to make your exhibition experience better. Our team is constantly working on new features and improvements based on your feedback.
           </p>
           <Link href="/auth/signup">
             <Button size="lg" variant="secondary" className="font-semibold">
