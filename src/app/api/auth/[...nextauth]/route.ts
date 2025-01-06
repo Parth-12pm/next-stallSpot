@@ -56,24 +56,30 @@ const handler = NextAuth({
           id: user._id.toString(),
           email: user.email,
           name: user.name,
-          role: user.role,
-          profileComplete: user.profileComplete,
+          role: user.role || 'vendor', // Add default role
+          profileComplete: user.profileComplete || false, // Add default value
         };
       }
     })
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
-        token.role = user.role;
-        token.profileComplete = user.profileComplete;
+        token.role = user.role || 'vendor'; // Add default role
+        token.profileComplete = user.profileComplete || false; // Add default value
       }
+
+      // Handle profile completion update
+      if (trigger === "update" && session?.user?.profileComplete) {
+        token.profileComplete = session.user.profileComplete;
+      }
+
       return token;
     },
     async session({ session, token }) {
       if (session?.user) {
-        session.user.role = token.role;
-        session.user.profileComplete = token.profileComplete;
+        session.user.role = token.role || 'vendor'; // Add default role
+        session.user.profileComplete = token.profileComplete || false; // Add default value
       }
       return session;
     }
@@ -84,6 +90,19 @@ const handler = NextAuth({
   },
   session: {
     strategy: 'jwt',
+    maxAge: 24 * 60 * 60, // 24 hours
+  },
+  events: {
+    async signIn({ user }) {
+      // Update last login time if needed
+      if (user.email) {
+        await dbConnect();
+        await User.findOneAndUpdate(
+          { email: user.email },
+          { lastLogin: new Date() }
+        );
+      }
+    },
   },
 });
 

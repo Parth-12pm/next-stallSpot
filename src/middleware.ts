@@ -16,15 +16,22 @@ export default withAuth(
       return NextResponse.redirect(new URL('/auth/login', req.url));
     }
 
-    // Allow access to profile completion page
+    // Special handling for profile completion path
     if (path.startsWith('/profile/complete')) {
+      // If profile is already complete, redirect to dashboard
+      if (token.profileComplete) {
+        return NextResponse.redirect(new URL('/dashboard', req.url));
+      }
       return NextResponse.next();
     }
 
-    // Check if profile is incomplete and redirect if necessary
-    // This assumes we're storing profileComplete in the token
+    // Enforce profile completion for all protected routes
     if (!token.profileComplete && !path.startsWith('/profile/complete')) {
-      return NextResponse.redirect(new URL('/profile/complete', req.url));
+      // Store the intended URL to redirect back after completion
+      const callbackUrl = encodeURIComponent(req.url);
+      return NextResponse.redirect(
+        new URL(`/profile/complete?callbackUrl=${callbackUrl}`, req.url)
+      );
     }
 
     // Role-based access control
