@@ -1,137 +1,104 @@
 // models/User.ts
 import mongoose, { Schema, Document } from 'mongoose';
 
+interface AccountDetails {
+  bankName?: string;
+  accountNumber?: string;
+  ifscCode?: string;
+}
+
+interface CompanyDetails {
+  companyName: string;
+  registrationNumber?: string;
+  website?: string;
+}
+
 export interface IUser extends Document {
   email: string;
   password?: string;
   name: string;
   role: 'organizer' | 'vendor';
   profileComplete: boolean;
-  dateOfBirth?: Date;
   googleId?: string;
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
+  
+  // Common fields
   contact?: string;
   address?: string;
-  companyDetails?: {
-    companyName?: string;
-    registrationType?: 'CIN' | 'GSTIN' | 'UDYAM';
-    registrationNumber?: string;
-    website?: string;
-  };
-  accountDetails?: {
-    bankName?: string;
-    accountNumber?: string;
-    ifscCode?: string;
-  };
+  companyDetails?: CompanyDetails;
+  accountDetails?: AccountDetails;
   selfDescription?: string;
+  
+  // Organizer specific fields
   profilePicture?: string;
+  age?: number;
 }
 
 const UserSchema = new Schema({
-  // Required fields for initial signup
-  email: { type: String, required: true, unique: true },
-  password: { type: String },
-  name: { type: String, required: true },
-  role: { type: String, enum: ['organizer', 'vendor'], required: true },
-  profileComplete: { type: Boolean, default: false },
-  
-  // Optional fields
-  dateOfBirth: { type: Date },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  password: {
+    type: String,
+    required: function(this: IUser) {
+      return !this.googleId;
+    }
+  },
+  name: {
+    type: String,
+    required: true,
+  },
+  role: {
+    type: String,
+    enum: ['organizer', 'vendor'],
+    required: true,
+  },
+  profileComplete: {
+    type: Boolean,
+    default: false,
+  },
   googleId: String,
   resetPasswordToken: String,
   resetPasswordExpires: Date,
+  
+  // Common fields
   contact: String,
   address: String,
-  
-  // Company details - required structure varies by role
   companyDetails: {
-    _id: false,
     companyName: String,
-    registrationType: { 
-      type: String,
-      enum: ['CIN', 'GSTIN', 'UDYAM'],
-      validate: {
-        validator: function(this: IUser, value: string) {
-          // Required for organizers or if other company fields are present for vendors
-          if (this.role === 'organizer') return !!value;
-          if (this.companyDetails?.companyName || this.companyDetails?.registrationNumber) return !!value;
-          return true;
-        },
-        message: 'Registration type is required for organizers or when providing company details'
-      }
-    },
-    registrationNumber: {
-      type: String,
-      validate: {
-        validator: function(this: IUser, value: string) {
-          // Required for organizers or if other company fields are present for vendors
-          if (this.role === 'organizer') return !!value;
-          if (this.companyDetails?.companyName || this.companyDetails?.registrationType) return !!value;
-          return true;
-        },
-        message: 'Registration number is required for organizers or when providing company details'
-      }
-    },
-    website: String
+    registrationNumber: String,
+    website: String,
   },
-
   accountDetails: {
-    _id: false,
     bankName: String,
     accountNumber: String,
-    ifscCode: String
+    ifscCode: String,
   },
-
   selfDescription: String,
-  profilePicture: String
+  
+  // Organizer specific fields
+  profilePicture: String,
+  age: Number,
 }, {
   timestamps: true
 });
 
-// Password validation
+// Add validation for selfDescription length using pre-save middleware
 UserSchema.pre('save', function(next) {
-  if (this.isNew && !this.googleId && !this.password) {
-    next(new Error('Password is required for email signup'));
-  }
-  next();
-});
-
-// Profile completion validation
-UserSchema.pre('save', function(next) {
-  if (this.profileComplete) {
-    const requiredFields = ['contact', 'address', 'dateOfBirth', 'accountDetails', 'selfDescription'];
-    
-    // Check common required fields
-    for (const field of requiredFields) {
-      if (!this[field as keyof IUser]) {
-        return next(new Error(`${field} is required for profile completion`));
-      }
-    }
-
-    // Company details validation
-    if (this.role === 'organizer') {
-      if (!this.companyDetails?.companyName || 
-          !this.companyDetails?.registrationType ||
-          !this.companyDetails?.registrationNumber) {
-        return next(new Error('Complete company details are required for organizers'));
-      }
-    } else if (this.companyDetails) {
-      // For vendors, if any company detail is provided, all are required
-      if (this.companyDetails.companyName || 
-          this.companyDetails.registrationType ||
-          this.companyDetails.registrationNumber) {
-        if (!this.companyDetails.companyName || 
-            !this.companyDetails.registrationType ||
-            !this.companyDetails.registrationNumber) {
-          return next(new Error('All company details must be provided if including company information'));
-        }
-      }
+  if (this.selfDescription) {
+    const maxLength = this.role === 'organizer' ? 1000 : 250;
+    if (this.selfDescription.length > maxLength) {
+      const error = new Error(`Self description cannot be longer than ${maxLength} words`);
+      return next(error);
     }
   }
   next();
 });
 
+// Handle the case where model might already be registered
 const User = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
 
 export default User;
