@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { StepProps, REGISTRATION_TYPES } from '@/components/profile/types/profile';
+import { StepProps, REGISTRATION_TYPES, UserRole } from '@/components/profile/types/profile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -76,7 +76,8 @@ export function CompanyDetailsStep({
       return;
     }
 
-    const validationErrors = validateProfileData(data, 'company', session?.user?.role || 'vendor');
+    const userRole = (session?.user?.role as UserRole) || 'vendor';
+    const validationErrors = validateProfileData(data, 'company', userRole);
     if (validationErrors.length > 0) {
       const errorMap: Record<string, string> = {};
       validationErrors.forEach(error => {
