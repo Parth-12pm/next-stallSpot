@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { AuthProvider } from "@/providers/auth-provider";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
-import "./globals.css";
+import "./global.css";
 import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { ThemeProvider } from "@/components/theme-provider";
