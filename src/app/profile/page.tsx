@@ -1,47 +1,24 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { ProfileForm } from '@/components/profile/ProfileForm';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Container } from "@/components/ui/container";
+import { useAuth } from "@/hooks/useAuth";
+import { MultiStepProfileForm } from "@/components/profile/MultiStepProfileForm";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProfilePage() {
-  const { status } = useSession();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/auth/login');
-    }
-  }, [status, router]);
+  const { status } = useAuth();
 
   if (status === 'loading') {
     return (
-      <div className="container mx-auto py-8">
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-8 w-[200px]" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-[400px] w-full" />
-          </CardContent>
-        </Card>
-      </div>
+      <Container className="py-10">
+        <Skeleton className="h-[600px] w-full max-w-4xl mx-auto" />
+      </Container>
     );
   }
 
   return (
-    <div className="container mx-auto py-8">
-      <Card>
-        <CardHeader>
-          <CardTitle>Your Profile</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ProfileForm mode="view" />
-        </CardContent>
-      </Card>
-    </div>
+    <Container className="py-10">
+      <MultiStepProfileForm />
+    </Container>
   );
 }

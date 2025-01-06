@@ -1,14 +1,14 @@
-// app/api/auth/complete-profile/route.ts
+// app/api/profile/complete-profile/route.ts
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import dbConnect from '@/lib/mongodb';
 import User, { IUser } from '@/models/User';
 import { handleImageChange } from '@/lib/image-service';
-import mongoose from 'mongoose';
 
-function checkProfileCompletion(user: mongoose.Document & IUser): boolean {
+// Helper function to check profile completion
+function checkProfileCompletion(user: IUser): boolean {
   // Check common required fields
-  if (!user.name || !user.email || !user.contact || !user.address) {
+  if (!user.name || !user.email || !user.dateOfBirth || !user.contact || !user.address) {
     return false;
   }
 
@@ -30,32 +30,8 @@ function checkProfileCompletion(user: mongoose.Document & IUser): boolean {
   if (!user.selfDescription) {
     return false;
   }
- // Company details check only for organizers
- if (user.role === 'organizer') {
-  if (!user.companyDetails?.companyName || 
-      !user.companyDetails?.registrationType ||
-      !user.companyDetails?.registrationNumber) {
-    return false;
-  }
-}
-
-// For vendors: if company details are provided, check they are complete
-if (user.role === 'vendor' && user.companyDetails) {
-  if (user.companyDetails.registrationNumber || user.companyDetails.registrationType) {
-    if (!user.companyDetails.companyName || 
-        !user.companyDetails.registrationType ||
-        !user.companyDetails.registrationNumber) {
-      return false;
-    }
-  }
-}
 
   return true;
-}
-
-interface MongooseError extends Error {
-  errors?: Record<string, { message: string }>;
-  code?: number;
 }
 
 export async function PUT(req: Request) {
@@ -89,24 +65,21 @@ export async function PUT(req: Request) {
 
     // Update common fields
     const allowedFields = [
+      'name',
+      'dateOfBirth',
       'contact', 
       'address', 
       'companyDetails', 
       'accountDetails', 
       'selfDescription', 
       'profilePicture'
-    ] as const;
+    ];
     
     allowedFields.forEach(field => {
       if (data[field] !== undefined) {
         user[field] = data[field];
       }
     });
-
-    // Process dateOfBirth separately
-    if (data.dateOfBirth) {
-      user.dateOfBirth = new Date(data.dateOfBirth);
-    }
 
     // Check if all required fields are completed
     const isProfileComplete = checkProfileCompletion(user);
@@ -116,18 +89,19 @@ export async function PUT(req: Request) {
 
     return NextResponse.json({
       message: 'Profile updated successfully',
-      profileComplete: isProfileComplete
+      profileComplete: isProfileComplete,
+      user: {
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        profileComplete: user.profileComplete,
+      }
     });
   } catch (error) {
-    const mongoError = error as MongooseError;
-    console.error('Profile completion error:', mongoError);
-    
+    console.error('Profile completion error:', error);
     return NextResponse.json(
-      { 
-        message: mongoError.message || 'Internal server error',
-        errors: mongoError.errors
-      },
-      { status: mongoError.code || 500 }
+      { message: 'Internal server error' },
+      { status: 500 }
     );
   }
 }
