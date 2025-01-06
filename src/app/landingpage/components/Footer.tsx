@@ -1,39 +1,104 @@
 import React from 'react';
+import { Layout, Users, Map } from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
-export function Footer() {
+interface FeatureCardProps {
+  icon: React.ElementType;
+  title: string;
+  description: string;
+  features: string[];
+}
+
+const FeatureCard: React.FC<FeatureCardProps> = ({ 
+  icon: Icon, 
+  title, 
+  description, 
+  features 
+}) => {
   return (
-    <footer className="bg-gray-900 text-white py-8 border-t border-gray-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div>
-            <h3 className="text-lg font-semibold mb-4">About StallSpot</h3>
-            <p className="text-gray-400">Your premium movie ticket booking destination</p>
+    <div className="group">
+      <Card className="h-full border-border bg-background transition-all duration-300 hover:border-primary/20">
+        <CardHeader className="space-y-4">
+          <div className="flex items-center gap-4">
+            <div className="p-2">
+              <Icon className="w-6 h-6 text-foreground group-hover:text-foreground/90" />
+            </div>
+            <CardTitle className="text-lg font-medium">
+              {title}
+            </CardTitle>
           </div>
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
-            <ul className="space-y-2 text-gray-400">
-              <li className="hover:text-blue-500 cursor-pointer">Now Live</li>
-              <li className="hover:text-blue-500 cursor-pointer">Coming Soon</li>
-           <li className="hover:text-blue-500 cursor-pointer"></li>
-            </ul>
+          <p className="text-sm text-muted-foreground">
+            {description}
+          </p>
+        </CardHeader>
+        <CardContent>
+          <ul className="space-y-3">
+            {features.map((feature, index) => (
+              <li key={index} className="flex items-center gap-2 text-sm text-muted-foreground group-hover:text-foreground/80 transition-colors">
+                <div className="h-1 w-1 rounded-full bg-muted-foreground group-hover:bg-foreground/80" />
+                {feature}
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default function Footer() {
+  return (
+    <section className="py-24 bg-background">
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="space-y-12">
+          <div className="max-w-3xl mx-auto text-center space-y-4">
+            <h2 className="text-3xl font-medium text-foreground">
+              Why Choose StallSpot?
+            </h2>
+            <p className="text-base text-muted-foreground">
+              Empowering exhibitions with innovative solutions
+            </p>
           </div>
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Help</h3>
-            <ul className="space-y-2 text-gray-400">
-              <li className="hover:text-blue-500 cursor-pointer">About Us</li>
-              <li className="hover:text-blue-500 cursor-pointer">Contact Us</li>
-              <li className="hover:text-blue-500 cursor-pointer">Terms of Service</li>
-            </ul>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <FeatureCard
+              icon={Layout}
+              title="For Organizers"
+              description="Powerful tools to manage your exhibitions"
+              features={[
+                "Interactive floor plan editor",
+                "Vendor management system",
+                "Real-time analytics"
+              ]}
+            />
+            <FeatureCard
+              icon={Users}
+              title="For Vendors"
+              description="Everything you need to succeed"
+              features={[
+                "Booth customization",
+                "Lead capture tools",
+                "Performance metrics"
+              ]}
+            />
+            <FeatureCard
+              icon={Map}
+              title="For Visitors"
+              description="Enhanced exhibition experience"
+              features={[
+                "Interactive maps",
+                "Event schedules", 
+                "Networking opportunities"
+              ]}
+            />
           </div>
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Connect With Us</h3>
-            <p className="text-gray-400">Follow us on social media for updates and offers</p>
-          </div>
-        </div>
-        <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-          <p>&copy; 2025 StallSpot. All rights reserved.</p>
         </div>
       </div>
-    </footer>
+    </section>
   );
 }
