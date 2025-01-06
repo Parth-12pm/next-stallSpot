@@ -1,37 +1,17 @@
-// app/api/profile/complete-profile/route.ts
+// app/api/auth/complete-profile/route.ts
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import dbConnect from '@/lib/mongodb';
-import User, { IUser } from '@/models/User';
-import { handleImageChange } from '@/lib/image-service';
+import User from '@/models/User';
 
-// Helper function to check profile completion
-function checkProfileCompletion(user: IUser): boolean {
-  // Check common required fields
-  if (!user.name || !user.email || !user.dateOfBirth || !user.contact || !user.address) {
-    return false;
-  }
-
-  // Check company details
-  if (!user.companyDetails?.companyName || 
-      !user.companyDetails?.registrationType ||
-      !user.companyDetails?.registrationNumber) {
-    return false;
-  }
-
-  // Check bank details
-  if (!user.accountDetails?.bankName ||
-      !user.accountDetails?.accountNumber ||
-      !user.accountDetails?.ifscCode) {
-    return false;
-  }
-
-  // Check self description
-  if (!user.selfDescription) {
-    return false;
-  }
-
-  return true;
+interface MongooseValidationError extends Error {
+  errors?: {
+    [key: string]: {
+      message: string;
+      path: string;
+    };
+  };
+  name: string;
 }
 
 export async function PUT(req: Request) {
@@ -55,24 +35,20 @@ export async function PUT(req: Request) {
       );
     }
 
-    // Handle profile picture change
-    if (data.profilePicture !== user.profilePicture) {
-      data.profilePicture = await handleImageChange(
-        data.profilePicture,
-        user.profilePicture
-      );
+    // For vendors, if no company details are provided, set to undefined
+    if (user.role === 'vendor' && !data.companyDetails?.companyName) {
+      data.companyDetails = undefined;
     }
 
-    // Update common fields
+    // Update user fields
     const allowedFields = [
-      'name',
-      'dateOfBirth',
       'contact', 
       'address', 
       'companyDetails', 
       'accountDetails', 
       'selfDescription', 
-      'profilePicture'
+      'profilePicture',
+      'dateOfBirth'
     ];
     
     allowedFields.forEach(field => {
@@ -81,26 +57,39 @@ export async function PUT(req: Request) {
       }
     });
 
-    // Check if all required fields are completed
-    const isProfileComplete = checkProfileCompletion(user);
-    user.profileComplete = isProfileComplete;
+    // Mark profile as complete
+    user.profileComplete = true;
 
     await user.save();
 
     return NextResponse.json({
       message: 'Profile updated successfully',
-      profileComplete: isProfileComplete,
-      user: {
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        profileComplete: user.profileComplete,
-      }
+      profileComplete: true
     });
+
   } catch (error) {
     console.error('Profile completion error:', error);
+    
+    // Handle Mongoose validation errors
+    if ((error as MongooseValidationError).name === 'ValidationError') {
+      const validationError = error as MongooseValidationError;
+      const errors = Object.values(validationError.errors || {}).map(err => ({
+        field: err.path,
+        message: err.message
+      }));
+
+      return NextResponse.json(
+        { 
+          message: 'Validation failed',
+          errors 
+        },
+        { status: 400 }
+      );
+    }
+
+    // Handle other errors
     return NextResponse.json(
-      { message: 'Internal server error' },
+      { message: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     );
   }

@@ -47,13 +47,22 @@ const UserSchema = new Schema({
   // Company details - required structure varies by role
   companyDetails: {
     _id: false,
-    companyName: String,
+    companyName: {
+      type: String,
+      validate: {
+        validator: function(this: IUser, value: string | undefined) {
+          if (this.role === 'organizer') return !!value;
+          if (this.companyDetails?.registrationNumber || this.companyDetails?.registrationType) return !!value;
+          return true;
+        },
+        message: 'Company name is required for organizers or when providing company details'
+      }
+    },
     registrationType: { 
       type: String,
       enum: ['CIN', 'GSTIN', 'UDYAM'],
       validate: {
-        validator: function(this: IUser, value: string) {
-          // Required for organizers or if other company fields are present for vendors
+        validator: function(this: IUser, value: string | undefined) {
           if (this.role === 'organizer') return !!value;
           if (this.companyDetails?.companyName || this.companyDetails?.registrationNumber) return !!value;
           return true;
@@ -64,8 +73,7 @@ const UserSchema = new Schema({
     registrationNumber: {
       type: String,
       validate: {
-        validator: function(this: IUser, value: string) {
-          // Required for organizers or if other company fields are present for vendors
+        validator: function(this: IUser, value: string | undefined) {
           if (this.role === 'organizer') return !!value;
           if (this.companyDetails?.companyName || this.companyDetails?.registrationType) return !!value;
           return true;
@@ -117,15 +125,21 @@ UserSchema.pre('save', function(next) {
         return next(new Error('Complete company details are required for organizers'));
       }
     } else if (this.companyDetails) {
-      // For vendors, if any company detail is provided, all are required
-      if (this.companyDetails.companyName || 
-          this.companyDetails.registrationType ||
-          this.companyDetails.registrationNumber) {
-        if (!this.companyDetails.companyName || 
-            !this.companyDetails.registrationType ||
-            !this.companyDetails.registrationNumber) {
-          return next(new Error('All company details must be provided if including company information'));
-        }
+      // For vendors, validate only if any company detail is provided
+      const hasAnyDetail = !!(
+        this.companyDetails.companyName ||
+        this.companyDetails.registrationType ||
+        this.companyDetails.registrationNumber
+      );
+
+      const hasAllDetails = !!(
+        this.companyDetails.companyName &&
+        this.companyDetails.registrationType &&
+        this.companyDetails.registrationNumber
+      );
+
+      if (hasAnyDetail && !hasAllDetails) {
+        return next(new Error('All company details must be provided if including any company information'));
       }
     }
   }

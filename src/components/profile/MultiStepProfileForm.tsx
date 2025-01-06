@@ -116,6 +116,7 @@ export function MultiStepProfileForm({ isCompletion = false }: MultiStepProfileF
   const handleSubmit = async () => {
     setLoading(true);
     try {
+      // First, submit to complete-profile endpoint
       const response = await fetch('/api/auth/complete-profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -127,9 +128,21 @@ export function MultiStepProfileForm({ isCompletion = false }: MultiStepProfileF
 
       if (!response.ok) {
         const data = await response.json();
+        
+        // Handle validation errors
+        if (response.status === 400 && data.errors) {
+          const errorMessage = data.errors
+            .map((err: { field: string; message: string }) => err.message)
+            .join('\n');
+          throw new Error(errorMessage);
+        }
+        
         throw new Error(data.message || 'Failed to update profile');
       }
 
+      await response.json();
+
+      // Clear local storage data
       clearFormData();
       clearDraft();
       
@@ -138,8 +151,24 @@ export function MultiStepProfileForm({ isCompletion = false }: MultiStepProfileF
         description: "Profile updated successfully",
       });
 
+      // Update session to reflect profile completion
+      const event = new Event('profileComplete');
+      window.dispatchEvent(event);
+
+      // Redirect based on context
       if (isCompletion) {
-        router.push('/dashboard');
+        // If this was the initial profile completion flow
+        const callbackUrl = new URLSearchParams(window.location.search).get('callbackUrl');
+        if (callbackUrl) {
+          // Redirect to the original intended URL if it exists
+          router.push(decodeURIComponent(callbackUrl));
+        } else {
+          // Default to dashboard
+          router.push('/dashboard');
+        }
+      } else {
+        // If this was a profile update from the profile page
+        router.push('/profile');
       }
       
       router.refresh();
