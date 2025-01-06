@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { Building2, Users, Globe2, UserCheck, Lightbulb, Users2, Award, Shield } from 'lucide-react';
 import { Hero } from '@/components/HeroAbout';
 import { StatCard } from '@/components/StatCard';
@@ -6,9 +7,13 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import Image from 'next/image';
 
+=======
+import React from 'react'
+>>>>>>> 259213fa22925815c2545675c88884d612d83bb7
 
-export default function AboutPage() {
+function about() {
   return (
+<<<<<<< HEAD
     <div className="min-h-screen bg-background">
       <Hero 
         title="Revolutionizing Exhibition Management"
@@ -111,6 +116,12 @@ export default function AboutPage() {
           </Link>
         </div>
       </div>
+=======
+    <div>
+      About
+>>>>>>> 259213fa22925815c2545675c88884d612d83bb7
     </div>
-  );
+  )
 }
+
+export default about
