@@ -3,7 +3,7 @@ import { Hero } from './components/Hero';
 import { Categories } from './components/Categories';
 import { ExhibitionList } from './components/ExhibitionList';
 import Features from './components/Features';
-import { Footer } from './components/Footer';
+
 import { ThemeProvider } from "@/components/theme-provider";
 
 function App() {
@@ -15,7 +15,6 @@ function App() {
         <Categories />
         <ExhibitionList />
         <Features />
-        <Footer />
         </ThemeProvider>
       </div>
     </div>
