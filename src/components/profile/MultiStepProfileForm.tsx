@@ -14,7 +14,7 @@ import { initialFormData } from '@/components/profile/utils/profile';
 import { useFormPersistence } from '@/hooks/useFormPersistence';
 import { useAutosave } from '@/hooks/useAutosave';
 import { AutosaveIndicator } from './AutosaveIndicator';
-import { FormStep } from '@/components/profile/types/profile';
+import { ProfileFormData, FormStep, CompanyDetails } from '@/components/profile/types/profile';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,9 +28,17 @@ import {
 
 interface MultiStepProfileFormProps {
   isCompletion?: boolean;
+  initialData?: ProfileFormData;
+  onComplete?: () => void;
 }
 
-export function MultiStepProfileForm({ isCompletion = false }: MultiStepProfileFormProps) {
+
+
+export function MultiStepProfileForm({ 
+  isCompletion = false, 
+  initialData,
+  onComplete 
+}: MultiStepProfileFormProps) {
   const router = useRouter();
   const { data: session } = useSession();
   const { toast } = useToast();
@@ -47,7 +55,7 @@ export function MultiStepProfileForm({ isCompletion = false }: MultiStepProfileF
     handleNext,
     handlePrev,
     clearFormData,
-  } = useFormPersistence(isCompletion, initialFormData);
+  } = useFormPersistence(isCompletion, initialData || initialFormData);
 
   const {
     lastSaved,
@@ -55,32 +63,6 @@ export function MultiStepProfileForm({ isCompletion = false }: MultiStepProfileF
     hasChanges,
     clearDraft
   } = useAutosave(formData);
-
-  // Check if company step should be marked as complete for vendors
-  useEffect(() => {
-    if (!isOrganizer && currentStep === 'bank' && !completedSteps.includes('company')) {
-      // For vendors, company step is considered complete if either:
-      // 1. No company details are provided
-      // 2. All required company details are provided
-      const hasAnyCompanyDetails = !!(
-        formData.companyDetails?.companyName ||
-        formData.companyDetails?.registrationNumber ||
-        formData.companyDetails?.registrationType
-      );
-
-      const hasAllCompanyDetails = !!(
-        formData.companyDetails?.companyName &&
-        formData.companyDetails?.registrationNumber &&
-        formData.companyDetails?.registrationType
-      );
-
-      if (!hasAnyCompanyDetails || hasAllCompanyDetails) {
-        // Use handleStepUpdate to update the form state including completedSteps
-        const newCompletedSteps = [...completedSteps, 'company'] as FormStep[];
-        handleStepUpdate({ _completedSteps: newCompletedSteps });
-      }
-    }
-  }, [currentStep, completedSteps, formData.companyDetails, isOrganizer, handleStepUpdate]);
 
   // Handle navigation/refresh attempts
   useEffect(() => {
@@ -113,36 +95,60 @@ export function MultiStepProfileForm({ isCompletion = false }: MultiStepProfileF
     };
   }, [isCompletion, loading]);
 
+  // Check if company step should be marked as complete for vendors
+  useEffect(() => {
+    if (!isOrganizer && currentStep === 'bank' && !completedSteps.includes('company')) {
+      const hasAnyCompanyDetails = !!(
+        formData.companyDetails?.companyName ||
+        formData.companyDetails?.registrationNumber ||
+        formData.companyDetails?.registrationType
+      );
+
+      const hasAllCompanyDetails = !!(
+        formData.companyDetails?.companyName &&
+        formData.companyDetails?.registrationNumber &&
+        formData.companyDetails?.registrationType
+      );
+
+      if (!hasAnyCompanyDetails || hasAllCompanyDetails) {
+        const newCompletedSteps = [...completedSteps, 'company'] as FormStep[];
+        handleStepUpdate({ _completedSteps: newCompletedSteps });
+      }
+    }
+  }, [currentStep, completedSteps, formData.companyDetails, isOrganizer, handleStepUpdate]);
+
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      // First, submit to complete-profile endpoint
+  
+      const payload = {
+        ...formData,
+        dateOfBirth: new Date(formData.dateOfBirth).toISOString(),
+      };
+  
+      if (session?.user?.role === 'vendor') {
+        // Only handle incomplete company details
+        const { companyName, registrationNumber, registrationType } = formData.companyDetails || {};
+        const hasIncompleteDetails = !companyName || !registrationNumber || !registrationType;
+        
+        if (hasIncompleteDetails) {
+          payload.companyDetails = {} as CompanyDetails;
+        }
+      }
+  
+  
       const response = await fetch('/api/auth/complete-profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          dateOfBirth: new Date(formData.dateOfBirth).toISOString(),
-        }),
+        body: JSON.stringify(payload),
       });
-
+  
       if (!response.ok) {
-        const data = await response.json();
-        
-        // Handle validation errors
-        if (response.status === 400 && data.errors) {
-          const errorMessage = data.errors
-            .map((err: { field: string; message: string }) => err.message)
-            .join('\n');
-          throw new Error(errorMessage);
-        }
-        
-        throw new Error(data.message || 'Failed to update profile');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update profile');
       }
-
-      await response.json();
-
-      // Clear local storage data
+  
+      // Clear form data and draft
       clearFormData();
       clearDraft();
       
@@ -150,28 +156,17 @@ export function MultiStepProfileForm({ isCompletion = false }: MultiStepProfileF
         title: "Success",
         description: "Profile updated successfully",
       });
-
-      // Update session to reflect profile completion
+    
+      // Update session with new profile status
       const event = new Event('profileComplete');
       window.dispatchEvent(event);
-
-      // Redirect based on context
-      if (isCompletion) {
-        // If this was the initial profile completion flow
-        const callbackUrl = new URLSearchParams(window.location.search).get('callbackUrl');
-        if (callbackUrl) {
-          // Redirect to the original intended URL if it exists
-          router.push(decodeURIComponent(callbackUrl));
-        } else {
-          // Default to dashboard
-          router.push('/dashboard');
-        }
+    
+      // Ensure redirect happens after state updates
+      if (onComplete) {
+        onComplete();
       } else {
-        // If this was a profile update from the profile page
         router.push('/profile');
       }
-      
-      router.refresh();
     } catch (error) {
       toast({
         title: "Error",
@@ -181,10 +176,9 @@ export function MultiStepProfileForm({ isCompletion = false }: MultiStepProfileF
     } finally {
       setLoading(false);
     }
-  };
 
-  const currentStepComponent = () => {
-    const isLastStep = currentStep === 'additional';
+
+  };  const currentStepComponent = () => {    const isLastStep = currentStep === 'additional';
     const stepProps = {
       data: formData,
       onUpdate: handleStepUpdate,

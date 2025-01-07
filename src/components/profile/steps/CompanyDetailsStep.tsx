@@ -46,14 +46,9 @@ export function CompanyDetailsStep({
   const handleToggleCompanyDetails = (checked: boolean) => {
     setIncludeCompanyDetails(checked);
     if (!checked) {
-      // Clear company details when toggled off
+      // Set company details to undefined when toggled off
       onUpdate({
-        companyDetails: {
-          companyName: '',
-          registrationType: 'GSTIN',
-          registrationNumber: '',
-          website: '',
-        }
+        companyDetails: undefined
       });
       setErrors({});
     }

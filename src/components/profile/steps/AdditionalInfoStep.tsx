@@ -30,10 +30,9 @@ export function AdditionalInfoStep({
   const maxLength = isOrganizer ? 1000 : 250;
 
   const handleChange = (value: string) => {
-    if (value.length <= maxLength) {
-      setErrors({});
-      onUpdate({ selfDescription: value });
-    }
+    const trimmedValue = value.slice(0, maxLength);
+    setErrors({});
+    onUpdate({ selfDescription: trimmedValue });
   };
 
   const validateAndSubmit = async () => {
