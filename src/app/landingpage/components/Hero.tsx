@@ -6,9 +6,9 @@ import { Card } from "@/components/ui/card";
 
 export function Hero() {
   return (
-    <div className="relative bg-background">
+    <div className="relative bg-background p-20">
       <img
-        src="/api/placeholder/1920/600"
+        src="@/src/assets/bgexhi.jpg"
         alt="Exhibition Hall"
         className="w-full h-[600px] object-cover opacity-30"
       />
