@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import Image from 'next/image';
 import { Square, CheckSquare, IndianRupee } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -42,7 +43,6 @@ export default function VendorStallLayout() {
       <div className="min-h-screen bg-background p-6">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-3xl font-bold mb-8">Exhibition Layout</h1>
-          
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Left Section */}
             <div className="space-y-6">
@@ -50,10 +50,11 @@ export default function VendorStallLayout() {
               <Card className="p-4">
                 <h2 className="text-xl font-semibold mb-4">Layout View</h2>
                 <div className="aspect-square relative rounded-lg overflow-hidden">
-                  <img 
+                  <Image 
                     src={layoutData.image} 
                     alt="Exhibition Layout"
-                    className="w-full h-full object-cover"
+                    layout="fill"
+                    objectFit="cover"
                   />
                 </div>
               </Card>
@@ -144,3 +145,4 @@ export default function VendorStallLayout() {
     </ThemeProvider>
   );
 }
+
