@@ -77,18 +77,14 @@ export default function EventDetails() {
                   <span>{eventData.totalStalls} Stalls Available</span>
                 </div>
               </div>
-              
               <Separator />
-              
               <div>
                 <h2 className="text-xl font-semibold mb-3">About Event</h2>
                 <p className="text-muted-foreground leading-relaxed">
                   {eventData.description}
                 </p>
               </div>
-              
               <Separator />
-              
               <div>
                 <h2 className="text-xl font-semibold mb-3">Facilities</h2>
                 <div className="grid grid-cols-2 gap-4">
@@ -101,18 +97,6 @@ export default function EventDetails() {
                       {facility}
                     </div>
                   ))}
-
-
-
-
-
-
-
-
-
-
-
-
                 </div>
               </div>
               <div className="left-0 right-0 p-4 bg-background/80 backdrop-blur-sm border-t">
@@ -129,9 +113,7 @@ export default function EventDetails() {
             </div>
           </div>
         </div>
-
         {/* Fixed Book A Stall Button */}
-
       </div>
     </ThemeProvider>
   );

@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { Search, Calendar, MapPin } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -7,10 +8,12 @@ import { Card } from "@/components/ui/card";
 export function Hero() {
   return (
     <div className="relative bg-background p-20">
-      <img
-        src="@/src/assets/bgexhi.jpg"
+      <Image
+        src="/bgexhi.jpg"
         alt="Exhibition Hall"
-        className="w-full h-[600px] object-cover opacity-30"
+        fill
+        className="object-cover opacity-30"
+        priority
       />
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="text-center text-foreground max-w-4xl px-4">
