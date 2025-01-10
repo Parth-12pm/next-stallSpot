@@ -1,14 +1,11 @@
-import { Hero } from '@/components/HeroAbout';
-import { ContactForm } from '@/components/ContactForm';
+import React from 'react'
 
-export default function ContactPage() {
+function contact() {
   return (
-    <div className="min-h-screen bg-background ">
-      <Hero 
-        title="Contact Us"
-        subtitle="We'd love to hear from you. Let's start a conversation."
-      />
-      <ContactForm />
+    <div>
+      Contact
     </div>
-  );
+  )
 }
+
+export default contact

@@ -14,7 +14,7 @@ import { initialFormData } from '@/components/profile/utils/profile';
 import { useFormPersistence } from '@/hooks/useFormPersistence';
 import { useAutosave } from '@/hooks/useAutosave';
 import { AutosaveIndicator } from './AutosaveIndicator';
-import { FormStep } from '@/components/profile/types/profile';
+import { ProfileFormData, FormStep, CompanyDetails } from '@/components/profile/types/profile';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,9 +28,17 @@ import {
 
 interface MultiStepProfileFormProps {
   isCompletion?: boolean;
+  initialData?: ProfileFormData;
+  onComplete?: () => void;
 }
 
-export function MultiStepProfileForm({ isCompletion = false }: MultiStepProfileFormProps) {
+
+
+export function MultiStepProfileForm({ 
+  isCompletion = false, 
+  initialData,
+  onComplete 
+}: MultiStepProfileFormProps) {
   const router = useRouter();
   const { data: session } = useSession();
   const { toast } = useToast();
@@ -47,7 +55,7 @@ export function MultiStepProfileForm({ isCompletion = false }: MultiStepProfileF
     handleNext,
     handlePrev,
     clearFormData,
-  } = useFormPersistence(isCompletion, initialFormData);
+  } = useFormPersistence(isCompletion, initialData || initialFormData);
 
   const {
     lastSaved,
@@ -55,32 +63,6 @@ export function MultiStepProfileForm({ isCompletion = false }: MultiStepProfileF
     hasChanges,
     clearDraft
   } = useAutosave(formData);
-
-  // Check if company step should be marked as complete for vendors
-  useEffect(() => {
-    if (!isOrganizer && currentStep === 'bank' && !completedSteps.includes('company')) {
-      // For vendors, company step is considered complete if either:
-      // 1. No company details are provided
-      // 2. All required company details are provided
-      const hasAnyCompanyDetails = !!(
-        formData.companyDetails?.companyName ||
-        formData.companyDetails?.registrationNumber ||
-        formData.companyDetails?.registrationType
-      );
-
-      const hasAllCompanyDetails = !!(
-        formData.companyDetails?.companyName &&
-        formData.companyDetails?.registrationNumber &&
-        formData.companyDetails?.registrationType
-      );
-
-      if (!hasAnyCompanyDetails || hasAllCompanyDetails) {
-        // Use handleStepUpdate to update the form state including completedSteps
-        const newCompletedSteps = [...completedSteps, 'company'] as FormStep[];
-        handleStepUpdate({ _completedSteps: newCompletedSteps });
-      }
-    }
-  }, [currentStep, completedSteps, formData.companyDetails, isOrganizer, handleStepUpdate]);
 
   // Handle navigation/refresh attempts
   useEffect(() => {
@@ -113,23 +95,60 @@ export function MultiStepProfileForm({ isCompletion = false }: MultiStepProfileF
     };
   }, [isCompletion, loading]);
 
+  // Check if company step should be marked as complete for vendors
+  useEffect(() => {
+    if (!isOrganizer && currentStep === 'bank' && !completedSteps.includes('company')) {
+      const hasAnyCompanyDetails = !!(
+        formData.companyDetails?.companyName ||
+        formData.companyDetails?.registrationNumber ||
+        formData.companyDetails?.registrationType
+      );
+
+      const hasAllCompanyDetails = !!(
+        formData.companyDetails?.companyName &&
+        formData.companyDetails?.registrationNumber &&
+        formData.companyDetails?.registrationType
+      );
+
+      if (!hasAnyCompanyDetails || hasAllCompanyDetails) {
+        const newCompletedSteps = [...completedSteps, 'company'] as FormStep[];
+        handleStepUpdate({ _completedSteps: newCompletedSteps });
+      }
+    }
+  }, [currentStep, completedSteps, formData.companyDetails, isOrganizer, handleStepUpdate]);
+
   const handleSubmit = async () => {
     setLoading(true);
     try {
+  
+      const payload = {
+        ...formData,
+        dateOfBirth: new Date(formData.dateOfBirth).toISOString(),
+      };
+  
+      if (session?.user?.role === 'vendor') {
+        // Only handle incomplete company details
+        const { companyName, registrationNumber, registrationType } = formData.companyDetails || {};
+        const hasIncompleteDetails = !companyName || !registrationNumber || !registrationType;
+        
+        if (hasIncompleteDetails) {
+          payload.companyDetails = {} as CompanyDetails;
+        }
+      }
+  
+  
       const response = await fetch('/api/auth/complete-profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          dateOfBirth: new Date(formData.dateOfBirth).toISOString(),
-        }),
+        body: JSON.stringify(payload),
       });
-
+  
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Failed to update profile');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update profile');
       }
-
+  
+      // Clear form data and draft
       clearFormData();
       clearDraft();
       
@@ -137,12 +156,17 @@ export function MultiStepProfileForm({ isCompletion = false }: MultiStepProfileF
         title: "Success",
         description: "Profile updated successfully",
       });
-
-      if (isCompletion) {
-        router.push('/dashboard');
+    
+      // Update session with new profile status
+      const event = new Event('profileComplete');
+      window.dispatchEvent(event);
+    
+      // Ensure redirect happens after state updates
+      if (onComplete) {
+        onComplete();
+      } else {
+        router.push('/profile');
       }
-      
-      router.refresh();
     } catch (error) {
       toast({
         title: "Error",
@@ -152,10 +176,9 @@ export function MultiStepProfileForm({ isCompletion = false }: MultiStepProfileF
     } finally {
       setLoading(false);
     }
-  };
 
-  const currentStepComponent = () => {
-    const isLastStep = currentStep === 'additional';
+
+  };  const currentStepComponent = () => {    const isLastStep = currentStep === 'additional';
     const stepProps = {
       data: formData,
       onUpdate: handleStepUpdate,

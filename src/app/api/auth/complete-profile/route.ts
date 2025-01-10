@@ -3,59 +3,59 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import dbConnect from '@/lib/mongodb';
 import User, { IUser } from '@/models/User';
-import { handleImageChange } from '@/lib/image-service';
 import mongoose from 'mongoose';
+import { handleImageChange } from '@/lib/image-service';
 
-function checkProfileCompletion(user: mongoose.Document & IUser): boolean {
-  // Check common required fields
-  if (!user.name || !user.email || !user.contact || !user.address) {
-    return false;
-  }
+type CompanyDetails = NonNullable<IUser['companyDetails']>;
 
-  // Check company details
-  if (!user.companyDetails?.companyName || 
-      !user.companyDetails?.registrationType ||
-      !user.companyDetails?.registrationNumber) {
-    return false;
-  }
-
-  // Check bank details
-  if (!user.accountDetails?.bankName ||
-      !user.accountDetails?.accountNumber ||
-      !user.accountDetails?.ifscCode) {
-    return false;
-  }
-
-  // Check self description
-  if (!user.selfDescription) {
-    return false;
-  }
- // Company details check only for organizers
- if (user.role === 'organizer') {
-  if (!user.companyDetails?.companyName || 
-      !user.companyDetails?.registrationType ||
-      !user.companyDetails?.registrationNumber) {
-    return false;
-  }
+interface ValidationData {
+  contact?: string;
+  address?: string;
+  dateOfBirth?: string | Date;
+  companyDetails?: CompanyDetails;
+  accountDetails?: {
+    bankName?: string;
+    accountNumber?: string;
+    ifscCode?: string;
+  };
+  selfDescription?: string;
+  profilePicture?: string;
 }
 
-// For vendors: if company details are provided, check they are complete
-if (user.role === 'vendor' && user.companyDetails) {
-  if (user.companyDetails.registrationNumber || user.companyDetails.registrationType) {
-    if (!user.companyDetails.companyName || 
-        !user.companyDetails.registrationType ||
-        !user.companyDetails.registrationNumber) {
-      return false;
+function validateProfileData(data: ValidationData, role: string): string[] {
+  const errors: string[] = [];
+
+  // Validate common required fields
+  if (!data.contact) errors.push('Contact is required');
+  if (!data.address) errors.push('Address is required');
+  if (!data.dateOfBirth) errors.push('Date of birth is required');
+  if (!data.selfDescription) errors.push('Self description is required');
+
+  // Validate account details
+  if (!data.accountDetails?.bankName) errors.push('Bank name is required');
+  if (!data.accountDetails?.accountNumber) errors.push('Account number is required');
+  if (!data.accountDetails?.ifscCode) errors.push('IFSC code is required');
+
+  // Company details validation
+  if (role === 'organizer') {
+    if (!data.companyDetails?.companyName) errors.push('Company name is required for organizers');
+    if (!data.companyDetails?.registrationType) errors.push('Registration type is required for organizers');
+    if (!data.companyDetails?.registrationNumber) errors.push('Registration number is required for organizers');
+  } else if (role === 'vendor' && data.companyDetails) {
+    const hasAnyDetail = !!(
+      data.companyDetails.companyName ||
+      data.companyDetails.registrationType ||
+      data.companyDetails.registrationNumber
+    );
+
+    if (hasAnyDetail) {
+      if (!data.companyDetails.companyName) errors.push('Company name is required when providing company details');
+      if (!data.companyDetails.registrationType) errors.push('Registration type is required when providing company details');
+      if (!data.companyDetails.registrationNumber) errors.push('Registration number is required when providing company details');
     }
   }
-}
 
-  return true;
-}
-
-interface MongooseError extends Error {
-  errors?: Record<string, { message: string }>;
-  code?: number;
+  return errors;
 }
 
 export async function PUT(req: Request) {
@@ -79,6 +79,18 @@ export async function PUT(req: Request) {
       );
     }
 
+    // Pre-validate the data
+    const validationErrors = validateProfileData(data, user.role);
+    if (validationErrors.length > 0) {
+      return NextResponse.json(
+        {
+          message: 'Validation failed',
+          errors: validationErrors.map(message => ({ field: '', message }))
+        },
+        { status: 400 }
+      );
+    }
+
     // Handle profile picture change
     if (data.profilePicture !== user.profilePicture) {
       data.profilePicture = await handleImageChange(
@@ -87,47 +99,75 @@ export async function PUT(req: Request) {
       );
     }
 
-    // Update common fields
+    // Handle company details for vendors
+    if (user.role === 'vendor' && !data.companyDetails?.companyName) {
+      data.companyDetails = undefined;
+    }
+
+    // Update fields
     const allowedFields = [
-      'contact', 
-      'address', 
-      'companyDetails', 
-      'accountDetails', 
-      'selfDescription', 
-      'profilePicture'
+      'contact',
+      'address',
+      'companyDetails',
+      'accountDetails',
+      'selfDescription',
+      'profilePicture',
+      'dateOfBirth'
     ] as const;
-    
+
     allowedFields.forEach(field => {
       if (data[field] !== undefined) {
-        user[field] = data[field];
+        if (field === 'dateOfBirth') {
+          user[field] = new Date(data[field]);
+        } else {
+          user[field] = data[field];
+        }
       }
     });
 
-    // Process dateOfBirth separately
-    if (data.dateOfBirth) {
-      user.dateOfBirth = new Date(data.dateOfBirth);
-    }
-
-    // Check if all required fields are completed
-    const isProfileComplete = checkProfileCompletion(user);
-    user.profileComplete = isProfileComplete;
-
+    // Mark profile as complete and save
+    user.profileComplete = true;
     await user.save();
+
+    // Create updated session data
+    const updatedSession = {
+      ...session,
+      user: {
+        ...session.user,
+        profileComplete: true
+      }
+    };
 
     return NextResponse.json({
       message: 'Profile updated successfully',
-      profileComplete: isProfileComplete
+      profileComplete: true,
+      session: updatedSession
     });
+
   } catch (error) {
-    const mongoError = error as MongooseError;
-    console.error('Profile completion error:', mongoError);
+    console.error('Profile completion error:', error);
     
+    if (error instanceof mongoose.Error.ValidationError) {
+      const errors = Object.values(error.errors).map(err => ({
+        field: err.path,
+        message: err.message
+      }));
+
+      return NextResponse.json(
+        {
+          message: 'Validation failed',
+          errors
+        },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
       { 
-        message: mongoError.message || 'Internal server error',
-        errors: mongoError.errors
+        message: error instanceof Error ? error.message : 'Internal server error',
+        errors: [{ field: '', message: error instanceof Error ? error.message : 'Internal server error' }]
       },
-      { status: mongoError.code || 500 }
+      { status: 500 }
     );
   }
 }

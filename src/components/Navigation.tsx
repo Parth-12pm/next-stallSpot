@@ -1,10 +1,9 @@
-// components/Navigation.tsx
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useSession,signOut } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   NavigationMenu,
@@ -28,9 +27,9 @@ import {
 import { ModeToggle } from "@/components/mode-toggle";
 import { Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { memo } from "react";
+import { ProfileFormData } from '@/components/profile/types/profile';
 
-const ListItem = memo(React.forwardRef<
+const ListItem = React.forwardRef<
   React.ElementRef<"a">,
   React.ComponentPropsWithoutRef<"a">
 >(({ className, title, children, ...props }, ref) => (
@@ -51,27 +50,35 @@ const ListItem = memo(React.forwardRef<
       </a>
     </NavigationMenuLink>
   </li>
-)));
+));
 ListItem.displayName = "ListItem";
 
-export const Navigation = memo(function Navigation() {
-  return (
-    <header className="border-b sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
-      <div className="container mx-auto px-4 py-4">
-        <nav className="flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold">
-            StallSpot
-          </Link>
-          <MobileNav />
-          <DesktopNav />
-        </nav>
-      </div>
-    </header>
-  );
-});
-
-const MobileNav = memo(function MobileNav() {
+const useProfileData = () => {
   const { data: session } = useSession();
+  const [profileData, setProfileData] = useState<ProfileFormData | null>(null);
+
+  useEffect(() => {
+    if (session?.user) {
+      fetch('/api/profile')
+        .then(res => res.json())
+        .then(data => setProfileData(data))
+        .catch(err => console.error('Error fetching profile:', err));
+    }
+  }, [session]);
+
+  const initials = session?.user?.name
+    ?.split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase() || '?';
+
+  const avatarImage = profileData?.profilePicture || session?.user?.image || '/placeholder.svg';
+
+  return { session, profileData, initials, avatarImage };
+};
+
+const MobileNav = () => {
+  const { session, initials, avatarImage } = useProfileData();
 
   return (
     <Sheet>
@@ -88,8 +95,8 @@ const MobileNav = memo(function MobileNav() {
               <>
                 <div className="flex items-center gap-2 py-2">
                   <Avatar>
-                    <AvatarImage src={session.user.image || ''} alt={session.user.name || ''} />
-                    <AvatarFallback>{session.user.name?.charAt(0).toUpperCase()}</AvatarFallback>
+                    <AvatarImage src={avatarImage} alt={session.user.name || ''} />
+                    <AvatarFallback>{initials}</AvatarFallback>
                   </Avatar>
                   <span>{session.user.name}</span>
                 </div>
@@ -112,10 +119,11 @@ const MobileNav = memo(function MobileNav() {
       </SheetContent>
     </Sheet>
   );
-});
+};
 
-const DesktopNav = memo(function DesktopNav() {
-  const { data: session } = useSession();
+const DesktopNav = () => {
+  const { session, initials, avatarImage } = useProfileData();
+
   return (
     <>
       <NavigationMenu className="hidden md:block">
@@ -146,11 +154,6 @@ const DesktopNav = memo(function DesktopNav() {
               <NavigationMenuLink className="px-4 py-2">Contact</NavigationMenuLink>
             </Link>
           </NavigationMenuItem>
-          <NavigationMenuItem>
-            <Link href="/landingpage" legacyBehavior passHref>
-              <NavigationMenuLink className="px-4 py-2">Landing Page</NavigationMenuLink>
-            </Link>
-          </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>
 
@@ -159,13 +162,13 @@ const DesktopNav = memo(function DesktopNav() {
           <DropdownMenu>
             <DropdownMenuTrigger>
               <Avatar>
-                <AvatarImage src={session.user.image || ''} alt={session.user.name || ''} />
-                <AvatarFallback>{session.user.name?.charAt(0).toUpperCase()}</AvatarFallback>
+                <AvatarImage src={avatarImage} alt={session.user.name || ''} />
+                <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <Link href="/profile"><DropdownMenuItem>Profile</DropdownMenuItem></Link>
-              <Link href="/dashboard" ><DropdownMenuItem>Dashboard</DropdownMenuItem></Link>
+              <Link href="/dashboard"><DropdownMenuItem>Dashboard</DropdownMenuItem></Link>
               <DropdownMenuItem onClick={() => signOut()}>Logout</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -183,4 +186,20 @@ const DesktopNav = memo(function DesktopNav() {
       </div>
     </>
   );
-});
+};
+
+export const Navigation = () => {
+  return (
+    <header className="border-b sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
+      <div className="container mx-auto px-4 py-4">
+        <nav className="flex items-center justify-between">
+          <Link href="/" className="text-xl font-bold">
+            StallSpot
+          </Link>
+          <MobileNav />
+          <DesktopNav />
+        </nav>
+      </div>
+    </header>
+  );
+};

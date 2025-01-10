@@ -14,11 +14,11 @@ export interface IUser extends Document {
   contact?: string;
   address?: string;
   companyDetails?: {
-    companyName?: string;
-    registrationType?: 'CIN' | 'GSTIN' | 'UDYAM';
-    registrationNumber?: string;
-    website?: string;
-  };
+    companyName?: string | null;
+    registrationType?: 'CIN' | 'GSTIN' | 'UDYAM' | null;
+    registrationNumber?: string | null;
+    website?: string | null;
+  } | null;
   accountDetails?: {
     bankName?: string;
     accountNumber?: string;
@@ -28,66 +28,52 @@ export interface IUser extends Document {
   profilePicture?: string;
 }
 
+type CompanyDetails = NonNullable<IUser['companyDetails']>;
+
+const CompanyDetailsSchema = new Schema({
+  companyName: String,
+  registrationType: {
+    type: String,
+    enum: ['CIN', 'GSTIN', 'UDYAM']
+  },
+  registrationNumber: String,
+  website: String
+}, { _id: false });
+
+const AccountDetailsSchema = new Schema({
+  bankName: String,
+  accountNumber: String,
+  ifscCode: String
+}, { _id: false });
+
 const UserSchema = new Schema({
-  // Required fields for initial signup
   email: { type: String, required: true, unique: true },
   password: { type: String },
   name: { type: String, required: true },
   role: { type: String, enum: ['organizer', 'vendor'], required: true },
   profileComplete: { type: Boolean, default: false },
-  
-  // Optional fields
   dateOfBirth: { type: Date },
   googleId: String,
   resetPasswordToken: String,
   resetPasswordExpires: Date,
   contact: String,
   address: String,
-  
-  // Company details - required structure varies by role
-  companyDetails: {
-    _id: false,
-    companyName: String,
-    registrationType: { 
-      type: String,
-      enum: ['CIN', 'GSTIN', 'UDYAM'],
-      validate: {
-        validator: function(this: IUser, value: string) {
-          // Required for organizers or if other company fields are present for vendors
-          if (this.role === 'organizer') return !!value;
-          if (this.companyDetails?.companyName || this.companyDetails?.registrationNumber) return !!value;
-          return true;
-        },
-        message: 'Registration type is required for organizers or when providing company details'
-      }
-    },
-    registrationNumber: {
-      type: String,
-      validate: {
-        validator: function(this: IUser, value: string) {
-          // Required for organizers or if other company fields are present for vendors
-          if (this.role === 'organizer') return !!value;
-          if (this.companyDetails?.companyName || this.companyDetails?.registrationType) return !!value;
-          return true;
-        },
-        message: 'Registration number is required for organizers or when providing company details'
-      }
-    },
-    website: String
-  },
-
-  accountDetails: {
-    _id: false,
-    bankName: String,
-    accountNumber: String,
-    ifscCode: String
-  },
-
+  companyDetails: CompanyDetailsSchema,
+  accountDetails: AccountDetailsSchema,
   selfDescription: String,
   profilePicture: String
 }, {
   timestamps: true
 });
+
+function hasCompleteCompanyDetails(details: CompanyDetails | null | undefined): boolean {
+  return !!(
+    details && 
+    details.companyName && 
+    details.registrationType && 
+    details.registrationNumber
+  );
+}
 
 // Password validation
 UserSchema.pre('save', function(next) {
@@ -98,40 +84,46 @@ UserSchema.pre('save', function(next) {
 });
 
 // Profile completion validation
-UserSchema.pre('save', function(next) {
-  if (this.profileComplete) {
-    const requiredFields = ['contact', 'address', 'dateOfBirth', 'accountDetails', 'selfDescription'];
-    
-    // Check common required fields
-    for (const field of requiredFields) {
-      if (!this[field as keyof IUser]) {
-        return next(new Error(`${field} is required for profile completion`));
-      }
-    }
+UserSchema.pre('save', async function(next) {
+  if (!this.isModified('profileComplete') || !this.profileComplete) {
+    return next();
+  }
 
-    // Company details validation
-    if (this.role === 'organizer') {
-      if (!this.companyDetails?.companyName || 
-          !this.companyDetails?.registrationType ||
-          !this.companyDetails?.registrationNumber) {
-        return next(new Error('Complete company details are required for organizers'));
-      }
-    } else if (this.companyDetails) {
-      // For vendors, if any company detail is provided, all are required
-      if (this.companyDetails.companyName || 
-          this.companyDetails.registrationType ||
-          this.companyDetails.registrationNumber) {
-        if (!this.companyDetails.companyName || 
-            !this.companyDetails.registrationType ||
-            !this.companyDetails.registrationNumber) {
-          return next(new Error('All company details must be provided if including company information'));
-        }
-      }
+  const errors: string[] = [];
+
+  if (!this.contact) errors.push('Contact is required');
+  if (!this.address) errors.push('Address is required');
+  if (!this.dateOfBirth) errors.push('Date of birth is required');
+  if (!this.selfDescription) errors.push('Self description is required');
+
+  if (!this.accountDetails?.bankName) errors.push('Bank name is required');
+  if (!this.accountDetails?.accountNumber) errors.push('Account number is required');
+  if (!this.accountDetails?.ifscCode) errors.push('IFSC code is required');
+
+  if (this.role === 'organizer') {
+    if (!hasCompleteCompanyDetails(this.companyDetails)) {
+      errors.push('Complete company details are required for organizers');
     }
   }
-  next();
+
+  if (errors.length > 0) {
+    next(new Error(errors.join(', ')));
+  } else {
+    next();
+  }
 });
 
+UserSchema.pre('save', function(next) {
+  // Only validate company details if user is a vendor AND companyDetails exists
+  if (this.role === 'vendor' && this.companyDetails) {
+    const { companyName, registrationNumber, registrationType } = this.companyDetails;
+    if (!(companyName && registrationNumber && registrationType)) {
+      return next(new Error('If providing company details, all fields must be completed'));
+    }
+  }
+  
+  next();
+});
 const User = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
 
 export default User;

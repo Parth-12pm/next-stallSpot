@@ -25,13 +25,17 @@ export default withAuth(
       return NextResponse.next();
     }
 
+    // Handle profile route
+    if (path === '/profile') {
+      if (!token.profileComplete) {
+        return NextResponse.redirect(new URL('/profile/complete', req.url));
+      }
+      return NextResponse.next();
+    }
+
     // Enforce profile completion for all protected routes
     if (!token.profileComplete && !path.startsWith('/profile/complete')) {
-      // Store the intended URL to redirect back after completion
-      const callbackUrl = encodeURIComponent(req.url);
-      return NextResponse.redirect(
-        new URL(`/profile/complete?callbackUrl=${callbackUrl}`, req.url)
-      );
+      return NextResponse.redirect(new URL('/profile/complete', req.url));
     }
 
     // Role-based access control
