@@ -1,6 +1,6 @@
 "use client"
 
-import { Bar, BarChart, Line, LineChart, ResponsiveContainer } from "recharts"
+import { Line, LineChart, ResponsiveContainer } from "recharts"
 import { Calendar, CircleDollarSign, Store, Users, PlusCircle, Clock, CheckCircle2 } from 'lucide-react'
 import { DashboardProps } from "./types"
 
