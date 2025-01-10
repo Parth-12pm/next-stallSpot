@@ -2,10 +2,12 @@
 
 import React from 'react';
 import { ThemeProvider } from '@/components/theme-provider';
-import { CalendarIcon, Clock, MapPin, Users, IndianRupee } from 'lucide-react';
+import { CalendarIcon, Clock, MapPin, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
+
 
 const eventData = {
   title: "Art Exhibition 2024",
@@ -37,10 +39,12 @@ export default function EventDetails() {
             {/* Left Section - Image Only */}
             <div className="sticky top-8 h-fit">
               <div className="aspect-[4/3] overflow-hidden rounded-xl">
-                <img 
+                <Image 
                   src={eventData.thumbnail} 
                   alt={eventData.title}
                   className="w-full h-full object-cover"
+                  width={800}
+                  height={600}
                 />
               </div>
             </div>
@@ -97,18 +101,29 @@ export default function EventDetails() {
                       {facility}
                     </div>
                   ))}
-        </div>
-        </div><div className=" left-0 right-0 p-4 bg-background/80 backdrop-blur-sm border-t">
-          <div className="max-w-7xl mx-auto px-4 md:px-8 flex justify-center">
-            <Button 
-              size="lg" 
-              className="w-full md:w-auto font-semibold text-lg"
-              onClick={() => alert('Booking functionality coming soon!')}
-            >
-              Book A Stall
-            </Button>
-          </div>
 
+
+
+
+
+
+
+
+
+
+
+
+                </div>
+              </div>
+              <div className="left-0 right-0 p-4 bg-background/80 backdrop-blur-sm border-t">
+                <div className="max-w-7xl mx-auto px-4 md:px-8 flex justify-center">
+                  <Button 
+                    size="lg" 
+                    className="w-full md:w-auto font-semibold text-lg"
+                    onClick={() => alert('Booking functionality coming soon!')}
+                  >
+                    Book A Stall
+                  </Button>
                 </div>
               </div>
             </div>
@@ -116,6 +131,8 @@ export default function EventDetails() {
         </div>
 
         {/* Fixed Book A Stall Button */}
-            </ThemeProvider>
+
+      </div>
+    </ThemeProvider>
   );
 }
