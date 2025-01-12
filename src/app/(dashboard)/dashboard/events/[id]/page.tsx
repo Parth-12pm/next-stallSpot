@@ -1,4 +1,3 @@
-// src/app/(dashboard)/dashboard/events/[id]/page.tsx
 'use client';
 
 import { useAuth } from "@/hooks/useAuth";
@@ -7,12 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Edit, Settings } from "lucide-react";
 import Link from "next/link";
 
+interface PageProps {
+  params: {
+    id: string;
+  };
+  searchParams?: { [key: string]: string | string[] | undefined };
+}
 
-export default function EventDetailsPage({ 
-  params 
-}: { 
-  params: { id: string } 
-}) {
+export default function EventDetailsPage({ params }: PageProps) {
   const { session } = useAuth();
   const isOrganizer = (session?.user as { role?: string })?.role === 'organizer';
 
