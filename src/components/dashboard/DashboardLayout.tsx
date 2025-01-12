@@ -10,13 +10,8 @@ import {
   LayoutDashboard,
   CalendarDays,
   Store,
-  Users,
-  Settings,
   Menu,
-  Bell,
-  CircleDollarSign,
-  Building2,
-  BarChart3
+  CreditCard
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import {
@@ -24,24 +19,9 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { ProfileSection } from "./profile-section"
+import type { NavItem, ExtendedSession } from "./types"
 
-type ExtendedSession = {
-  user: {
-    id?: string;
-    name?: string | null;
-    email?: string | null;
-    image?: string | null;
-    role?: 'organizer' | 'vendor' | null;
-    profileComplete?: boolean;
-  };
-};
-
-interface NavItem {
-  title: string;
-  href: string;
-  icon: React.ElementType;
-  description?: string;
-}
 
 const organizerNavItems: NavItem[] = [
   { 
@@ -63,29 +43,11 @@ const organizerNavItems: NavItem[] = [
     description: 'Review and manage vendor applications'
   },
   { 
-    title: 'Vendor Directory',
-    href: '/dashboard/vendors',
-    icon: Users,
-    description: 'View and manage registered vendors'
-  },
-  { 
-    title: 'Floor Plans',
-    href: '/dashboard/floor-plans',
-    icon: Building2,
-    description: 'Design and manage exhibition layouts'
-  },
-  { 
-    title: 'Analytics',
-    href: '/dashboard/analytics',
-    icon: BarChart3,
-    description: 'View event performance metrics'
-  },
-  { 
-    title: 'Settings',
-    href: '/dashboard/settings',
-    icon: Settings,
-    description: 'Configure your organizer account'
-  },
+    title: 'Payments',
+    href: '/dashboard/payments',
+    icon: CreditCard,
+    description: 'Track and manage all payments'
+  }
 ];
 
 const vendorNavItems: NavItem[] = [
@@ -110,22 +72,11 @@ const vendorNavItems: NavItem[] = [
   { 
     title: 'Payments',
     href: '/dashboard/payments',
-    icon: CircleDollarSign,
-    description: 'View payment history'
-  },
-  { 
-    title: 'Notifications',
-    href: '/dashboard/notifications',
-    icon: Bell,
-    description: 'View system notifications'
-  },
-  { 
-    title: 'Settings',
-    href: '/dashboard/settings',
-    icon: Settings,
-    description: 'Configure your vendor account'
-  },
+    icon: CreditCard,
+    description: 'View and manage your payment history'
+  }
 ];
+
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -197,6 +148,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="px-3">
               <NavList />
             </div>
+            <ProfileSection user={session.user} />
           </div>
         </SheetContent>
       </Sheet>
@@ -209,6 +161,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="flex-1 overflow-auto py-4 px-3">
           <NavList />
         </div>
+        <ProfileSection user={session.user} />
       </aside>
 
       {/* Main Content */}

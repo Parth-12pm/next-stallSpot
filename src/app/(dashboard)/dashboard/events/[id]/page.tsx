@@ -34,7 +34,7 @@ export default function EventDetailsPage({
           </Button>
         </div>
       )}
-      <EventPreview id={params.id} />
+      <EventPreview eventId={params.id} />
     </div>
   );
 }
