@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Progress } from "@/components/ui/progress"
+import Link from "next/link"
 
 // Mock data - Replace with real data from your API
 const revenueData = [
@@ -23,6 +24,7 @@ const revenueData = [
 
 
 export function OrganizerDashboard({ user }: DashboardProps) {
+
   return (
     <div className="flex-1 space-y-4 p-4 pt-6">
       <div className="flex items-center justify-between space-y-2">
@@ -30,10 +32,12 @@ export function OrganizerDashboard({ user }: DashboardProps) {
           Welcome back, {user.name || "Organizer"}
         </h2>
         <div className="flex items-center space-x-2">
-          <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
+          <Link href='/dashboard/events/create'>
+          <Button >
+            <PlusCircle className="w-4 h-4 mr-2" />
             Create Event
           </Button>
+          </Link>
         </div>
       </div>
       <Tabs defaultValue="overview" className="space-y-4">
