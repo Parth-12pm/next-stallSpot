@@ -1,120 +1,237 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import React, { useState } from 'react';
-import { Card } from '@/components/ui/card';
+import React, { useState, useEffect } from "react";
+import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Save } from 'lucide-react';
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Save, Plus, Building2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Stall, StallFormProps } from '@/components/events/types/types';
 
-interface StallFormProps {
-  eventId: string;  // Add eventId prop
-}
 
-interface Stall {
-  id: number;
-  type: string;
-  price: string;
-  size: string;
-  status: 'available' | 'reserved' | 'booked';
-}
 
-interface EventData {
-  layout: string;
-  numberOfStalls: number;
-}
+// Default categories with option for custom
+const DEFAULT_CATEGORIES = [
+  "Art",
+  "Food",
+  "Jewelry",
+  "Clothing",
+  "Handicrafts",
+  "Electronics",
+  "Books",
+  "General",
+];
 
-export default function StallManagementDemo({ eventId }: StallFormProps) {
-  const sampleEventData: EventData = {
-    layout: "",
-    numberOfStalls: 8
-  };
-
+export default function StallForm({
+  eventId,
+  eventDetails,
+  onSave,
+  readOnly = false,
+  isOrganizer = false,
+}: StallFormProps) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [selectedStall, setSelectedStall] = useState<Stall | null>(null);
-  const [stalls, setStalls] = useState<Stall[]>(
-    Array.from({ length: sampleEventData.numberOfStalls }, (_, i) => ({
-      id: i + 1,
-      type: 'standard',
-      price: i % 2 === 0 ? '5000' : '',
+  const [customCategory, setCustomCategory] = useState("");
+  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
+
+  // Initialize stalls with sample data
+  const [stalls, setStalls] = useState<Stall[]>(() =>
+    Array.from({ length: eventDetails.numberOfStalls }, (_, i) => ({
+      stallId: i + 1,  // Changed from id
+      displayId: `${i + 1}`,
+      type: 'standard' as const,  // Add type assertion
+      category: eventDetails.category,
+      name: '',
+      price: '5000',
       size: '3x3',
-      status: 'available'
+      status: 'available' as const,  // Add type assertion
     }))
   );
+  
+
+  useEffect(() => {
+    const fetchStalls = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch(`/api/events/${eventId}/stalls`);
+        if (!response.ok) throw new Error("Failed to fetch stalls");
+        const data = await response.json();
+        setStalls(data.stalls);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load stalls");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (eventId) {
+      fetchStalls();
+    }
+  }, [eventId]);
 
   const handleStallClick = (stall: Stall) => {
+    if (readOnly && stall.status !== "available") return;
     setSelectedStall(stall);
   };
 
   const updateStallDetails = (field: keyof Stall, value: string) => {
-    if (!selectedStall) return;
-
-    setStalls(prevStalls =>
-      prevStalls.map(stall =>
-        stall.id === selectedStall.id
-          ? { ...stall, [field]: value }
-          : stall
+    if (!selectedStall || readOnly) return;
+  
+    setStalls((prevStalls) =>
+      prevStalls.map((stall) =>
+        stall.stallId === selectedStall.stallId ? { ...stall, [field]: value } : stall
       )
     );
+  
+    setSelectedStall((prev) => (prev ? { ...prev, [field]: value } : prev));
+  };
 
-    setSelectedStall(prev => prev ? { ...prev, [field]: value } : prev);
+  const handleAddCategory = () => {
+    if (!customCategory.trim()) return;
+    setCategories((prev) => [...prev, customCategory.trim()]);
+    if (selectedStall) {
+      updateStallDetails("category", customCategory.trim());
+    }
+    setCustomCategory("");
   };
 
   const applyToAllStalls = () => {
-    if (!selectedStall) return;
+    if (!selectedStall || readOnly) return;
 
-    setStalls(prevStalls =>
-      prevStalls.map(stall => ({
+    setStalls((prevStalls) =>
+      prevStalls.map((stall) => ({
         ...stall,
         type: selectedStall.type,
+        category: selectedStall.category,
         price: selectedStall.price,
         size: selectedStall.size,
-        status: stall.status // Keep original status
+        // Don't copy status or name to keep them unique
       }))
     );
+  };
+
+  const handleSave = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      if (onSave) {
+        await onSave(stalls);
+      } else {
+        const response = await fetch(`/api/events/${eventId}/stalls`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ stalls }),
+        });
+
+        if (!response.ok) throw new Error("Failed to save stalls");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save stalls");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getStallColorByStatus = (status: Stall["status"], type: string) => {
+    if (!isOrganizer) {
+      // Non-organizer view
+      return status === "available"
+        ? `bg-green-100 border-green-300 ${type === "premium" ? "border-yellow-400" : ""}`
+        : `bg-gray-100 border-gray-300 ${type === "premium" ? "border-yellow-400" : ""}`;
+    }
+  
+    // Organizer view - base colors for status
+    const colors = {
+      available: "bg-green-100 border-green-300",
+      reserved: "bg-yellow-100 border-yellow-300",
+      blocked: "bg-red-100 border-red-300",
+      booked: "bg-blue-100 border-blue-300",
+    };
+  
+    // Add premium indicator if needed
+    return `${colors[status]} ${type === "premium" ? "border-yellow-400" : ""}`;
   };
 
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-[1800px] mx-auto">
-        <h1 className="text-3xl font-bold mb-8">Stall Management</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">Stall Configuration</h1>
+          {isOrganizer && !readOnly && (
+            <Button onClick={handleSave} disabled={isLoading}>
+              <Save className="w-4 h-4 mr-2" />
+              {isLoading ? "Saving..." : "Save Changes"}
+            </Button>
+          )}
+        </div>
+
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Side - Layout and Stalls */}
           <div className="space-y-6">
             <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Event Layout</h2>
+              <h2 className="text-xl font-semibold mb-4">Stall Layout</h2>
               <div className="aspect-video bg-muted rounded-lg overflow-hidden mb-6">
                 <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                  No layout uploaded
+                  Layout will be displayed here
                 </div>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {stalls.map((stall) => (
-                  <button
-                    key={stall.id}
-                    onClick={() => handleStallClick(stall)}
-                    className={`p-4 rounded-lg border-2 transition-all ${
-                      selectedStall?.id === stall.id
-                        ? 'border-primary bg-primary/10'
-                        : 'border-border hover:border-primary/50'
-                    }`}
-                  >
-                    <div className="text-sm font-medium">Stall {stall.id}</div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {stall.type} - {stall.size}
-                    </div>
-                    <div className="text-xs font-semibold mt-1">
-                      {stall.price ? `₹${stall.price}` : 'No price set'}
-                    </div>
-                  </button>
-                ))}
+              {/* Add max height with scrolling */}
+              <div className="max-h-[400px] overflow-y-auto pr-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3">
+                  {stalls.map((stall) => (
+                    <button
+                      key={stall.stallId}
+                      onClick={() => handleStallClick(stall)}
+                      disabled={!isOrganizer && stall.status !== "available"}
+                      className={`p-3 rounded-lg border-2 transition-all relative ${getStallColorByStatus(
+                        stall.status,
+                        stall.type
+                      )} ${
+                        selectedStall?.stallId === stall.stallId
+                          ? "ring-2 ring-primary"
+                          : ""
+                      } hover:border-primary/50 disabled:opacity-70 disabled:cursor-not-allowed`}
+                    >
+                      {stall.type === "premium" && (
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full shadow-sm" />
+                      )}
+                      <div className="text-sm text-gray-600 dark:text-gray-600 font-medium truncate flex items-center gap-1">
+                        {stall.name || `Stall ${stall.displayId}`}
+                      </div>
+                      <Badge
+                        variant="default"
+                        className={`mt-1 w-full justify-center ${
+                          stall.status === "available"
+                            ? "bg-green-300 text-green-800 dark:bg-green-900/50 dark:text-green-300"
+                            : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100"
+                        }`}
+                      >
+                        {isOrganizer
+                          ? stall.status
+                          : stall.status === "available"
+                          ? "Available"
+                          : "Not Available"}
+                      </Badge>
+                    </button>
+                  ))}
+                </div>
               </div>
             </Card>
           </div>
@@ -123,95 +240,242 @@ export default function StallManagementDemo({ eventId }: StallFormProps) {
           <div className="space-y-6">
             <Card className="p-6">
               <h2 className="text-xl font-semibold mb-6">
-                {selectedStall ? `Stall ${selectedStall.id} Details` : 'Select a stall'}
+                {selectedStall
+                  ? `Stall ${selectedStall.displayId} Details`
+                  : "Select a stall to view details"}
               </h2>
 
               {selectedStall ? (
                 <div className="space-y-6">
+                  {/* Stall Identifier Section */}
+                  {isOrganizer && (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="stallName">Stall Number</Label>
+                        <Input
+                          id="stallName"
+                          value={selectedStall.displayId}
+                          onChange={(e) =>
+                            updateStallDetails("displayId", e.target.value)
+                          }
+                          placeholder="Enter stall number"
+                          disabled={readOnly}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="stallName">
+                          Display Name (Optional)
+                        </Label>
+                        <Input
+                          id="customName"
+                          value={selectedStall.name}
+                          onChange={(e) =>
+                            updateStallDetails("name", e.target.value)
+                          }
+                          placeholder="Enter a display name"
+                          disabled={readOnly}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Category Section */}
                   <div className="space-y-2">
-                    <Label htmlFor="stallType">Stall Type</Label>
-                    <Select
-                      value={selectedStall.type}
-                      onValueChange={(value) => updateStallDetails('type', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="standard">Standard</SelectItem>
-                        <SelectItem value="premium">Premium</SelectItem>
-                        <SelectItem value="corner">Corner</SelectItem>
-                        <SelectItem value="food">Food</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="stallCategory">Category</Label>
+                    {!isOrganizer ? (
+                      <div className="text-sm font-medium">
+                        {selectedStall.category}
+                      </div>
+                    ) : (
+                      <>
+                        <Select
+                          value={selectedStall.category}
+                          onValueChange={(value) =>
+                            updateStallDetails("category", value)
+                          }
+                          disabled={readOnly}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categories.map((category) => (
+                              <SelectItem key={category} value={category}>
+                                {category}
+                              </SelectItem>
+                            ))}
+                            <SelectItem value="custom">
+                              Add Custom...
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        {selectedStall.category === "custom" && (
+                          <div className="flex gap-2 mt-2">
+                            <Input
+                              value={customCategory}
+                              onChange={(e) =>
+                                setCustomCategory(e.target.value)
+                              }
+                              placeholder="Enter custom category"
+                              disabled={readOnly}
+                            />
+                            <Button
+                              size="sm"
+                              onClick={handleAddCategory}
+                              disabled={readOnly}
+                            >
+                              <Plus className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="stallSize">Stall Size</Label>
-                    <Select
-                      value={selectedStall.size}
-                      onValueChange={(value) => updateStallDetails('size', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select size" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="2x2">2m x 2m</SelectItem>
-                        <SelectItem value="3x3">3m x 3m</SelectItem>
-                        <SelectItem value="4x4">4m x 4m</SelectItem>
-                        <SelectItem value="custom">Custom</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  {/* Type and Size Section */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="stallType">Type</Label>
+                      {!isOrganizer ? (
+                        <div className="text-sm font-medium capitalize">
+                          {selectedStall.type}
+                        </div>
+                      ) : (
+                        <Select
+                          value={selectedStall.type}
+                          onValueChange={(value) =>
+                            updateStallDetails("type", value)
+                          }
+                          disabled={readOnly}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="standard">Standard</SelectItem>
+                            <SelectItem value="premium">Premium</SelectItem>
+                            <SelectItem value="corner">Corner</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="stallSize">Size</Label>
+                      {!isOrganizer ? (
+                        <div className="text-sm font-medium">
+                          {selectedStall.size}
+                        </div>
+                      ) : (
+                        <Select
+                          value={selectedStall.size}
+                          onValueChange={(value) =>
+                            updateStallDetails("size", value)
+                          }
+                          disabled={readOnly}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select size" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="2x2">2ft x 2ft</SelectItem>
+                            <SelectItem value="3x3">3ft x 3ft</SelectItem>
+                            <SelectItem value="5x5">5ft x 5ft</SelectItem>
+                            <SelectItem value="10x10">10ft x 10ft</SelectItem>
+                            <SelectItem value="custom">Custom</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="stallPrice">Stall Price (₹)</Label>
-                    <Input
-                      id="stallPrice"
-                      type="number"
-                      value={selectedStall.price}
-                      onChange={(e) => updateStallDetails('price', e.target.value)}
-                      placeholder="Enter price"
-                    />
+                  {/* Price and Status Section */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="stallPrice">Price (₹)</Label>
+                      {!isOrganizer ? (
+                        <div className="text-sm font-medium">
+                          ₹{selectedStall.price}
+                        </div>
+                      ) : (
+                        <Input
+                          id="stallPrice"
+                          type="number"
+                          value={selectedStall.price}
+                          onChange={(e) =>
+                            updateStallDetails("price", e.target.value)
+                          }
+                          placeholder="Enter price"
+                          disabled={readOnly}
+                        />
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="stallStatus">Status</Label>
+                      {!isOrganizer ? (
+                        <Badge
+                          variant="default"
+                          className={`mt-1 m-4 ${
+                            selectedStall.status === "available"
+                              ? "bg-green-400 text-green-800 hover:bg-green-200"
+                              : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                          }`}
+                        >
+                          {selectedStall.status === "available"
+                            ? "Available"
+                            : "Not Available"}
+                        </Badge>
+                      ) : (
+                        <Select
+                          value={selectedStall.status}
+                          onValueChange={(value: Stall["status"]) =>
+                            updateStallDetails("status", value)
+                          }
+                          disabled={readOnly}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="available">Available</SelectItem>
+                            <SelectItem value="reserved">Reserved</SelectItem>
+                            <SelectItem value="blocked">Blocked</SelectItem>
+                            <SelectItem value="booked">Booked</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="stallStatus">Status</Label>
-                    <Select
-                      value={selectedStall.status}
-                      onValueChange={(value: 'available' | 'reserved' | 'booked') => 
-                        updateStallDetails('status', value)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="available">Available</SelectItem>
-                        <SelectItem value="reserved">Reserved</SelectItem>
-                        <SelectItem value="booked">Booked</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {/* Action Buttons */}
+                  {isOrganizer && !readOnly && (
+                    <div className="pt-4 space-y-4">
+                      <Button
+                        onClick={applyToAllStalls}
+                        variant="outline"
+                        className="w-full"
+                      >
+                        Apply Settings to All Stalls
+                      </Button>
+                    </div>
+                  )}
 
-                  <div className="pt-4 space-y-4">
-                    <Button
-                      onClick={applyToAllStalls}
-                      variant="outline"
-                      className="w-full"
-                    >
-                      Apply to All Stalls
-                    </Button>
-                    
-                    <Button className="w-full">
-                      <Save className="w-4 h-4 mr-2" />
-                      Save Changes
-                    </Button>
-                  </div>
+                  {/* Vendor Apply Button */}
+                  {!isOrganizer && selectedStall.status === "available" && (
+                    <div className="pt-4">
+                      <Button className="w-full" size="lg">
+                        <Building2 className="w-4 h-4 mr-2" />
+                        Apply for This Stall
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="text-center text-muted-foreground py-8">
-                  Select a stall from the layout to edit its details
+                  Select a stall from the layout to view its details
                 </div>
               )}
             </Card>

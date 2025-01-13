@@ -1,4 +1,4 @@
-// src/components/events/types/type.ts
+// src/components/events/types/types.ts
 
 export interface Event {
     id: string;
@@ -10,22 +10,39 @@ export interface Event {
     endDate: string;
     startTime: string;
     endTime: string;
-    entryFee?: string;  // Optional entry fee
+    entryFee?: string;
     facilities: string[];
     category: string;
     layout?: string;
     thumbnail?: string;
     organizerId: string;
+    status: 'draft' | 'published' | 'completed' | 'cancelled';
+    stallConfiguration: Stall[];
+    configurationComplete: boolean;
     createdAt: string;
     updatedAt: string;
 }
 
 export interface Stall {
-    id: number;
-    type: string;
+    stallId: number;
+    displayId: string;
+    type: 'standard' | 'premium' | 'corner';
+    category: string;
+    name: string;
     price: string;
     size: string;
-    status: 'available' | 'reserved' | 'booked';
+    status: 'available' | 'reserved' | 'blocked' | 'booked';
+}
+
+export interface StallFormProps {
+    eventId: string;
+    eventDetails: {
+        category: string;
+        numberOfStalls: number;
+    };
+    onSave?: (stalls: Stall[]) => Promise<void>;
+    readOnly?: boolean;
+    isOrganizer?: boolean;
 }
 
 export interface EventPreviewProps {
@@ -47,4 +64,18 @@ export interface EventData {
     facilities: string[];
 }
 
-// Add type guard for checking organizer role
+// API Response Types
+export interface StallApiResponse {
+    stalls: Stall[];
+    eventCategory: string;
+    numberOfStalls: number;
+}
+
+export interface EventApiResponse {
+    _id: string;
+    title: string;
+    category: string;
+    numberOfStalls: number;
+    configurationComplete: boolean;
+}
+

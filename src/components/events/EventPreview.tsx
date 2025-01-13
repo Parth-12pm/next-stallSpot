@@ -24,7 +24,6 @@ export default function EventDetails({ eventId }: EventPreviewProps) {
     endTime: "18:00",
     venue: "Metropolitan Art Gallery",
     category: "Art",
-    bookingFee: "500",          // Changed from charges
     entryFee: "100",            // Added entry fee
     totalStalls: 16,
     facilities: [
@@ -61,7 +60,6 @@ export default function EventDetails({ eventId }: EventPreviewProps) {
   {eventData.entryFee && (
     <Badge variant="outline">₹{eventData.entryFee} Entry Fee</Badge>
   )}
-  <Badge variant="outline">₹{eventData.bookingFee} Booking Fee</Badge>
 </div>
               </div>
 

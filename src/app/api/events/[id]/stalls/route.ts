@@ -1,84 +1,261 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-// src/app/api/events/[id]/stalls/route.ts
+// app/api/events/[id]/stalls/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { authOptions } from "../../../auth/[...nextauth]/route";
+import { handleServerError } from "@/lib/server-error-handling";
+import dbConnect from "@/lib/mongodb";
+import Event from "@/models/Event";
+import { z } from "zod";
 
-// GET: Get stalls for an event
+// Validation schema for stall data
+const StallSchema = z.object({
+  stallId: z.number(),
+  displayId: z.string(),
+  type: z.enum(['standard', 'premium', 'corner']),
+  category: z.string(),
+  name: z.string(),
+  price: z.string(),
+  size: z.string(),
+  status: z.enum(['available', 'reserved', 'blocked', 'booked'])
+});
+
+const StallConfigurationSchema = z.object({
+  stalls: z.array(StallSchema)
+});
+
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized - Please log in" }, 
+        { status: 401 }
+      );
     }
 
-    const eventId = params.id;
+    await dbConnect();
+
+    const event = await Event.findById(params.id);
+    if (!event) {
+      return NextResponse.json(
+        { error: "Event not found" }, 
+        { status: 404 }
+      );
+    }
+
+    const isOrganizer = (session.user as { role?: string })?.role === 'organizer';
+    const isEventOwner = event.organizerId.toString() === session.user.id;
+
+    // Check authorization
+    if (isOrganizer && !isEventOwner) {
+      return NextResponse.json(
+        { error: "You don't have permission to access this event" }, 
+        { status: 401 }
+      );
+    }
+
+    // Initialize stalls if they haven't been configured yet
+    if (!event.stallConfiguration || event.stallConfiguration.length === 0) {
+      const initialStalls = Array.from(
+        { length: event.numberOfStalls }, 
+        (_, i) => ({
+          stallId: i + 1,
+          displayId: `${i + 1}`,
+          type: 'standard',
+          category: event.category,
+          name: '',
+          price: '5000',
+          size: '3x3',
+          status: 'available'
+        })
+      );
+
+      event.stallConfiguration = initialStalls;
+      await event.save();
+    }
     
-    // TODO: Add database query to get stalls
-    // If organizer: Get all stalls with detailed info
-    // If vendor: Get available stalls with basic info
-    
-    return NextResponse.json({ message: "Stalls list" });
+    return NextResponse.json({ 
+      stalls: event.stallConfiguration,
+      eventCategory: event.category,
+      numberOfStalls: event.numberOfStalls
+    });
   } catch (error) {
     console.error("[STALLS_GET]", error);
-    return new NextResponse("Internal error", { status: 500 });
+    const apiError = handleServerError(error);
+    return NextResponse.json(
+      { error: apiError.message, errors: apiError.errors },
+      { status: apiError.statusCode }
+    );
   }
 }
 
-// POST: Update stall configurations
 export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     
-    // Check if user is authenticated and is an organizer
     if (!session?.user || (session.user as { role?: string })?.role !== 'organizer') {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized - Only organizers can configure stalls" }, 
+        { status: 401 }
+      );
     }
 
-    const eventId = params.id;
-    const stallConfigs = await request.json();
+    await dbConnect();
+
+    const event = await Event.findById(params.id);
+    if (!event) {
+      return NextResponse.json(
+        { error: "Event not found" }, 
+        { status: 404 }
+      );
+    }
+
+    if (event.organizerId.toString() !== session.user.id) {
+      return NextResponse.json(
+        { error: "You don't have permission to modify this event" }, 
+        { status: 401 }
+      );
+    }
+
+    const body = await request.json();
     
-    // TODO:
-    // 1. Verify user owns this event
-    // 2. Validate stall configurations
-    // 3. Update stall data
+    // Validate the stall configuration data
+    const validatedData = StallConfigurationSchema.parse(body);
+
+    // Additional validations
+    if (validatedData.stalls.length !== event.numberOfStalls) {
+      return NextResponse.json(
+        { error: "Number of stalls doesn't match event configuration" }, 
+        { status: 400 }
+      );
+    }
+
+    // Check for duplicate stallIds or displayIds
+    const stallIds = new Set();
+    const displayIds = new Set();
+    for (const stall of validatedData.stalls) {
+      if (stallIds.has(stall.stallId)) {
+        return NextResponse.json(
+          { error: "Duplicate stall IDs found" }, 
+          { status: 400 }
+        );
+      }
+      if (displayIds.has(stall.displayId)) {
+        return NextResponse.json(
+          { error: "Duplicate display IDs found" }, 
+          { status: 400 }
+        );
+      }
+      stallIds.add(stall.stallId);
+      displayIds.add(stall.displayId);
+    }
     
-    return NextResponse.json({ message: "Stalls updated successfully" });
+    // Update event with new stall configuration
+    const updatedEvent = await Event.findByIdAndUpdate(
+      params.id,
+      { 
+        $set: { 
+          stallConfiguration: validatedData.stalls,
+          configurationComplete: true
+        }
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedEvent) {
+      return NextResponse.json(
+        { error: "Failed to update stall configuration" }, 
+        { status: 500 }
+      );
+    }
+    
+    return NextResponse.json({ 
+      message: "Stall configuration updated successfully",
+      stalls: updatedEvent.stallConfiguration
+    });
   } catch (error) {
     console.error("[STALLS_POST]", error);
-    return new NextResponse("Internal error", { status: 500 });
+    const apiError = handleServerError(error);
+    return NextResponse.json(
+      { error: apiError.message, errors: apiError.errors },
+      { status: apiError.statusCode }
+    );
   }
 }
 
-// PATCH: Update single stall
 export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     
-    // Check if user is authenticated and is an organizer
     if (!session?.user || (session.user as { role?: string })?.role !== 'organizer') {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized - Only organizers can modify stalls" }, 
+        { status: 401 }
+      );
     }
 
-    const eventId = params.id;
+    await dbConnect();
+
+    const event = await Event.findById(params.id);
+    if (!event) {
+      return NextResponse.json(
+        { error: "Event not found" }, 
+        { status: 404 }
+      );
+    }
+
+    if (event.organizerId.toString() !== session.user.id) {
+      return NextResponse.json(
+        { error: "You don't have permission to modify this event" }, 
+        { status: 401 }
+      );
+    }
+
     const { stallId, ...stallData } = await request.json();
     
-    // TODO:
-    // 1. Verify user owns this event
-    // 2. Validate stall data
-    // 3. Update specific stall
+    // Validate single stall data
+    const validatedStall = StallSchema.parse({ stallId, ...stallData });
+
+    // Update specific stall
+    const updatedEvent = await Event.findOneAndUpdate(
+      { 
+        _id: params.id,
+        'stallConfiguration.stallId': stallId
+      },
+      {
+        $set: {
+          'stallConfiguration.$': validatedStall
+        }
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedEvent) {
+      return NextResponse.json(
+        { error: "Failed to update stall" }, 
+        { status: 500 }
+      );
+    }
     
-    return NextResponse.json({ message: "Stall updated successfully" });
+    return NextResponse.json({ 
+      message: "Stall updated successfully",
+      stall: validatedStall
+    });
   } catch (error) {
     console.error("[STALL_PATCH]", error);
-    return new NextResponse("Internal error", { status: 500 });
+    const apiError = handleServerError(error);
+    return NextResponse.json(
+      { error: apiError.message, errors: apiError.errors },
+      { status: apiError.statusCode }
+    );
   }
 }

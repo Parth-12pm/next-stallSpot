@@ -15,17 +15,28 @@ export const eventFormSchema = z.object({
     .min(1, 'Must have at least 1 stall')
     .max(1000, 'Cannot exceed 1000 stalls'),
   startDate: z.string()
-    .refine(date => new Date(date) > new Date(), {
-      message: 'Start date must be in the future',
+    .refine(date => {
+      const eventDate = new Date(date);
+      const today = new Date();
+      // Reset time to midnight for date comparison
+      eventDate.setHours(0, 0, 0, 0);
+      today.setHours(0, 0, 0, 0);
+      return eventDate >= today;
+    }, {
+      message: 'Start date must be today or in the future',
     }),
   endDate: z.string()
-    .refine(date => new Date(date) > new Date(), {
-      message: 'End date must be in the future',
+    .refine(date => {
+      const eventDate = new Date(date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      eventDate.setHours(0, 0, 0, 0);
+      return eventDate >= today;
+    }, {
+      message: 'End date must be today or in the future',
     }),
   startTime: z.string(),
   endTime: z.string(),
-  bookingFee: z.string()
-    .regex(/^\d+$/, 'Booking fee must be a number'),
   entryFee: z.string()
     .regex(/^\d+$/, 'Entry fee must be a number')
     .optional(),
@@ -33,7 +44,13 @@ export const eventFormSchema = z.object({
   category: z.string(),
   thumbnail: z.any().optional(), // Will be handled separately
   layout: z.any().optional(),    // Will be handled separately
+}).refine((data) => {
+  const startDate = new Date(`${data.startDate}T${data.startTime}`);
+  const endDate = new Date(`${data.endDate}T${data.endTime}`);
+  return endDate > startDate;
+}, {
+  message: "End date/time must be after start date/time",
+  path: ["endDate"], // Shows error on the end date field
 });
 
-// Type inference
 export type EventFormData = z.infer<typeof eventFormSchema>;
