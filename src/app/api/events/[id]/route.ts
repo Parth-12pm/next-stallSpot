@@ -14,7 +14,7 @@ import mongoose from "mongoose";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -24,7 +24,9 @@ export async function GET(
 
     await dbConnect();
 
-    const event = (await Event.findById(params.id).lean()) as unknown as (IEvent & { _id: mongoose.Types.ObjectId });
+    const { id } = await context.params;
+  
+    const event = (await Event.findById(id).lean()) as unknown as (IEvent & { _id: mongoose.Types.ObjectId });
 
     if (!event) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
@@ -48,7 +50,7 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -59,7 +61,9 @@ export async function PATCH(
 
     await dbConnect();
 
-    const existingEvent = await Event.findById(params.id);
+    const { id } = await context.params;
+    const existingEvent = await Event.findById(id);    
+
     if (!existingEvent) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
@@ -90,7 +94,7 @@ export async function PATCH(
     }
 
     const updatedEvent = await Event.findByIdAndUpdate(
-      params.id,
+      id,
       { $set: Object.fromEntries(formData) },
       { new: true, runValidators: true }
     );
@@ -108,7 +112,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -119,7 +123,9 @@ export async function DELETE(
 
     await dbConnect();
 
-    const event = await Event.findById(params.id);
+    const { id } = await context.params;
+    const event = await Event.findById(id);
+
     if (!event) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
@@ -137,7 +143,7 @@ export async function DELETE(
       if (layoutId) await deleteImage(layoutId);
     }
 
-    await Event.findByIdAndDelete(params.id);
+    await Event.findByIdAndDelete(id);
 
     return NextResponse.json({ message: "Event deleted successfully" });
   } catch (error) {

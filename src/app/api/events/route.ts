@@ -1,4 +1,4 @@
-// src/app/api/events/route.ts
+// app/api/events/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
@@ -8,12 +8,14 @@ import { handleEventImageUploads } from "@/lib/event-upload";
 import { eventFormSchema } from "@/lib/validations/event";
 import { handleServerError } from "@/lib/server-error-handling";
 
-// GET: List events
 export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized" }, 
+        { status: 401 }
+      );
     }
 
     await dbConnect();
@@ -25,9 +27,13 @@ export async function GET(request: Request) {
 
     const isOrganizer = (session.user as { role?: string })?.role === 'organizer';
     
+    // Build query based on user role
     const query = isOrganizer 
-      ? { organizerId: session.user.id }
-      : { status: 'published' };
+      ? { organizerId: session.user.id }  // Organizers see their own events
+      : { 
+          status: 'published',  // Others only see published events
+          configurationComplete: true  // and fully configured events
+        };
 
     const events = await Event.find(query)
       .sort({ createdAt: -1 })
@@ -56,7 +62,6 @@ export async function GET(request: Request) {
   }
 }
 
-// POST: Create new event
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -96,24 +101,39 @@ export async function POST(request: Request) {
       category: formData.get('category'),
     };
 
+    // Validate event data
     const validatedData = eventFormSchema.parse(eventData);
 
+    // Handle image uploads
     const uploadResults = await handleEventImageUploads(thumbnail, layout);
 
+    // Create event in draft status
     const event = await Event.create({
       ...validatedData,
       organizerId: session.user.id,
       thumbnail: uploadResults.thumbnailUrl,
       layout: uploadResults.layoutUrl,
-      status: 'draft'
+      status: 'draft',
+      configurationComplete: false,
+      stallConfiguration: [] // Initialize empty stall configuration
     });
 
-    return NextResponse.json(event);
+    return NextResponse.json({
+      success: true,
+      event,
+      message: "Event created successfully",
+      redirectUrl: `/dashboard/events/${event._id}/stalls`
+    });
+
   } catch (error) {
     console.error("[EVENTS_POST]", error);
     const apiError = handleServerError(error);
     return NextResponse.json(
-      { error: apiError.message, errors: apiError.errors },
+      { 
+        success: false,
+        error: apiError.message, 
+        errors: apiError.errors 
+      },
       { status: apiError.statusCode }
     );
   }

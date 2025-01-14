@@ -5,6 +5,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import Link from "next/link";
+import { EventsTable } from "@/components/events/EventsTable";
+
 
 export default function EventsPage() {
   const { session } = useAuth();
@@ -26,8 +28,8 @@ export default function EventsPage() {
         )}
       </div>
 
-      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        {/* Events will be listed here */}
+      <div className="rounded-md border">
+        <EventsTable />
       </div>
     </div>
   );

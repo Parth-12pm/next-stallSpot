@@ -1,7 +1,6 @@
 // src/components/events/types/types.ts
-
 export interface Event {
-    id: string;
+    _id: string;  // Changed from id to _id to match MongoDB
     title: string;
     description: string;
     venue: string;
@@ -23,6 +22,7 @@ export interface Event {
     updatedAt: string;
 }
 
+// Rest of your types remain the same
 export interface Stall {
     stallId: number;
     displayId: string;

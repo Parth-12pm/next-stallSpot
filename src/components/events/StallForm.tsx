@@ -15,9 +15,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Save, Plus, Building2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Stall, StallFormProps } from '@/components/events/types/types';
-
-
+import { Stall, StallFormProps } from "@/components/events/types/types";
+import { useRouter } from "next/navigation";
+import { toast } from "@/hooks/use-toast";
 
 // Default categories with option for custom
 const DEFAULT_CATEGORIES = [
@@ -42,22 +42,23 @@ export default function StallForm({
   const [error, setError] = useState<string | null>(null);
   const [selectedStall, setSelectedStall] = useState<Stall | null>(null);
   const [customCategory, setCustomCategory] = useState("");
+  const [customSize, setCustomSize] = useState(""); // Add this state
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
+  const router = useRouter();
 
   // Initialize stalls with sample data
   const [stalls, setStalls] = useState<Stall[]>(() =>
     Array.from({ length: eventDetails.numberOfStalls }, (_, i) => ({
-      stallId: i + 1,  // Changed from id
+      stallId: i + 1, // Changed from id
       displayId: `${i + 1}`,
-      type: 'standard' as const,  // Add type assertion
+      type: "standard" as const, // Add type assertion
       category: eventDetails.category,
-      name: '',
-      price: '5000',
-      size: '3x3',
-      status: 'available' as const,  // Add type assertion
+      name: "",
+      price: "5000",
+      size: "3x3",
+      status: "available" as const, // Add type assertion
     }))
   );
-  
 
   useEffect(() => {
     const fetchStalls = async () => {
@@ -84,15 +85,22 @@ export default function StallForm({
     setSelectedStall(stall);
   };
 
+  const isValidSizeFormat = (size: string) => {
+    // Matches formats like "4x4", "10x5", "2.5x3", etc.
+    return /^\d+(\.\d+)?x\d+(\.\d+)?$/.test(size);
+  };
+
   const updateStallDetails = (field: keyof Stall, value: string) => {
     if (!selectedStall || readOnly) return;
-  
+
     setStalls((prevStalls) =>
       prevStalls.map((stall) =>
-        stall.stallId === selectedStall.stallId ? { ...stall, [field]: value } : stall
+        stall.stallId === selectedStall.stallId
+          ? { ...stall, [field]: value }
+          : stall
       )
     );
-  
+
     setSelectedStall((prev) => (prev ? { ...prev, [field]: value } : prev));
   };
 
@@ -124,17 +132,34 @@ export default function StallForm({
     try {
       setIsLoading(true);
       setError(null);
-
+  
+      // Validate stall configurations
+      const invalidStalls = stalls.filter(
+        stall => stall.size === "custom" || !isValidSizeFormat(stall.size)
+      );
+  
+      if (invalidStalls.length > 0) {
+        throw new Error("All stalls must have valid sizes");
+      }
+  
       if (onSave) {
         await onSave(stalls);
       } else {
         const response = await fetch(`/api/events/${eventId}/stalls`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ stalls }),
+          body: JSON.stringify({ 
+            stalls,
+            configurationComplete: true
+          }),
         });
-
+  
         if (!response.ok) throw new Error("Failed to save stalls");
+  
+        toast({
+          title: "Success",
+          description: "Stall configuration saved. You can now preview and publish your event.",
+        });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save stalls");
@@ -147,10 +172,14 @@ export default function StallForm({
     if (!isOrganizer) {
       // Non-organizer view
       return status === "available"
-        ? `bg-green-100 border-green-300 ${type === "premium" ? "border-yellow-400" : ""}`
-        : `bg-gray-100 border-gray-300 ${type === "premium" ? "border-yellow-400" : ""}`;
+        ? `bg-green-100 border-green-300 ${
+            type === "premium" ? "border-yellow-400" : ""
+          }`
+        : `bg-gray-100 border-gray-300 ${
+            type === "premium" ? "border-yellow-400" : ""
+          }`;
     }
-  
+
     // Organizer view - base colors for status
     const colors = {
       available: "bg-green-100 border-green-300",
@@ -158,7 +187,7 @@ export default function StallForm({
       blocked: "bg-red-100 border-red-300",
       booked: "bg-blue-100 border-blue-300",
     };
-  
+
     // Add premium indicator if needed
     return `${colors[status]} ${type === "premium" ? "border-yellow-400" : ""}`;
   };
@@ -169,10 +198,21 @@ export default function StallForm({
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Stall Configuration</h1>
           {isOrganizer && !readOnly && (
-            <Button onClick={handleSave} disabled={isLoading}>
-              <Save className="w-4 h-4 mr-2" />
-              {isLoading ? "Saving..." : "Save Changes"}
-            </Button>
+            <div className="flex gap-4">
+              <Button onClick={handleSave} disabled={isLoading}>
+                <Save className="w-4 h-4 mr-2" />
+                {isLoading ? "Saving..." : "Save Changes"}
+              </Button>
+              <Button
+                onClick={() =>
+                  router.push(`/dashboard/events/${eventId}/preview`)
+                }
+                disabled={!stalls.length}
+                variant="outline"
+              >
+                Preview & Publish
+              </Button>
+            </div>
           )}
         </div>
 
@@ -367,26 +407,87 @@ export default function StallForm({
                       {!isOrganizer ? (
                         <div className="text-sm font-medium">
                           {selectedStall.size}
+                          {selectedStall.size !== "custom" && " ft"}
                         </div>
                       ) : (
-                        <Select
-                          value={selectedStall.size}
-                          onValueChange={(value) =>
-                            updateStallDetails("size", value)
-                          }
-                          disabled={readOnly}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select size" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="2x2">2ft x 2ft</SelectItem>
-                            <SelectItem value="3x3">3ft x 3ft</SelectItem>
-                            <SelectItem value="5x5">5ft x 5ft</SelectItem>
-                            <SelectItem value="10x10">10ft x 10ft</SelectItem>
-                            <SelectItem value="custom">Custom</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <>
+                          <Select
+                            value={
+                              selectedStall.size.match(
+                                /^\d+(\.\d+)?x\d+(\.\d+)?$/
+                              )
+                                ? "custom"
+                                : selectedStall.size
+                            }
+                            onValueChange={(value) => {
+                              if (value === "custom") {
+                                setCustomSize("");
+                                updateStallDetails("size", "");
+                              } else {
+                                setCustomSize("");
+                                updateStallDetails("size", value);
+                              }
+                            }}
+                            disabled={readOnly}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select size" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="2x2">2ft x 2ft</SelectItem>
+                              <SelectItem value="3x3">3ft x 3ft</SelectItem>
+                              <SelectItem value="5x5">5ft x 5ft</SelectItem>
+                              <SelectItem value="10x10">10ft x 10ft</SelectItem>
+                              <SelectItem value="custom">
+                                Custom Size
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+
+                          {(selectedStall.size === "custom" ||
+                            selectedStall.size.match(
+                              /^\d+(\.\d+)?x\d+(\.\d+)?$/
+                            )) && (
+                            <div className="flex gap-2 mt-2">
+                              <div className="relative flex-1">
+                                <Input
+                                  value={customSize || selectedStall.size}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    setCustomSize(value);
+                                    if (isValidSizeFormat(value)) {
+                                      updateStallDetails("size", value);
+                                    }
+                                  }}
+                                  placeholder="Enter size (e.g., 4x4)"
+                                  disabled={readOnly}
+                                  className={
+                                    !isValidSizeFormat(
+                                      customSize || selectedStall.size
+                                    )
+                                      ? "border-red-500"
+                                      : ""
+                                  }
+                                />
+                                <div className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                                  ft
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          {(selectedStall.size === "custom" ||
+                            selectedStall.size.match(
+                              /^\d+(\.\d+)?x\d+(\.\d+)?$/
+                            )) &&
+                            !isValidSizeFormat(
+                              customSize || selectedStall.size
+                            ) && (
+                              <p className="text-xs text-red-500 mt-1">
+                                Please enter size in format: widthxheight (e.g.,
+                                4x4)
+                              </p>
+                            )}
+                        </>
                       )}
                     </div>
                   </div>

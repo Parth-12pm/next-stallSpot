@@ -25,7 +25,8 @@ const StallConfigurationSchema = z.object({
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
+
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -38,7 +39,9 @@ export async function GET(
 
     await dbConnect();
 
-    const event = await Event.findById(params.id);
+    const { id } = await context.params;
+    const event = await Event.findById(id);
+
     if (!event) {
       return NextResponse.json(
         { error: "Event not found" }, 
@@ -94,7 +97,7 @@ export async function GET(
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -108,7 +111,9 @@ export async function POST(
 
     await dbConnect();
 
-    const event = await Event.findById(params.id);
+    const { id } = await context.params;
+    const event = await Event.findById(id);
+
     if (!event) {
       return NextResponse.json(
         { error: "Event not found" }, 
@@ -158,7 +163,7 @@ export async function POST(
     
     // Update event with new stall configuration
     const updatedEvent = await Event.findByIdAndUpdate(
-      params.id,
+      id,
       { 
         $set: { 
           stallConfiguration: validatedData.stalls,
@@ -191,7 +196,7 @@ export async function POST(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -205,7 +210,9 @@ export async function PATCH(
 
     await dbConnect();
 
-    const event = await Event.findById(params.id);
+    const { id } = await context.params;
+    const event = await Event.findById(id);
+
     if (!event) {
       return NextResponse.json(
         { error: "Event not found" }, 
@@ -228,7 +235,7 @@ export async function PATCH(
     // Update specific stall
     const updatedEvent = await Event.findOneAndUpdate(
       { 
-        _id: params.id,
+        _id: id,
         'stallConfiguration.stallId': stallId
       },
       {

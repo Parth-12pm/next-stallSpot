@@ -17,6 +17,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from "next/navigation";
+import { toast } from "@/hooks/use-toast";
 
 interface FormState {
   eventName: string;
@@ -153,64 +154,90 @@ export default function EventForm({ onSubmit }: EventFormProps) {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setSubmitError(null);
+// In EventForm.tsx, update the handleSubmit function
 
-    if (validateForm()) {
-      setIsSubmitting(true);
+const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  setSubmitError(null);
 
-      try {
-        const formDataToSend = new FormData();
+  if (validateForm()) {
+    setIsSubmitting(true);
 
-        // Add form fields
-        Object.entries(formData).forEach(([key, value]) => {
-          if (Array.isArray(value)) {
-            value.forEach((v) => formDataToSend.append(key, v));
-          } else {
-            formDataToSend.append(key, value.toString());
-          }
+    try {
+      const formDataToSend = new FormData();
+
+      // Add form fields
+      Object.entries(formData).forEach(([key, value]) => {
+        if (Array.isArray(value)) {
+          value.forEach((v) => formDataToSend.append(key, v));
+        } else {
+          formDataToSend.append(key, value.toString());
+        }
+      });
+
+      // Add files
+      const layoutInput = document.getElementById(
+        "layout"
+      ) as HTMLInputElement;
+      const thumbnailInput = document.getElementById(
+        "thumbnail"
+      ) as HTMLInputElement;
+
+      if (layoutInput?.files?.[0]) {
+        formDataToSend.append("layout", layoutInput.files[0]);
+      }
+      if (thumbnailInput?.files?.[0]) {
+        formDataToSend.append("thumbnail", thumbnailInput.files[0]);
+      }
+
+      if (onSubmit) {
+        await onSubmit(formDataToSend);
+      } else {
+        const response = await fetch("/api/events", {
+          method: "POST",
+          body: formDataToSend,
         });
 
-        // Add files
-        const layoutInput = document.getElementById(
-          "layout"
-        ) as HTMLInputElement;
-        const thumbnailInput = document.getElementById(
-          "thumbnail"
-        ) as HTMLInputElement;
+        const data = await response.json();
 
-        if (layoutInput?.files?.[0]) {
-          formDataToSend.append("layout", layoutInput.files[0]);
-        }
-        if (thumbnailInput?.files?.[0]) {
-          formDataToSend.append("thumbnail", thumbnailInput.files[0]);
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to create event");
         }
 
-        if (onSubmit) {
-          await onSubmit(formDataToSend);
-        } else {
-          const response = await fetch("/api/events", {
-            method: "POST",
-            body: formDataToSend,
+        if (data.success) {
+          // Show success notification
+          toast({
+            title: "Success!",
+            description: "Event created successfully. Redirecting to stall configuration...",
+            duration: 3000,
           });
 
-          if (!response.ok) {
-            throw new Error("Failed to create event");
-          }
-
-          const result = await response.json();
-          router.push(`/dashboard/events/${result._id}`);
+          // Small delay for the toast to be visible
+          setTimeout(() => {
+            router.push(data.redirectUrl);
+          }, 1500);
+        } else {
+          throw new Error(data.error || "Failed to create event");
         }
-      } catch (error) {
-        setSubmitError(
-          error instanceof Error ? error.message : "Failed to create event"
-        );
-      } finally {
-        setIsSubmitting(false);
       }
+    } catch (error) {
+      console.error("Event creation error:", error);
+      setSubmitError(
+        error instanceof Error ? error.message : "Failed to create event"
+      );
+      
+      // Show error notification
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to create event",
+        variant: "destructive",
+        duration: 5000,
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-  };
+  }
+};
 
   return (
     <div className="min-h-screen bg-background py-8 px-2">
