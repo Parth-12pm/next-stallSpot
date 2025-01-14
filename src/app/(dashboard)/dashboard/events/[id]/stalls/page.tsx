@@ -1,15 +1,23 @@
-// /app/(dashboard)/dashboard/events/[id]/stalls/page.tsx
+/* eslint-disable @typescript-eslint/no-unused-vars */
+// src/app/(dashboard)/dashboard/events/[id]/stalls/page.tsx
 import { Suspense } from 'react';
 import StallManagementContent from './StallManagementContent';
+import React from 'react';
 
-export default function StallManagementPage({
+interface PageProps {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+export default async function StallManagementPage({
   params,
-}: {
-  params: { id: string };
-}) {
+  searchParams
+}: PageProps) {
+  const { id } = await params;
+
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <StallManagementContent id={params.id} />
+      <StallManagementContent id={id} />
     </Suspense>
   );
 }
