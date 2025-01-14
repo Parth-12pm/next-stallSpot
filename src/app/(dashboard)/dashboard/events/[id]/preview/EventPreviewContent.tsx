@@ -1,4 +1,4 @@
-// app/(dashboard)/dashboard/events/[id]/preview/EventPreviewContent.tsx
+// src/app/(dashboard)/dashboard/events/[id]/preview/EventPreviewContent.tsx
 'use client';
 
 import { useState } from 'react';
@@ -34,6 +34,7 @@ export default function EventPreviewContent({ id }: Props) {
         throw new Error(data.error || 'Failed to publish event');
       }
 
+      // Redirect to event details page after successful publish
       router.push(`/dashboard/events/${id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to publish event');
@@ -49,6 +50,7 @@ export default function EventPreviewContent({ id }: Props) {
   return (
     <div className="relative min-h-screen pb-10">
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <Button
             variant="ghost"
@@ -74,6 +76,7 @@ export default function EventPreviewContent({ id }: Props) {
           </div>
         </div>
 
+        {/* Error Alert */}
         {error && (
           <Alert variant="destructive" className="mb-6">
             <AlertCircle className="h-4 w-4" />
@@ -81,6 +84,7 @@ export default function EventPreviewContent({ id }: Props) {
           </Alert>
         )}
 
+        {/* Preview */}
         <div className="bg-background rounded-lg shadow-sm">
           <EventPreview eventId={id} isOrganizer={true} />
         </div>
