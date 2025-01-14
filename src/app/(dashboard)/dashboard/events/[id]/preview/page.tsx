@@ -1,16 +1,21 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // src/app/(dashboard)/dashboard/events/[id]/preview/page.tsx
 import { Suspense } from 'react';
 import EventPreviewContent from './EventPreviewContent';
 import React from 'react';
 
-type PageProps = {
+interface PageProps {
   params: Promise<{ id: string }>;
-  searchParams?: { [key: string]: string | string[] | undefined };
-};
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
 
-export default async function EventPreviewPage({ params }: PageProps) {
-  // Await the params
+export default async function EventPreviewPage({ 
+  params,
+  searchParams 
+}: PageProps) {
   const { id } = await params;
+  // Can also await searchParams if needed
+  // const searchParamsData = await searchParams;
 
   return (
     <Suspense fallback={<div>Loading preview...</div>}>
