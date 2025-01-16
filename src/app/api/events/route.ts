@@ -1,7 +1,7 @@
 // app/api/events/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]/route";
+import { authOptions } from "../auth/[...nextauth]/auth-options";
 import dbConnect from "@/lib/mongodb";
 import Event from "@/models/Event";
 import { handleEventImageUploads } from "@/lib/event-upload";
