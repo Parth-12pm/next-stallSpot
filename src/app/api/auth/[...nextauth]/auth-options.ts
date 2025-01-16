@@ -44,9 +44,6 @@ export const authOptions: AuthOptions = {
          const isValid = await bcrypt.compare(credentials.password, dbUser.password);
          if (!isValid) return null;
          
-         // Debug log
-         console.log('DB User:', dbUser);
-
          return {
            id: dbUser._id.toString(),
            name: dbUser.name,
@@ -65,25 +62,18 @@ export const authOptions: AuthOptions = {
  callbacks: {
    async jwt({ token, user }) {
      if (user) {
-       console.log('Setting JWT from user:', user);
        token.id = user.id;
        token.role = user.role;
        token.profileComplete = user.profileComplete;
      }
-     
-     console.log('JWT Token:', token);
      return token;
    },
    async session({ session, token }) {
-     console.log('Setting session from token:', token);
-     
      if (session?.user) {
        session.user.id = token.id;
        session.user.role = token.role;
        session.user.profileComplete = token.profileComplete;
      }
-     
-     console.log('Final session:', session);
      return session;
    }
  },
@@ -94,6 +84,6 @@ export const authOptions: AuthOptions = {
    strategy: 'jwt',
    maxAge: 30 * 24 * 60 * 60, // 30 days
  },
- debug: true
+ debug: process.env.NODE_ENV === 'development'
 };
 
