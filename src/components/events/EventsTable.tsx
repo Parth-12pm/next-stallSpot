@@ -123,7 +123,7 @@ export function EventsTable() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => router.push(`/dashboard/events/${event._id}`)}>
+                    <DropdownMenuItem onClick={() => router.push(`/dashboard/events/${event._id}/preview`)}>
                       <Eye className="mr-2 h-4 w-4" />
                       View
                     </DropdownMenuItem>

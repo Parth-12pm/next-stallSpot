@@ -18,6 +18,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
+import { Event } from './types/types';
 
 interface FormState {
   eventName: string;
@@ -35,6 +36,13 @@ interface FormState {
 
 interface EventFormProps {
   onSubmit?: (formData: globalThis.FormData) => Promise<void>;
+}
+
+// In EventForm.tsx
+interface EventFormProps {
+  onSubmit?: (formData: globalThis.FormData) => Promise<void>;
+  initialData?: Event;  // Add this for edit mode
+  isEditing?: boolean;  // Add this to toggle edit/create behavior
 }
 
 interface FormErrors {
@@ -56,23 +64,42 @@ const facilities = [
   { id: "catering", label: "Catering" },
 ];
 
-export default function EventForm({ onSubmit }: EventFormProps) {
+export default function EventForm({ onSubmit, initialData, isEditing = false  }: EventFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState<FormState>({
-    eventName: "",
-    description: "",
-    venue: "",
-    numberOfStalls: "10",
-    startDate: "",
-    endDate: "",
-    startTime: "",
-    endTime: "",
-    entryFee: "",
-    facilities: [],
-    category: "art",
+ 
+  const [formData, setFormData] = useState<FormState>(() => {
+    if (initialData) {
+      return {
+        eventName: initialData.title,
+        description: initialData.description,
+        venue: initialData.venue,
+        numberOfStalls: initialData.numberOfStalls.toString(),
+        startDate: new Date(initialData.startDate).toISOString().split('T')[0],
+        endDate: new Date(initialData.endDate).toISOString().split('T')[0],
+        startTime: initialData.startTime,
+        endTime: initialData.endTime,
+        entryFee: initialData.entryFee || '',
+        facilities: initialData.facilities,
+        category: initialData.category,
+      };
+    }
+
+    return {
+      eventName: "",
+      description: "",
+      venue: "",
+      numberOfStalls: "10",
+      startDate: "",
+      endDate: "",
+      startTime: "",
+      endTime: "",
+      entryFee: "",
+      facilities: [],
+      category: "art",
+    };
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -208,7 +235,9 @@ const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
           // Show success notification
           toast({
             title: "Success!",
-            description: "Event created successfully. Redirecting to stall configuration...",
+            description: isEditing 
+              ? "Event updated successfully."
+              : "Event created successfully. Redirecting to stall configuration...",
             duration: 3000,
           });
 
@@ -243,12 +272,16 @@ const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     <div className="min-h-screen bg-background py-8 px-2">
       <div className="max-w-[1400px] mx-auto bg-card rounded-xl shadow-lg p-6 sm:p-8">
         <div className="mb-10">
-          <div className="text-center mb-6">
-            <h1 className="text-3xl font-bold mb-4">Create New Event</h1>
-            <p className="text-muted-foreground text-lg">
-              Fill in the details below to create a new exhibition event.
-            </p>
-          </div>
+<div className="text-center mb-6">
+  <h1 className="text-3xl font-bold mb-4">
+    {isEditing ? 'Edit Event' : 'Create New Event'}
+  </h1>
+  <p className="text-muted-foreground text-lg">
+    {isEditing 
+      ? 'Update your exhibition event details below.'
+      : 'Fill in the details below to create a new exhibition event.'}
+  </p>
+</div>
 
           {submitError && (
             <Alert variant="destructive" className="mb-6">
@@ -490,13 +523,15 @@ const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
 
           {/* Eighth Row: Submit Button */}
           <div className="pt-4 flex justify-end">
-            <Button
-              type="submit"
-              className="w-full md:w-auto h-12 px-12 text-lg"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Creating Event..." : "Create Event"}
-            </Button>
+          <Button
+  type="submit"
+  className="w-full md:w-auto h-12 px-12 text-lg"
+  disabled={isSubmitting}
+>
+  {isSubmitting 
+    ? (isEditing ? "Updating Event..." : "Creating Event...") 
+    : (isEditing ? "Update Event" : "Create Event")}
+</Button>
           </div>
         </form>
       </div>
