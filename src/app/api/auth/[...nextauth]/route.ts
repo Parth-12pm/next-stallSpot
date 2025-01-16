@@ -5,30 +5,6 @@ import bcrypt from 'bcryptjs';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 
-// Move the type declarations outside
-declare module 'next-auth' {
-  interface Session {
-    user: {
-      id?: string;
-      name?: string | null;
-      email?: string | null;
-      image?: string | null;
-      role?: 'organizer' | 'vendor' | null;
-      profileComplete?: boolean;
-    };
-  }
-
-  interface User {
-    id?: string;
-    name?: string;
-    email?: string;
-    role?: 'organizer' | 'vendor';
-    profileComplete?: boolean;
-    image?: string | null;
-  }
-}
-
-// Define the config without exporting it
 const config: AuthOptions = {
   providers: [
     CredentialsProvider({
@@ -45,7 +21,7 @@ const config: AuthOptions = {
           
           await dbConnect();
           
-          const user = await User.findOne({ email: credentials.email }).lean();
+          const user = await User.findOne({ email: credentials.email });
           if (!user) {
             return null;
           }
@@ -63,7 +39,9 @@ const config: AuthOptions = {
             profileComplete: user.profileComplete,
             image: user.profilePicture || null
           };
-        } catch (error) {
+        } catch(error) {
+          // Error handling without unused parameter
+          console.error('Auth error:', error instanceof Error ? error.message : 'Unknown error');
           return null;
         }
       }
@@ -96,11 +74,6 @@ const config: AuthOptions = {
   }
 };
 
-// Create and export the handler
 const handler = NextAuth(config);
-
-// Export the handlers as required by Next.js API routes
 export { handler as GET, handler as POST };
-
-// Export config for use in server components
 export const authOptions = config;
