@@ -17,6 +17,7 @@ interface EventDetails {
   title: string;
   category: string;
   numberOfStalls: number;
+  layout: string;
   configurationComplete: boolean;
 }
 
@@ -47,6 +48,7 @@ export default function StallManagementContent({ id }: Props) {
           title: data.title,
           category: data.category,
           numberOfStalls: data.numberOfStalls,
+          layout: data.layout,
           configurationComplete: data.configurationComplete
         });
       } catch (err) {
@@ -161,7 +163,8 @@ export default function StallManagementContent({ id }: Props) {
       eventId={id as string}
       eventDetails={{
         category: eventDetails.category,
-        numberOfStalls: eventDetails.numberOfStalls
+        numberOfStalls: eventDetails.numberOfStalls,
+        layout: eventDetails.layout
       }}
       onSave={handleStallsSave}
       isOrganizer={true}

@@ -162,6 +162,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     </SidebarMenuButton>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-[200px]">
+                  <DropdownMenuItem asChild>
+                      <Link href="/">Home</Link>
+                    </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link href="/dashboard/settings">Profile</Link>
                     </DropdownMenuItem>

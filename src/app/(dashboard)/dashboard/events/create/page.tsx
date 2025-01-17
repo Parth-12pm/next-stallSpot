@@ -31,7 +31,6 @@ export default function CreateEventPage() {
       }
 
       const event = await response.json();
-      
       // Show success toast
       toast({
         title: "Success!",

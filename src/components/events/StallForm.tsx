@@ -18,6 +18,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Stall, StallFormProps } from "@/components/events/types/types";
 import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
+import Image from "next/image";
 
 // Default categories with option for custom
 const DEFAULT_CATEGORIES = [
@@ -229,7 +230,19 @@ export default function StallForm({
               <h2 className="text-xl font-semibold mb-4">Stall Layout</h2>
               <div className="aspect-video bg-muted rounded-lg overflow-hidden mb-6">
                 <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                  Layout will be displayed here
+                              {eventDetails.layout ? (
+                                <Image
+                                  src={eventDetails.layout}
+                                  alt="Event Layout"
+                                  className="w-full h-full object-cover"
+                                  width={800}
+                                  height={600}
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                                  No thumbnail available
+                                </div>
+                              )}
                 </div>
               </div>
               {/* Add max height with scrolling */}

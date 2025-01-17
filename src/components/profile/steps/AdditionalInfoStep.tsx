@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { validateProfileData } from '@/components/profile/utils/profile';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-
+import { useRouter } from 'next/navigation';
 interface AdditionalInfoStepProps extends StepProps {
   onSubmit: () => Promise<void>;
   loading: boolean;
@@ -23,6 +23,7 @@ export function AdditionalInfoStep({
   loading
 }: AdditionalInfoStepProps) {
   const { data: session } = useSession();
+  const router = useRouter();
   const { toast } = useToast();
   const [errors, setErrors] = useState<Record<string, string>>({});
   
@@ -50,8 +51,20 @@ export function AdditionalInfoStep({
       });
       return;
     }
-    await onSubmit();
+  
+    try {
+      await onSubmit(); // Using the onSubmit prop here
+      router.replace('/dashboard');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to complete profile",
+        variant: "destructive",
+      });
+    }
   };
+  
+  
 
   return (
     <div className="space-y-6">

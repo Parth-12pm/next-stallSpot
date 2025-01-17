@@ -1,4 +1,3 @@
-// lib/validations/event.ts
 import { z } from 'zod';
 
 export const eventFormSchema = z.object({
@@ -14,27 +13,8 @@ export const eventFormSchema = z.object({
   numberOfStalls: z.number()
     .min(1, 'Must have at least 1 stall')
     .max(1000, 'Cannot exceed 1000 stalls'),
-  startDate: z.string()
-    .refine(date => {
-      const eventDate = new Date(date);
-      const today = new Date();
-      // Reset time to midnight for date comparison
-      eventDate.setHours(0, 0, 0, 0);
-      today.setHours(0, 0, 0, 0);
-      return eventDate >= today;
-    }, {
-      message: 'Start date must be today or in the future',
-    }),
-  endDate: z.string()
-    .refine(date => {
-      const eventDate = new Date(date);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      eventDate.setHours(0, 0, 0, 0);
-      return eventDate >= today;
-    }, {
-      message: 'End date must be today or in the future',
-    }),
+  startDate: z.string(),
+  endDate: z.string(),
   startTime: z.string(),
   endTime: z.string(),
   entryFee: z.string()
@@ -42,15 +22,23 @@ export const eventFormSchema = z.object({
     .optional(),
   facilities: z.array(z.string()),
   category: z.string(),
-  thumbnail: z.any().optional(), // Will be handled separately
-  layout: z.any().optional(),    // Will be handled separately
+  thumbnail: z.any().optional(),
+  layout: z.any().optional(),
 }).refine((data) => {
-  const startDate = new Date(`${data.startDate}T${data.startTime}`);
-  const endDate = new Date(`${data.endDate}T${data.endTime}`);
-  return endDate > startDate;
+  const startDateTime = new Date(`${data.startDate.split('T')[0]}T${data.startTime}`);
+  const endDateTime = new Date(`${data.endDate.split('T')[0]}T${data.endTime}`);
+  
+  // Check if dates are the same
+  const sameDay = startDateTime.toDateString() === endDateTime.toDateString();
+  
+  if (sameDay) {
+    return data.startTime < data.endTime;
+  }
+  
+  return endDateTime > startDateTime;
 }, {
   message: "End date/time must be after start date/time",
-  path: ["endDate"], // Shows error on the end date field
+  path: ["endDate"],
 });
 
 export type EventFormData = z.infer<typeof eventFormSchema>;

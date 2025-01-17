@@ -1,12 +1,15 @@
 // src/components/events/types/types.ts
+import type { DateRange } from "react-day-picker"
+
+
 export interface Event {
     _id: string;  // Changed from id to _id to match MongoDB
     title: string;
     description: string;
     venue: string;
     numberOfStalls: number;
-    startDate: string;
-    endDate: string;
+    startDate: Date;
+    endDate: Date;
     startTime: string;
     endTime: string;
     entryFee?: string;
@@ -39,6 +42,7 @@ export interface StallFormProps {
     eventDetails: {
         category: string;
         numberOfStalls: number;
+        layout: string;
     };
     onSave?: (stalls: Stall[]) => Promise<void>;
     readOnly?: boolean;
@@ -53,8 +57,8 @@ export interface EventData {
     title: string;
     thumbnail: string;
     description: string;
-    startDate: string;
-    endDate: string;
+    startDate: Date;
+    endDate: Date;
     startTime: string;
     endTime: string;
     venue: string;
@@ -79,3 +83,14 @@ export interface EventApiResponse {
     configurationComplete: boolean;
 }
 
+export interface FilterState {
+    search: string
+    dateRange: DateRange | undefined
+    category: string
+    selectedTags: string[]
+    stallTypes: string[]
+    facilities: string[]
+    priceRange: [number, number]
+    venue: string[]
+  }
+  

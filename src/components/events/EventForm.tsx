@@ -18,15 +18,15 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
-import { Event } from './types/types';
+import { Event } from "./types/types";
 
 interface FormState {
   eventName: string;
   description: string;
   venue: string;
   numberOfStalls: string;
-  startDate: string;
-  endDate: string;
+  startDate: Date;
+  endDate: Date;
   startTime: string;
   endTime: string;
   entryFee: string;
@@ -41,19 +41,19 @@ interface EventFormProps {
 // In EventForm.tsx
 interface EventFormProps {
   onSubmit?: (formData: globalThis.FormData) => Promise<void>;
-  initialData?: Event;  // Add this for edit mode
-  isEditing?: boolean;  // Add this to toggle edit/create behavior
+  initialData?: Event; // Add this for edit mode
+  isEditing?: boolean; // Add this to toggle edit/create behavior
 }
 
 interface FormErrors {
   eventName?: string;
   description?: string;
   venue?: string;
-  startDate?: string;
-  endDate?: string;
+  startDate?: Date;
+  endDate?: Date;
   startTime?: string;
   endTime?: string;
-  }
+}
 
 const facilities = [
   { id: "wifi", label: "WiFi" },
@@ -64,12 +64,15 @@ const facilities = [
   { id: "catering", label: "Catering" },
 ];
 
-export default function EventForm({ onSubmit, initialData, isEditing = false  }: EventFormProps) {
+export default function EventForm({
+  onSubmit,
+  initialData,
+  isEditing = false,
+}: EventFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
- 
   const [formData, setFormData] = useState<FormState>(() => {
     if (initialData) {
       return {
@@ -77,11 +80,11 @@ export default function EventForm({ onSubmit, initialData, isEditing = false  }:
         description: initialData.description,
         venue: initialData.venue,
         numberOfStalls: initialData.numberOfStalls.toString(),
-        startDate: new Date(initialData.startDate).toISOString().split('T')[0],
-        endDate: new Date(initialData.endDate).toISOString().split('T')[0],
+        startDate: new Date(initialData.startDate),
+        endDate: new Date(initialData.endDate),
         startTime: initialData.startTime,
         endTime: initialData.endTime,
-        entryFee: initialData.entryFee || '',
+        entryFee: initialData.entryFee || "",
         facilities: initialData.facilities,
         category: initialData.category,
       };
@@ -92,8 +95,8 @@ export default function EventForm({ onSubmit, initialData, isEditing = false  }:
       description: "",
       venue: "",
       numberOfStalls: "10",
-      startDate: "",
-      endDate: "",
+      startDate: new Date(),
+      endDate: new Date(),
       startTime: "",
       endTime: "",
       entryFee: "",
@@ -118,7 +121,7 @@ export default function EventForm({ onSubmit, initialData, isEditing = false  }:
     ];
 
     const filledFields = fields.filter(
-      (field) => field && field.trim() !== ""
+      (field) => field && (typeof field === 'string' ? field.trim() !== "" : true)
     ).length;
     const hasFacilities = formData.facilities.length > 0;
 
@@ -133,7 +136,7 @@ export default function EventForm({ onSubmit, initialData, isEditing = false  }:
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: name.includes("Date") ? new Date(value) : value,
     }));
 
     if (errors[name as keyof FormErrors]) {
@@ -146,142 +149,170 @@ export default function EventForm({ onSubmit, initialData, isEditing = false  }:
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
+    
     if (!formData.eventName || formData.eventName.length < 2) {
       newErrors.eventName = "Event name must be at least 2 characters.";
     }
+    
     if (!formData.description || formData.description.length < 10) {
       newErrors.description = "Description must be at least 10 characters.";
     }
+    
     if (!formData.venue) {
       newErrors.venue = "Venue is required.";
     }
-    if (!formData.startDate) {
-      newErrors.startDate = "Start date is required.";
+    
+  // Date validations with user-friendly messages
+  if (formData.startDate && formData.endDate && formData.startTime && formData.endTime) {
+    const startDateTime = new Date(formData.startDate);
+    const endDateTime = new Date(formData.endDate);
+    
+    const [startHours, startMinutes] = formData.startTime.split(':');
+    const [endHours, endMinutes] = formData.endTime.split(':');
+    
+    startDateTime.setHours(parseInt(startHours), parseInt(startMinutes), 0);
+    endDateTime.setHours(parseInt(endHours), parseInt(endMinutes), 0);
+    
+    // Check if dates are the same
+    const sameDay = startDateTime.toDateString() === endDateTime.toDateString();
+    
+    if (sameDay && formData.startTime >= formData.endTime) {
+      newErrors.endTime = "End time must be later than start time";
+      toast({
+        title: "Time Selection Error",
+        description: "When dates are the same, end time must be later than start time",
+        variant: "destructive"
+      });
+      return false;
     }
-    if (!formData.endDate) {
-      newErrors.endDate = "End date is required.";
+    
+    if (endDateTime <= startDateTime) {
+      newErrors.endTime = "Event end must be after start";
+      toast({
+        title: "Date/Time Error",
+        description: "Overall event end date/time must be after start date/time",
+        variant: "destructive"
+      });
+      return false;
     }
+  }
+  
     if (!formData.startTime) {
       newErrors.startTime = "Start time is required.";
     }
+    
     if (!formData.endTime) {
       newErrors.endTime = "End time is required.";
     }
-
-
-    if (formData.startDate && formData.endDate) {
-      const startDate = new Date(formData.startDate);
-      const endDate = new Date(formData.endDate);
-      if (endDate < startDate) {
-        newErrors.endDate = "End date must be after start date.";
-      }
-    }
-
+  
+  
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+  
 
-// In EventForm.tsx, update the handleSubmit function
+  // In EventForm.tsx, update the handleSubmit function
 
-const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  setSubmitError(null);
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setSubmitError(null);
 
-  if (validateForm()) {
-    setIsSubmitting(true);
+    if (validateForm()) {
+      setIsSubmitting(true);
 
-    try {
-      const formDataToSend = new FormData();
+      try {
+        const formDataToSend = new FormData();
 
-      // Add form fields
-      Object.entries(formData).forEach(([key, value]) => {
-        if (Array.isArray(value)) {
-          value.forEach((v) => formDataToSend.append(key, v));
-        } else {
-          formDataToSend.append(key, value.toString());
-        }
-      });
-
-      // Add files
-      const layoutInput = document.getElementById(
-        "layout"
-      ) as HTMLInputElement;
-      const thumbnailInput = document.getElementById(
-        "thumbnail"
-      ) as HTMLInputElement;
-
-      if (layoutInput?.files?.[0]) {
-        formDataToSend.append("layout", layoutInput.files[0]);
-      }
-      if (thumbnailInput?.files?.[0]) {
-        formDataToSend.append("thumbnail", thumbnailInput.files[0]);
-      }
-
-      if (onSubmit) {
-        await onSubmit(formDataToSend);
-      } else {
-        const response = await fetch("/api/events", {
-          method: "POST",
-          body: formDataToSend,
+        // Add form fields
+        Object.entries(formData).forEach(([key, value]) => {
+          if (Array.isArray(value)) {
+            value.forEach((v) => formDataToSend.append(key, v));
+          } else {
+            formDataToSend.append(key, value.toString());
+          }
         });
 
-        const data = await response.json();
+        // Add files
+        const layoutInput = document.getElementById(
+          "layout"
+        ) as HTMLInputElement;
+        const thumbnailInput = document.getElementById(
+          "thumbnail"
+        ) as HTMLInputElement;
 
-        if (!response.ok) {
-          throw new Error(data.error || "Failed to create event");
+        if (layoutInput?.files?.[0]) {
+          formDataToSend.append("layout", layoutInput.files[0]);
+        }
+        if (thumbnailInput?.files?.[0]) {
+          formDataToSend.append("thumbnail", thumbnailInput.files[0]);
         }
 
-        if (data.success) {
-          // Show success notification
-          toast({
-            title: "Success!",
-            description: isEditing 
-              ? "Event updated successfully."
-              : "Event created successfully. Redirecting to stall configuration...",
-            duration: 3000,
+        if (onSubmit) {
+          await onSubmit(formDataToSend);
+        } else {
+          const response = await fetch("/api/events", {
+            method: "POST",
+            body: formDataToSend,
           });
 
-          // Small delay for the toast to be visible
-          setTimeout(() => {
-            router.push(data.redirectUrl);
-          }, 1500);
-        } else {
-          throw new Error(data.error || "Failed to create event");
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || "Failed to create event");
+          }
+
+          if (data.success) {
+            // Show success notification
+            toast({
+              title: "Success!",
+              description: isEditing
+                ? "Event updated successfully."
+                : "Event created successfully. Redirecting to stall configuration...",
+              duration: 3000,
+            });
+
+            // Small delay for the toast to be visible
+            setTimeout(() => {
+              router.push(data.redirectUrl);
+            }, 1500);
+          } else {
+            throw new Error(data.error || "Failed to create event");
+          }
         }
+      } catch (error) {
+        console.error("Event creation error:", error);
+        setSubmitError(
+          error instanceof Error ? error.message : "Failed to create event"
+        );
+
+        // Show error notification
+        toast({
+          title: "Error",
+          description:
+            error instanceof Error ? error.message : "Failed to create event",
+          variant: "destructive",
+          duration: 5000,
+        });
+      } finally {
+        setIsSubmitting(false);
       }
-    } catch (error) {
-      console.error("Event creation error:", error);
-      setSubmitError(
-        error instanceof Error ? error.message : "Failed to create event"
-      );
-      
-      // Show error notification
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create event",
-        variant: "destructive",
-        duration: 5000,
-      });
-    } finally {
-      setIsSubmitting(false);
     }
-  }
-};
+  };
 
   return (
     <div className="min-h-screen bg-background py-8 px-2">
       <div className="max-w-[1400px] mx-auto bg-card rounded-xl shadow-lg p-6 sm:p-8">
         <div className="mb-10">
-<div className="text-center mb-6">
-  <h1 className="text-3xl font-bold mb-4">
-    {isEditing ? 'Edit Event' : 'Create New Event'}
-  </h1>
-  <p className="text-muted-foreground text-lg">
-    {isEditing 
-      ? 'Update your exhibition event details below.'
-      : 'Fill in the details below to create a new exhibition event.'}
-  </p>
-</div>
+          <div className="text-center mb-6">
+            <h1 className="text-3xl font-bold mb-4">
+              {isEditing ? "Edit Event" : "Create New Event"}
+            </h1>
+            <p className="text-muted-foreground text-lg">
+              {isEditing
+                ? "Update your exhibition event details below."
+                : "Fill in the details below to create a new exhibition event."}
+            </p>
+          </div>
 
           {submitError && (
             <Alert variant="destructive" className="mb-6">
@@ -363,13 +394,15 @@ const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
                 id="startDate"
                 name="startDate"
                 type="date"
-                value={formData.startDate}
+                value={formData.startDate.toISOString().split("T")[0]}
                 onChange={handleInputChange}
                 min={new Date().toISOString().split("T")[0]}
               />
               {errors.startDate && (
                 <Alert variant="destructive">
-                  <AlertDescription>{errors.startDate}</AlertDescription>
+                  <AlertDescription>
+                  {errors.startDate?.toISOString().split('T')[0]}
+                  </AlertDescription>
                 </Alert>
               )}
             </div>
@@ -380,15 +413,15 @@ const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
                 id="endDate"
                 name="endDate"
                 type="date"
-                value={formData.endDate}
+                value={formData.endDate.toISOString().split("T")[0]}
                 onChange={handleInputChange}
-                min={
-                  formData.startDate || new Date().toISOString().split("T")[0]
-                }
+                min={formData.startDate.toISOString().split("T")[0]}
               />
               {errors.endDate && (
                 <Alert variant="destructive">
-                  <AlertDescription>{errors.endDate}</AlertDescription>
+                  <AlertDescription>
+                  {errors.endDate?.toISOString().split('T')[0]}
+                  </AlertDescription>
                 </Alert>
               )}
             </div>
@@ -523,15 +556,19 @@ const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
 
           {/* Eighth Row: Submit Button */}
           <div className="pt-4 flex justify-end">
-          <Button
-  type="submit"
-  className="w-full md:w-auto h-12 px-12 text-lg"
-  disabled={isSubmitting}
->
-  {isSubmitting 
-    ? (isEditing ? "Updating Event..." : "Creating Event...") 
-    : (isEditing ? "Update Event" : "Create Event")}
-</Button>
+            <Button
+              type="submit"
+              className="w-full md:w-auto h-12 px-12 text-lg"
+              disabled={isSubmitting}
+            >
+              {isSubmitting
+                ? isEditing
+                  ? "Updating Event..."
+                  : "Creating Event..."
+                : isEditing
+                ? "Update Event"
+                : "Create Event"}
+            </Button>
           </div>
         </form>
       </div>
