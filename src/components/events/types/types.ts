@@ -83,6 +83,7 @@ export interface EventApiResponse {
     configurationComplete: boolean;
 }
 
+// First, we define what our filter state looks like
 export interface FilterState {
     search: string
     dateRange: DateRange | undefined
@@ -92,5 +93,12 @@ export interface FilterState {
     facilities: string[]
     priceRange: [number, number]
     venue: string[]
+  }
+  
+  // Then, we define the shape of our context
+  export interface FilterContextType {
+    filters: FilterState          // The current state of all filters
+    updateFilters: (key: keyof FilterState, value: FilterState[keyof FilterState]) => void  // Function to update a specific filter
+    resetFilters: () => void     // Function to reset all filters to their initial state
   }
   

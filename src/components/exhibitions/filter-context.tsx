@@ -1,32 +1,32 @@
 "use client"
 
 import { createContext, useContext, useState } from "react"
-import type { FilterState, FilterContextType } from "@/types/exhibition"
+import type { FilterState, FilterContextType } from "@/components/events/types/types"
 
+// Define initial filter state
 const initialFilters: FilterState = {
   search: "",
-  categorySearch: "",
-  selectedCategories: [],
-  selectedTags: [],
   dateRange: undefined,
-  priceRange: [5000],
-  duration: "2-3days",
-  eventTypes: [],
-  stallOptions: [],
-  locations: [],
+  category: "",
+  selectedTags: [],
+  stallTypes: [],
+  facilities: [],
+  priceRange: [0, 50000],
+  venue: [],
 }
 
-// Create context with default values
+// Create the context with default values
 const FilterContext = createContext<FilterContextType>({
   filters: initialFilters,
   updateFilters: () => null,
   resetFilters: () => null,
 })
 
+// Create the provider component
 export function FilterProvider({ children }: { children: React.ReactNode }) {
   const [filters, setFilters] = useState<FilterState>(initialFilters)
 
-  const updateFilters = (key: keyof FilterState, value: any) => {
+  const updateFilters = <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
     setFilters(prev => ({ ...prev, [key]: value }))
   }
 
@@ -34,7 +34,8 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
     setFilters(initialFilters)
   }
 
-  const value = {
+  // Create the value object that will be provided to consumers
+  const value: FilterContextType = {
     filters,
     updateFilters,
     resetFilters,
@@ -47,7 +48,8 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
   )
 }
 
-export const useFilters = () => {
+// Create a custom hook to use the filter context
+export function useFilters() {
   const context = useContext(FilterContext)
   if (!context) {
     throw new Error("useFilters must be used within a FilterProvider")

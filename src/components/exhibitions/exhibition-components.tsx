@@ -16,7 +16,7 @@ import { ExhibitionFilters } from "./exhibition-filters"
 
 interface ExhibitionComponentsProps {
   exhibitions?: Event[],
-  categories?: string[],
+  categories: string[]
 }
 
 const initialFilters: FilterState = {
@@ -152,6 +152,17 @@ export function ExhibitionComponents({ exhibitions = [] }: ExhibitionComponentsP
             resetFilters={resetFilters} 
           />
         </div>
+
+        {/* Mobile Filters in Sheet - This was moved from above the Exhibition List */}
+        <Sheet>
+          <SheetContent>
+            <ExhibitionFilters 
+              filters={filters} 
+              updateFilter={updateFilter} 
+              resetFilters={resetFilters} 
+            />
+          </SheetContent>
+        </Sheet>
 
         {/* Exhibition List */}
         <div className="flex-1">
