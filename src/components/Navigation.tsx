@@ -10,8 +10,6 @@ import {
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuContent,
-  NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import {
   DropdownMenu,
@@ -129,20 +127,9 @@ const DesktopNav = () => {
       <NavigationMenu className="hidden md:block">
         <NavigationMenuList>
           <NavigationMenuItem>
-            <NavigationMenuTrigger>Discover</NavigationMenuTrigger>
-            <NavigationMenuContent>
-              <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                <ListItem href="/exhibitions" title="Exhibitions">
-                  Browse upcoming and ongoing exhibitions
-                </ListItem>
-                <ListItem href="/vendors" title="Vendors">
-                  Connect with exhibition vendors
-                </ListItem>
-                <ListItem href="/orgprofile" title="Organizers">
-                  Find exhibition organizers
-                </ListItem>
-              </ul>
-            </NavigationMenuContent>
+            <Link href="/exhibitions" legacyBehavior passHref>
+              <NavigationMenuLink className="px-4 py-2">Exhibitions</NavigationMenuLink>
+            </Link>
           </NavigationMenuItem>
           <NavigationMenuItem>
             <Link href="/about" legacyBehavior passHref>

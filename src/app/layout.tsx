@@ -1,13 +1,14 @@
+// app/layout.tsx
 import React from "react";
 import { Inter } from "next/font/google";
 import { getServerSession } from "next-auth";
 import { AuthProvider } from "@/providers/auth-provider";
-import { Navigation } from "@/components/Navigation";
-import { Footer } from "@/components/Footer";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { ThemeProvider } from "@/components/theme-provider";
+// Import your auth options
+import { authOptions } from "@/app/api/auth/[...nextauth]/auth-options";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -16,11 +17,15 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getServerSession();
+  // Pass the auth options to getServerSession
+  const session = await getServerSession(authOptions);
+
+  // Add this console log to debug server-side session
+  console.log('Server-side session:', JSON.stringify(session, null, 2));
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} flex flex-col min-h-screen`}>
+      <body className={inter.className}>
         <ThemeProvider 
           attribute="class" 
           defaultTheme="system" 
@@ -28,13 +33,9 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider session={session}>
-            <Navigation />
-            <main className="flex-grow">
-              {children}
-              <Analytics />
-              <SpeedInsights />
-            </main>
-            <Footer />
+            {children}
+            <Analytics />
+            <SpeedInsights />
           </AuthProvider>
         </ThemeProvider>
       </body>

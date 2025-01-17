@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import Link from "next/link"
 
 // Mock data - Replace with real data from your API
 const applicationData = [
@@ -28,7 +29,9 @@ export function VendorDashboard({ user }: DashboardProps) {
           Welcome back, {user.name || "Vendor"}
         </h2>
         <div className="flex items-center space-x-2">
+          <Link href="/exhibitions">
           <Button>Browse Events</Button>
+          </Link>
         </div>
       </div>
       <Tabs defaultValue="overview" className="space-y-4">
@@ -119,7 +122,7 @@ export function VendorDashboard({ user }: DashboardProps) {
                         <p className="text-sm font-medium leading-none">Food Festival</p>
                         <p className="text-sm text-muted-foreground">Corner Stall • $300</p>
                       </div>
-                      <Badge variant="secondary">Approved</Badge>
+                      <Badge variant="default" className="bg-green-500 text-white">Approved</Badge>
                     </div>
                     <div className="flex items-center justify-between space-x-4">
                       <div className="space-y-1">
