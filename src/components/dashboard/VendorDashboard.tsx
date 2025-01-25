@@ -1,141 +1,203 @@
 "use client"
 
-import { Bar, BarChart, ResponsiveContainer } from "recharts"
-import { CircleDollarSign, Clock, Store, CheckCircle2 } from 'lucide-react'
-import { DashboardProps } from "./types"
+import { useEffect, useState } from "react"
+import { CircleDollarSign, Clock, Store, CheckCircle2 } from "lucide-react"
+import type { DashboardProps } from "./types"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Skeleton } from "@/components/ui/skeleton"
+import { ApplicationsTable } from "@/components/applications/ApplicationsTable"
 import Link from "next/link"
+import { BookingsTable } from "@/components/bookings/BookingsTable"
+import { PaymentsTable } from "@/components/payments/PaymentsTable"
 
-// Mock data - Replace with real data from your API
-const applicationData = [
-  { name: "Jan", total: 4 },
-  { name: "Feb", total: 6 },
-  { name: "Mar", total: 4 },
-  { name: "Apr", total: 8 },
-  { name: "May", total: 10 },
-  { name: "Jun", total: 12 },
-]
+interface VendorStats {
+  activeBookings: number
+  pendingApplications: number
+  totalSpent: number
+  successRate: number
+  recentApplications: Array<{
+    _id: string
+    eventId: {
+      title: string
+    }
+    status: string
+    fees: {
+      totalAmount: number
+    }
+  }>
+}
 
 export function VendorDashboard({ user }: DashboardProps) {
+  const [stats, setStats] = useState<VendorStats | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch("/api/vendor/stats")
+        if (!response.ok) throw new Error("Failed to fetch vendor stats")
+        const data = await response.json()
+        setStats(data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load stats")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchStats()
+  }, [])
+
   return (
     <div className="flex-1 space-y-4 p-4 pt-6">
       <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">
-          Welcome back, {user.name || "Vendor"}
-        </h2>
+        <h2 className="text-3xl font-bold tracking-tight">Welcome back, {user.name || "Vendor"}</h2>
         <div className="flex items-center space-x-2">
           <Link href="/exhibitions">
-          <Button>Browse Events</Button>
+            <Button>Browse Events</Button>
           </Link>
         </div>
       </div>
+
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="bookings">My Bookings</TabsTrigger>
           <TabsTrigger value="applications">Applications</TabsTrigger>
           <TabsTrigger value="payments">Payments</TabsTrigger>
         </TabsList>
+
         <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active Bookings</CardTitle>
-                <Store className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">4</div>
-                <p className="text-xs text-muted-foreground">2 upcoming this month</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pending Applications</CardTitle>
-                <Clock className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">7</div>
-                <p className="text-xs text-muted-foreground">5 new this week</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
-                <CircleDollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">$2,400</div>
-                <p className="text-xs text-muted-foreground">+$840 from last month</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
-                <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">89%</div>
-                <p className="text-xs text-muted-foreground">+2% from last month</p>
-              </CardContent>
-            </Card>
+            {isLoading ? (
+              [...Array(4)].map((_, i) => <Skeleton key={i} className="h-[120px]" />)
+            ) : (
+              <>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Active Bookings</CardTitle>
+                    <Store className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{stats?.activeBookings}</div>
+                    <p className="text-xs text-muted-foreground">Current active bookings</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Pending Applications</CardTitle>
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{stats?.pendingApplications}</div>
+                    <p className="text-xs text-muted-foreground">Awaiting response</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
+                    <CircleDollarSign className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">₹{stats?.totalSpent.toLocaleString()}</div>
+                    <p className="text-xs text-muted-foreground">Lifetime spending</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
+                    <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{stats?.successRate}%</div>
+                    <p className="text-xs text-muted-foreground">Application success rate</p>
+                  </CardContent>
+                </Card>
+              </>
+            )}
           </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <Card className="col-span-4">
-              <CardHeader>
-                <CardTitle>Application History</CardTitle>
-              </CardHeader>
-              <CardContent className="pl-2">
-                <ResponsiveContainer width="100%" height={240}>
-                  <BarChart data={applicationData}>
-                    <Bar
-                      dataKey="total"
-                      style={{
-                        fill: "hsl(var(--primary))",
-                        opacity: 0.9,
-                      }}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-            <Card className="col-span-3">
-              <CardHeader>
-                <CardTitle>Recent Applications</CardTitle>
-                <CardDescription>You have 3 pending applications</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-[220px]">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between space-x-4">
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium leading-none">Tech Expo 2024</p>
-                        <p className="text-sm text-muted-foreground">Premium Stall • $500</p>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Applications</CardTitle>
+              <CardDescription>Your latest event applications</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[220px]">
+                <div className="space-y-4">
+                  {isLoading ? (
+                    [...Array(3)].map((_, i) => <Skeleton key={i} className="h-[60px]" />)
+                  ) : stats?.recentApplications.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">No applications yet</p>
+                  ) : (
+                    stats?.recentApplications.map((application) => (
+                      <div key={application._id} className="flex items-center justify-between space-x-4">
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium leading-none">{application.eventId.title}</p>
+                          <p className="text-sm text-muted-foreground">
+                            ₹{application.fees.totalAmount.toLocaleString()}
+                          </p>
+                        </div>
+                        <Badge variant="secondary">{application.status.replace("_", " ").toUpperCase()}</Badge>
                       </div>
-                      <Badge variant="secondary">Pending</Badge>
-                    </div>
-                    <div className="flex items-center justify-between space-x-4">
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium leading-none">Food Festival</p>
-                        <p className="text-sm text-muted-foreground">Corner Stall • $300</p>
-                      </div>
-                      <Badge variant="default" className="bg-green-500 text-white">Approved</Badge>
-                    </div>
-                    <div className="flex items-center justify-between space-x-4">
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium leading-none">Craft Fair</p>
-                        <p className="text-sm text-muted-foreground">Standard Stall • $200</p>
-                      </div>
-                      <Badge variant="destructive">Rejected</Badge>
-                    </div>
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          </div>
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="bookings">
+          <Card>
+            <CardHeader>
+              <CardTitle>My Bookings</CardTitle>
+              <CardDescription>View your active and upcoming event bookings</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <BookingsTable />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="applications">
+          <Card>
+            <CardHeader>
+              <CardTitle>Your Applications</CardTitle>
+              <CardDescription>View and manage your event applications</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ApplicationsTable />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="payments">
+          <Card>
+            <CardHeader>
+              <CardTitle>Payment History</CardTitle>
+              <CardDescription>View your payment history and transaction details</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <PaymentsTable />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

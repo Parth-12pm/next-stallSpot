@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, FormEvent } from 'react';
-import { ThemeProvider } from '@/components/theme-provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -146,7 +145,6 @@ export default function VendorApplicationPage() {
   };
 
   return (
-    <ThemeProvider defaultTheme="system" storageKey="ui-theme">
       <div className="min-h-screen bg-background py-8 px-2">
         <div className="max-w-[1200px] mx-auto bg-card rounded-xl shadow-lg p-6 sm:p-8">
           <div className="mb-10">
@@ -299,6 +297,5 @@ export default function VendorApplicationPage() {
           </form>
         </div>
       </div>
-    </ThemeProvider>
   );
 }

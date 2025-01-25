@@ -2,7 +2,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { IUser } from './User';
 
-interface IStall {
+export interface IStall {
   stallId: number;
   displayId: string;
   type: 'standard' | 'premium' | 'corner';

@@ -13,6 +13,7 @@ import Image from "next/image"
 import type { Event, FilterState } from "@/components/events/types/types"
 import { tags } from "./mock"
 import { ExhibitionFilters } from "./exhibition-filters"
+import Link from "next/link"
 
 interface ExhibitionComponentsProps {
   exhibitions?: Event[],
@@ -187,8 +188,9 @@ export function ExhibitionComponents({ exhibitions = [] }: ExhibitionComponentsP
 
 function ExhibitionCard({ exhibition }: { exhibition: Event }) {
   const {
+    _id,
     title,
-    thumbnail = '/placeholder.svg?height=400&width=600',
+    thumbnail = '/placeholder.svg',
     venue,
     startDate,
     endDate,
@@ -197,7 +199,14 @@ function ExhibitionCard({ exhibition }: { exhibition: Event }) {
     entryFee = 'Free Entry',
     numberOfStalls,
     category,
-  } = exhibition
+    stallConfiguration = []
+  } = exhibition;
+
+  // Calculate price range
+  const prices = stallConfiguration.map(stall => parseInt(stall.price.replace(/[^0-9]/g, '')));
+  const minPrice = Math.min(...prices);
+  const maxPrice = Math.max(...prices);
+  const priceRange = prices.length ? `₹${minPrice.toLocaleString()} - ₹${maxPrice.toLocaleString()}` : 'Contact for pricing';
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 group border border-border">
@@ -211,7 +220,7 @@ function ExhibitionCard({ exhibition }: { exhibition: Event }) {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </div>
-        <div className="p-6 md:w-2/3">
+        <div className="p-6 md:w-2/3 flex flex-col">
           <h3 className="text-xl font-semibold mb-3 group-hover:text-primary transition-colors">
             {title}
           </h3>
@@ -232,20 +241,30 @@ function ExhibitionCard({ exhibition }: { exhibition: Event }) {
             </div>
             <div className="flex items-center gap-2">
               <IndianRupee className="h-4 w-4" />
-              <span>{entryFee}</span>
+              <span>Entry: {entryFee}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <IndianRupee className="h-4 w-4" />
+              <span>Stall Prices: {priceRange}</span>
             </div>
           </div>
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <Badge variant="secondary">
-              {numberOfStalls} stalls
-            </Badge>
-            <Badge>
-              {category}
-            </Badge>
+          <div className="mt-4 flex items-center justify-between">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary">
+                {numberOfStalls} stalls
+              </Badge>
+              <Badge>
+                {category}
+              </Badge>
+            </div>
+            <Link href={`/exhibitions/${_id}`}>
+              <Button size="sm" className="ml-auto">
+                View Details
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
     </Card>
-  )
+  );
 }
-

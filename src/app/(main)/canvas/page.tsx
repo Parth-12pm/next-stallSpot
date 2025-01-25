@@ -1,9 +1,10 @@
-import React from 'react'
-import FloorPlanEditor from '@/components/floorplan/floorplan-editor'
-const page = () => {
-  return (
-    <div><FloorPlanEditor /></div>
-  )
-}
+'use client'
+import dynamic from 'next/dynamic';
 
-export default page
+const FloorplanCanvas = dynamic(() => import('@/components/canvas/Editor'), {
+  ssr: false
+});
+
+export default function PlaygroundPage() {
+  return <FloorplanCanvas />;
+}

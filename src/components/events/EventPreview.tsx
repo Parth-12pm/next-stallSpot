@@ -1,5 +1,5 @@
-// components/events/EventPreview.tsx
 "use client";
+
 
 import React, { useEffect, useState } from "react";
 import { CalendarIcon, Clock, MapPin, Users, AlertCircle } from "lucide-react";
@@ -44,7 +44,6 @@ export default function EventPreview({ eventId, isOrganizer = false }: EventPrev
     try {
       setIsPublishing(true);
       
-      // Check if stall configuration is complete
       if (!event?.configurationComplete) {
         throw new Error("Please complete stall configuration before publishing");
       }
@@ -67,7 +66,7 @@ export default function EventPreview({ eventId, isOrganizer = false }: EventPrev
   };
 
   if (isLoading) {
-    return <div>Loading...</div>; // Add a proper loading skeleton here
+    return <div>Loading...</div>;
   }
 
   if (error || !event) {
@@ -82,7 +81,6 @@ export default function EventPreview({ eventId, isOrganizer = false }: EventPrev
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 py-8 md:px-8">
-        {/* Status Banner for Organizers */}
         {isOrganizer && (
           <div className="mb-8">
             <Alert variant={event.configurationComplete ? "default" : "destructive"}>
@@ -134,6 +132,7 @@ export default function EventPreview({ eventId, isOrganizer = false }: EventPrev
               </div>
             </div>
 
+            {/* Details sections remain the same */}
             <div className="grid gap-4">
               <div className="flex items-center gap-2">
                 <CalendarIcon className="h-5 w-5 text-muted-foreground" />
@@ -160,6 +159,7 @@ export default function EventPreview({ eventId, isOrganizer = false }: EventPrev
 
             <Separator />
 
+            {/* About Event and Facilities sections remain the same */}
             <div>
               <h2 className="text-xl font-semibold mb-3">About Event</h2>
               <p className="text-muted-foreground leading-relaxed">
@@ -184,7 +184,7 @@ export default function EventPreview({ eventId, isOrganizer = false }: EventPrev
               </div>
             </div>
 
-            {/* Action Buttons */}
+            {/* Action Buttons - Modified for vendor and organizer views */}
             <div className="pt-4 space-y-4">
               {isOrganizer ? (
                 <div className="flex gap-4">
@@ -205,13 +205,28 @@ export default function EventPreview({ eventId, isOrganizer = false }: EventPrev
                 </div>
               ) : (
                 event.status === 'published' && (
-                  <Button
-                    size="lg"
-                    className="w-full md:w-auto font-semibold text-lg"
-                    onClick={() => router.push(`/events/${eventId}/stalls`)}
-                  >
-                    View Stalls
-                  </Button>
+                  <div>
+                    <div className="mb-4 p-4 bg-muted rounded-lg">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h3 className="font-semibold">Available Stalls</h3>
+                          <p className="text-muted-foreground">
+                            {event.stallConfiguration.filter(s => s.status === 'available').length} out of {event.numberOfStalls} stalls available
+                          </p>
+                        </div>
+                        <Badge variant="secondary">
+                          Starting from ₹{Math.min(...event.stallConfiguration.map(s => parseInt(s.price))).toLocaleString()}
+                        </Badge>
+                      </div>
+                    </div>
+                    <Button
+                      size="lg"
+                      className="w-full"
+                      onClick={() => router.push(`/exhibitions/${eventId}/stalls`)}
+                    >
+                      View Available Stalls
+                    </Button>
+                  </div>
                 )
               )}
             </div>

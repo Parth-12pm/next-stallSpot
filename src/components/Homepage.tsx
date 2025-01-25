@@ -11,32 +11,17 @@ import {
 import Link from "next/link";
 import React from "react";
 import {
-  Search,
-  Calendar,
-  Camera,
-  Tag,
-  IndianRupeeIcon,
   MapPin,
   ArrowRight,
   Building2,
-  Users2,
-  Trophy,
   ArrowUpRight,
-  Globe2,
   Users,
-  TrendingUp,
   UserPlus,
   Compass,
   BookCheck,
   Clock,
   Bell,
   Shield,
-  LayoutGrid,
-  Users2Icon,
-  LineChart,
-  Palette,
-  Target,
-  BarChart3,
   Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -155,11 +140,6 @@ const SwirlyBackground = () => {
 };
 
 export default function App() {
-  const stats = [
-    { icon: Globe2, label: "Global Events", value: "1,000+" },
-    { icon: Users, label: "Monthly Visitors", value: "500K+" },
-    { icon: TrendingUp, label: "Success Rate", value: "98%" },
-  ];
 
   const upcomingEvents = [
     {
@@ -178,23 +158,6 @@ export default function App() {
     },
   ];
 
-  const howItWorks = [
-    {
-      icon: UserPlus,
-      title: "Create an Account",
-      description: "Choose your role as Exhibitor or Vendor",
-    },
-    {
-      icon: Compass,
-      title: "Explore Options",
-      description: "Browse events or available stalls",
-    },
-    {
-      icon: BookCheck,
-      title: "Book and Manage",
-      description: "Real-time stall booking and management",
-    },
-  ];
 
   const benefits = [
     {
@@ -214,28 +177,6 @@ export default function App() {
     },
   ];
 
-  const userTypes = [
-    {
-      icon: Building2,
-      title: "For Organizers",
-      description: "Powerful tools to manage your exhibitions",
-      features: [
-        { icon: LayoutGrid, text: "Interactive floor plan editor" },
-        { icon: Users2Icon, text: "Vendor management system" },
-        { icon: LineChart, text: "Real-time analytics" },
-      ],
-    },
-    {
-      icon: Users2,
-      title: "For Vendors",
-      description: "Everything you need to succeed",
-      features: [
-        { icon: Palette, text: "Booth customization" },
-        { icon: Target, text: "Lead capture tools" },
-        { icon: BarChart3, text: "Performance metrics" },
-      ],
-    },
-  ];
 
   const faqs = [
     {
@@ -275,10 +216,13 @@ export default function App() {
       {/* Hero Section - Reduced spacing */}
       <section className="relative min-h-[80vh] overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img
+          <Image
             src="https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?auto=format&fit=crop&q=80"
             alt="Exhibition Hall"
             className="w-full h-full object-cover opacity-20"
+            fill
+            priority
+            sizes="100vw"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-background/50 to-background"></div>
         </div>
@@ -311,10 +255,12 @@ export default function App() {
             {upcomingEvents.slice(0, 2).map((event) => (
               <Card key={event.title} className="overflow-hidden group">
                 <div className="relative h-48 overflow-hidden">
-                  <img
+                  <Image
                     src={event.image}
                     alt={event.title}
                     className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                    width={400}
+                    height={300}
                   />
                 </div>
                 <div className="p-6">
@@ -481,7 +427,7 @@ export default function App() {
                 Got Questions?
               </h2>
               <p className="text-lg text-muted-foreground">
-                We've got answers! Check out our FAQs to clear up any confusion
+                We&apos;ve got answers! Check out our FAQs to clear up any confusion
                 and get the most out of StallSpot.
               </p>
             </div>
@@ -508,7 +454,7 @@ export default function App() {
 
             <div className="text-center mt-12">
               <p className="text-muted-foreground mb-4">
-                Still have questions? We're here to help!
+                Still have questions? We&apos;re here to help!
               </p>
               <Button size="lg" variant="outline">
                 Contact Support
