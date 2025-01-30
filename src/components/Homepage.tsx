@@ -465,71 +465,73 @@ export default function App() {
         </div>
       </section>
 
-      <div className="py-36 flex items-center justify-center p-8">
-        <div className="max-w-6xl w-full">
-          <div className="text-center mb-12">
-            <h1 className="text-5xl font-bold tracking-tight">
+      <div className="py-24 flex items-center justify-center p-6">
+        <div className="max-w-5xl w-full">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold tracking-tight">
               Choose Your Role
             </h1>
-            <p className="text-muted-foreground mt-4 text-lg">
+            <p className="text-muted-foreground mt-3 text-base">
               Select how you want to use StallSpot
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-12">
-            <Card className="relative cursor-pointer hover:border-primary transition-colors p-6">
+          <div className="grid md:grid-cols-2 gap-8">
+            <Card className="relative cursor-pointer hover:border-primary transition-colors p-5">
               <Link
                 href="/auth/signup?role=organizer"
                 className="absolute inset-0"
               />
-              <CardHeader className="pb-8">
-                <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center mb-6">
-                  <Building2 className="h-8 w-8 text-primary" />
+              <CardHeader className="pb-6">
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <Building2 className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle className="text-2xl mb-2">
+                <CardTitle className="text-xl mb-2">
                   Exhibition Organizer
                 </CardTitle>
-                <CardDescription className="text-base">
+                <CardDescription className="text-sm">
                   Create and manage exhibitions, handle vendor applications, and
                   oversee event operations
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-4 text-base text-muted-foreground mb-8">
+                <ul className="space-y-3 text-sm text-muted-foreground mb-6">
                   <li>• Create and manage multiple exhibitions</li>
                   <li>• Handle vendor applications</li>
                   <li>• Access detailed analytics</li>
                   <li>• Manage floor plans and layouts</li>
                 </ul>
-                <Button className="w-full mt-6 py-6 text-lg">
+                <Button className="w-full mt-4 py-4 text-base">
                   Continue as Organizer
                 </Button>
               </CardContent>
             </Card>
 
-            <Card className="relative cursor-pointer hover:border-primary transition-colors p-6">
+            <Card className="relative cursor-pointer hover:border-primary transition-colors p-5">
               <Link
                 href="/auth/signup?role=vendor"
                 className="absolute inset-0"
               />
-              <CardHeader className="pb-8">
-                <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center mb-6">
-                  <Users className="h-8 w-8 text-primary" />
+              <CardHeader className="pb-6">
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <Users className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle className="text-2xl mb-2">Vendor</CardTitle>
-                <CardDescription className="text-base">
+                <CardTitle className="text-xl mb-2">
+                  Vendor
+                </CardTitle>
+                <CardDescription className="text-sm">
                   Book stalls, manage your presence, and connect with exhibition
                   organizers
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-4 text-base text-muted-foreground mb-8">
+                <ul className="space-y-3 text-sm text-muted-foreground mb-6">
                   <li>• Browse available exhibitions</li>
                   <li>• Book and manage stalls</li>
                   <li>• Track performance metrics</li>
                   <li>• Connect with organizers</li>
                 </ul>
-                <Button className="w-full mt-6 py-6 text-lg">
+                <Button className="w-full mt-4 py-4 text-base">
                   Continue as Vendor
                 </Button>
               </CardContent>
