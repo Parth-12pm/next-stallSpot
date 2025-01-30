@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import dbConnect from "@/lib/mongodb";
+import { type NextRequest } from 'next/server';  // Add this import
 import Application from "@/models/Application";
 import Event from "@/models/Event";
 import type { IStall } from "@/models/Event";
@@ -18,8 +19,8 @@ interface PopulatedVendor {
 }
 
 export async function POST(
-  request: Request,
-  { params }: { params: { eventId: string; applicationId: string } }
+req: NextRequest,
+  { params }: { params: { eventId: string, applicationId: string } }
 ) {
   try {
     const session = await getServerSession();
@@ -39,7 +40,7 @@ export async function POST(
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
-    const body: StatusUpdateBody = await request.json();
+    const body: StatusUpdateBody = await req.json();
     const { status, rejectionReason } = body;
 
     if (!['approved', 'rejected'].includes(status)) {
