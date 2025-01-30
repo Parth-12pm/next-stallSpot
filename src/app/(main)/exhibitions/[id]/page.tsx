@@ -9,7 +9,7 @@ import { Suspense } from "react";
 
 interface PageProps {
   params: Promise<{ id: string }>;
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 async function getEvent(id: string) {
@@ -28,6 +28,7 @@ async function getEvent(id: string) {
 export default async function ExhibitionPage({ params, searchParams }: PageProps) {
   const session = await getServerSession();
   const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
   const event = await getEvent(resolvedParams.id);
 
   if (!event) {
