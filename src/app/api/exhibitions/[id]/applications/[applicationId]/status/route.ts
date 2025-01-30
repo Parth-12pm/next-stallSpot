@@ -19,9 +19,14 @@ interface PopulatedVendor {
 }
 
 export async function POST(
-req: NextRequest,
-  { params }: { params: { id: string, applicationId: string } }
-) {
+  request: NextRequest,
+  { params }: {
+    params: {
+      id: string
+      applicationId: string
+    }
+  }
+): Promise<NextResponse> {
   try {
     const session = await getServerSession();
     if (!session?.user || (session.user as { role?: string })?.role !== 'organizer') {
@@ -40,7 +45,7 @@ req: NextRequest,
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
-    const body: StatusUpdateBody = await req.json();
+    const body: StatusUpdateBody = await request.json();
     const { status, rejectionReason } = body;
 
     if (!['approved', 'rejected'].includes(status)) {
