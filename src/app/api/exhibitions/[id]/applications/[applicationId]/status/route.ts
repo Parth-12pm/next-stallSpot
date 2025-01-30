@@ -18,17 +18,14 @@ interface PopulatedVendor {
   name: string;
 }
 
-type RouteParams = {
-  params: {
-    id: string;
-    applicationId: string;
-  };
-  searchParams: { [key: string]: string | string[] | undefined };
-}
-
 export async function POST(
   request: NextRequest,
-  context: RouteParams
+  { params }: {
+    params: {
+      id: string;
+      applicationId: string;
+    }
+  }
 ): Promise<NextResponse> {
   try {
     const session = await getServerSession();
@@ -40,7 +37,7 @@ export async function POST(
 
     // Get event and validate ownership
     const event = await Event.findOne({
-      _id: context.params.id,
+      _id: params.id,
       organizerId: session.user.id
     });
 
@@ -56,7 +53,7 @@ export async function POST(
     }
 
     // Get application and validate
-    const application = await Application.findById(context.params.applicationId)
+    const application = await Application.findById(params.applicationId)
       .populate<{ vendorId: PopulatedVendor }>('vendorId', 'email');
 
     if (!application) {
@@ -67,7 +64,7 @@ export async function POST(
       return NextResponse.json({ error: "Application is not in pending state" }, { status: 400 });
     }
 
-    if (application.eventId.toString() !== context.params.id) {
+    if (application.eventId.toString() !== params.id) {
       return NextResponse.json({ error: "Application does not match event" }, { status: 400 });
     }
 
@@ -88,7 +85,7 @@ export async function POST(
     };
 
     const updatedApplication = await Application.findByIdAndUpdate(
-      context.params.applicationId,
+      params.applicationId,
       { $set: updates },
       { new: true }
     );
@@ -96,7 +93,7 @@ export async function POST(
     // Update stall status if rejected
     if (status === 'rejected') {
       await Event.updateOne(
-        { _id: context.params.id, "stallConfiguration.stallId": application.stallId },
+        { _id: params.id, "stallConfiguration.stallId": application.stallId },
         { $set: { "stallConfiguration.$.status": "available" } }
       );
     }
