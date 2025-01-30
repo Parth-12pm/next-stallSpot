@@ -1,9 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // app/(main)/exhibitions/[id]/page.tsx
 import { notFound } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import EventPreview from "@/components/events/EventPreview";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Suspense } from "react";
+
+interface PageProps {
+  params: Promise<{ id: string }>;
+  searchParams: { [key: string]: string | string[] | undefined };
+}
 
 async function getEvent(id: string) {
   try {
@@ -18,9 +25,10 @@ async function getEvent(id: string) {
   }
 }
 
-export default async function ExhibitionPage({ params }: { params: { id: string } }) {
+export default async function ExhibitionPage({ params, searchParams }: PageProps) {
   const session = await getServerSession();
-  const event = await getEvent(params.id);
+  const resolvedParams = await params;
+  const event = await getEvent(resolvedParams.id);
 
   if (!event) {
     return notFound();
@@ -43,10 +51,12 @@ export default async function ExhibitionPage({ params }: { params: { id: string 
 
   return (
     <div className="container mx-auto py-8">
-      <EventPreview 
-        eventId={params.id} 
-        isOrganizer={isOrganizer}
-      />
+      <Suspense fallback={<div>Loading...</div>}>
+        <EventPreview 
+          eventId={resolvedParams.id} 
+          isOrganizer={isOrganizer}
+        />
+      </Suspense>
     </div>
   );
 }

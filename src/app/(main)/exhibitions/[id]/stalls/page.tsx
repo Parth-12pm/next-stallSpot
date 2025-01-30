@@ -11,17 +11,22 @@ import { Event, Stall } from "@/components/events/types/types";
 import { useEffect, useState } from 'react';
 
 export default function ExhibitionStallsPage() {
-  const params = useParams(); // Use useParams hook instead
+  const params = useParams();
+  const eventId = params.id as string; // Extract id once
   const router = useRouter();
   const { data: session } = useSession();
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!eventId) {
+      router.push('/exhibitions');
+      return;
+    }
+
     const fetchEvent = async () => {
       try {
-        // Access id from params object
-        const res = await fetch(`/api/exhibitions/${params.id}`);
+        const res = await fetch(`/api/exhibitions/${eventId}`);
         if (!res.ok) throw new Error('Failed to fetch event');
         const data = await res.json();
         if (data.status !== 'published') {
@@ -37,10 +42,8 @@ export default function ExhibitionStallsPage() {
       }
     };
 
-    if (params.id) {
-      fetchEvent();
-    }
-  }, [params.id, router]);
+    fetchEvent();
+  }, [eventId, router]);
 
   const handleStallSelect = (stall: Stall) => {
     if (!session) {
