@@ -1,4 +1,4 @@
-// app/(main)/exhibitions/[id]/application/page.tsx
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -8,16 +8,15 @@ import { ApplicationForm } from './ApplicationForm';
 import type { Event, Stall } from '@/components/events/types/types';
 import type { ProfileFormData } from '@/components/profile/types/profile';
 
-interface PageProps {
-  params: {
-    id: string;
-  };
+export default function ApplicationPage({ 
+  params,
+  searchParams,
+}: {
+  params: { id: string };
   searchParams: { [key: string]: string | string[] | undefined };
-}
-
-export default function ApplicationPage({ params }: PageProps) {
-  const searchParams = useSearchParams();
-  const stallId = searchParams.get('stall');
+}) {
+  const searchParamsHook = useSearchParams();
+  const stallId = searchParamsHook.get('stall');
   const router = useRouter();
   const { data: session } = useSession();
   
@@ -31,12 +30,10 @@ export default function ApplicationPage({ params }: PageProps) {
       try {
         setLoading(true);
         
-        // Fetch event details
         const eventRes = await fetch(`/api/events/${params.id}`);
         const eventData = await eventRes.json();
         setEvent(eventData);
 
-        // Find selected stall
         if (stallId) {
           const stall = eventData.stallConfiguration.find(
             (s: Stall) => s.stallId.toString() === stallId
@@ -44,7 +41,6 @@ export default function ApplicationPage({ params }: PageProps) {
           setSelectedStall(stall);
         }
 
-        // Fetch vendor profile
         const profileRes = await fetch('/api/profile');
         const profileData = await profileRes.json();
         setVendorProfile(profileData);
