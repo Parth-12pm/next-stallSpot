@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import dbConnect from "@/lib/mongodb";
-import { type NextRequest } from 'next/server';  // Add this import
+import { type NextRequest } from 'next/server';
 import Application from "@/models/Application";
 import Event from "@/models/Event";
 import type { IStall } from "@/models/Event";
@@ -18,14 +18,17 @@ interface PopulatedVendor {
   name: string;
 }
 
+type RouteParams = {
+  params: {
+    id: string;
+    applicationId: string;
+  };
+  searchParams: { [key: string]: string | string[] | undefined };
+}
+
 export async function POST(
   request: NextRequest,
-  { params }: {
-    params: {
-      id: string
-      applicationId: string
-    }
-  }
+  context: RouteParams
 ): Promise<NextResponse> {
   try {
     const session = await getServerSession();
@@ -37,7 +40,7 @@ export async function POST(
 
     // Get event and validate ownership
     const event = await Event.findOne({
-      _id: params.id,
+      _id: context.params.id,
       organizerId: session.user.id
     });
 
@@ -53,7 +56,7 @@ export async function POST(
     }
 
     // Get application and validate
-    const application = await Application.findById(params.applicationId)
+    const application = await Application.findById(context.params.applicationId)
       .populate<{ vendorId: PopulatedVendor }>('vendorId', 'email');
 
     if (!application) {
@@ -64,7 +67,7 @@ export async function POST(
       return NextResponse.json({ error: "Application is not in pending state" }, { status: 400 });
     }
 
-    if (application.eventId.toString() !== params.id) {
+    if (application.eventId.toString() !== context.params.id) {
       return NextResponse.json({ error: "Application does not match event" }, { status: 400 });
     }
 
@@ -85,7 +88,7 @@ export async function POST(
     };
 
     const updatedApplication = await Application.findByIdAndUpdate(
-      params.applicationId,
+      context.params.applicationId,
       { $set: updates },
       { new: true }
     );
@@ -93,7 +96,7 @@ export async function POST(
     // Update stall status if rejected
     if (status === 'rejected') {
       await Event.updateOne(
-        { _id: params.id, "stallConfiguration.stallId": application.stallId },
+        { _id: context.params.id, "stallConfiguration.stallId": application.stallId },
         { $set: { "stallConfiguration.$.status": "available" } }
       );
     }
