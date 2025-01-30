@@ -11,32 +11,18 @@ import {
 import Link from "next/link";
 import React from "react";
 import {
-  Search,
-  Calendar,
-  Camera,
-  Tag,
-  IndianRupeeIcon,
   MapPin,
   ArrowRight,
   Building2,
-  Users2,
-  Trophy,
   ArrowUpRight,
-  Globe2,
   Users,
-  TrendingUp,
   UserPlus,
   Compass,
   BookCheck,
   Clock,
   Bell,
   Shield,
-  LayoutGrid,
-  Users2Icon,
-  LineChart,
-  Palette,
-  Target,
-  BarChart3,
+
   Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -155,11 +141,7 @@ const SwirlyBackground = () => {
 };
 
 export default function App() {
-  const stats = [
-    { icon: Globe2, label: "Global Events", value: "1,000+" },
-    { icon: Users, label: "Monthly Visitors", value: "500K+" },
-    { icon: TrendingUp, label: "Success Rate", value: "98%" },
-  ];
+
 
   const upcomingEvents = [
     {
@@ -178,23 +160,7 @@ export default function App() {
     },
   ];
 
-  const howItWorks = [
-    {
-      icon: UserPlus,
-      title: "Create an Account",
-      description: "Choose your role as Exhibitor or Vendor",
-    },
-    {
-      icon: Compass,
-      title: "Explore Options",
-      description: "Browse events or available stalls",
-    },
-    {
-      icon: BookCheck,
-      title: "Book and Manage",
-      description: "Real-time stall booking and management",
-    },
-  ];
+
 
   const benefits = [
     {
@@ -214,28 +180,7 @@ export default function App() {
     },
   ];
 
-  const userTypes = [
-    {
-      icon: Building2,
-      title: "For Organizers",
-      description: "Powerful tools to manage your exhibitions",
-      features: [
-        { icon: LayoutGrid, text: "Interactive floor plan editor" },
-        { icon: Users2Icon, text: "Vendor management system" },
-        { icon: LineChart, text: "Real-time analytics" },
-      ],
-    },
-    {
-      icon: Users2,
-      title: "For Vendors",
-      description: "Everything you need to succeed",
-      features: [
-        { icon: Palette, text: "Booth customization" },
-        { icon: Target, text: "Lead capture tools" },
-        { icon: BarChart3, text: "Performance metrics" },
-      ],
-    },
-  ];
+
 
   const faqs = [
     {
@@ -492,7 +437,7 @@ export default function App() {
                 Got Questions?
               </h2>
               <p className="text-lg text-muted-foreground">
-                We've got answers! Check out our FAQs to clear up any confusion
+                We&apos;ve got answers! Check out our FAQs to clear up any confusion
                 and get the most out of StallSpot.
               </p>
             </div>
@@ -519,7 +464,7 @@ export default function App() {
 
             <div className="text-center mt-12">
               <p className="text-muted-foreground mb-4">
-                Still have questions? We're here to help!
+                Still have questions? We&apos;re here to help!
               </p>
               <Link href={"/contact"}>
               <Button size="lg" variant="outline">

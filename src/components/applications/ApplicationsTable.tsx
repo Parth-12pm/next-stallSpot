@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // components/applications/ApplicationsTable.tsx
 "use client";
 

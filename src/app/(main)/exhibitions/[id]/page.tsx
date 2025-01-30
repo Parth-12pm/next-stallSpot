@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // app/(main)/exhibitions/[id]/page.tsx
 import { notFound } from 'next/navigation';
 import { getServerSession } from 'next-auth';

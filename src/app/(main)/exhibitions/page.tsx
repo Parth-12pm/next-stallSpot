@@ -31,7 +31,6 @@ export default async function ExhibitionsPage() {
     </FilterProvider>
   )
 }
-
 function ExhibitionsSkeleton() {
   return (
     <div className="container mx-auto p-20">
