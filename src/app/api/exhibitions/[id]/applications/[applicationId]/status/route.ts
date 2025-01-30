@@ -20,7 +20,7 @@ interface PopulatedVendor {
 
 export async function POST(
 req: NextRequest,
-  { params }: { params: { eventId: string, applicationId: string } }
+  { params }: { params: { id: string, applicationId: string } }
 ) {
   try {
     const session = await getServerSession();
@@ -32,7 +32,7 @@ req: NextRequest,
 
     // Get event and validate ownership
     const event = await Event.findOne({
-      _id: params.eventId,
+      _id: params.id,
       organizerId: session.user.id
     });
 
@@ -59,7 +59,7 @@ req: NextRequest,
       return NextResponse.json({ error: "Application is not in pending state" }, { status: 400 });
     }
 
-    if (application.eventId.toString() !== params.eventId) {
+    if (application.eventId.toString() !== params.id) {
       return NextResponse.json({ error: "Application does not match event" }, { status: 400 });
     }
 
@@ -88,7 +88,7 @@ req: NextRequest,
     // Update stall status if rejected
     if (status === 'rejected') {
       await Event.updateOne(
-        { _id: params.eventId, "stallConfiguration.stallId": application.stallId },
+        { _id: params.id, "stallConfiguration.stallId": application.stallId },
         { $set: { "stallConfiguration.$.status": "available" } }
       );
     }
