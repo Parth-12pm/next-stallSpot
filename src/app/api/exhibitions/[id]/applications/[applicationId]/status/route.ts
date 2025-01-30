@@ -19,13 +19,7 @@ interface PopulatedVendor {
 }
 
 export async function POST(
-  request: NextRequest,
-  { params }: {
-    params: {
-      id: string;
-      applicationId: string;
-    }
-  }
+  request: NextRequest
 ): Promise<NextResponse> {
   try {
     const session = await getServerSession();
@@ -35,9 +29,15 @@ export async function POST(
 
     await dbConnect();
 
+    // Extract dynamic route parameters from URL
+    const pathname = new URL(request.url).pathname;
+    const pathParts = pathname.split('/').filter(Boolean);
+    const eventId = pathParts[pathParts.length - 3];
+    const applicationId = pathParts[pathParts.length - 1];
+
     // Get event and validate ownership
     const event = await Event.findOne({
-      _id: params.id,
+      _id: eventId,
       organizerId: session.user.id
     });
 
@@ -53,7 +53,7 @@ export async function POST(
     }
 
     // Get application and validate
-    const application = await Application.findById(params.applicationId)
+    const application = await Application.findById(applicationId)
       .populate<{ vendorId: PopulatedVendor }>('vendorId', 'email');
 
     if (!application) {
@@ -64,7 +64,7 @@ export async function POST(
       return NextResponse.json({ error: "Application is not in pending state" }, { status: 400 });
     }
 
-    if (application.eventId.toString() !== params.id) {
+    if (application.eventId.toString() !== eventId) {
       return NextResponse.json({ error: "Application does not match event" }, { status: 400 });
     }
 
@@ -85,7 +85,7 @@ export async function POST(
     };
 
     const updatedApplication = await Application.findByIdAndUpdate(
-      params.applicationId,
+      applicationId,
       { $set: updates },
       { new: true }
     );
@@ -93,7 +93,7 @@ export async function POST(
     // Update stall status if rejected
     if (status === 'rejected') {
       await Event.updateOne(
-        { _id: params.id, "stallConfiguration.stallId": application.stallId },
+        { _id: eventId, "stallConfiguration.stallId": application.stallId },
         { $set: { "stallConfiguration.$.status": "available" } }
       );
     }
