@@ -8,7 +8,14 @@ import { ApplicationForm } from './ApplicationForm';
 import type { Event, Stall } from '@/components/events/types/types';
 import type { ProfileFormData } from '@/components/profile/types/profile';
 
-export default function ApplicationPage({ params }: { params: { id: string } }) {
+interface PageProps {
+  params: {
+    id: string;
+  };
+  searchParams: { [key: string]: string | string[] | undefined };
+}
+
+export default function ApplicationPage({ params }: PageProps) {
   const searchParams = useSearchParams();
   const stallId = searchParams.get('stall');
   const router = useRouter();
