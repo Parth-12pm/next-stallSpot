@@ -1,22 +1,17 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+// app/(main)/exhibitions/[id]/application/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams, useRouter, useParams } from 'next/navigation';
 import { ApplicationForm } from './ApplicationForm';
 import type { Event, Stall } from '@/components/events/types/types';
 import type { ProfileFormData } from '@/components/profile/types/profile';
 
-export default function ApplicationPage({ 
-  params,
-  searchParams,
-}: {
-  params: { id: string };
-  searchParams: { [key: string]: string | string[] | undefined };
-}) {
-  const searchParamsHook = useSearchParams();
-  const stallId = searchParamsHook.get('stall');
+export default function ApplicationPage() {
+  const searchParams = useSearchParams();
+  const params = useParams();
+  const stallId = searchParams.get('stall');
   const router = useRouter();
   const { data: session } = useSession();
   
@@ -30,10 +25,12 @@ export default function ApplicationPage({
       try {
         setLoading(true);
         
+        // Fetch event details
         const eventRes = await fetch(`/api/events/${params.id}`);
         const eventData = await eventRes.json();
         setEvent(eventData);
 
+        // Find selected stall
         if (stallId) {
           const stall = eventData.stallConfiguration.find(
             (s: Stall) => s.stallId.toString() === stallId
@@ -41,6 +38,7 @@ export default function ApplicationPage({
           setSelectedStall(stall);
         }
 
+        // Fetch vendor profile
         const profileRes = await fetch('/api/profile');
         const profileData = await profileRes.json();
         setVendorProfile(profileData);
@@ -53,7 +51,7 @@ export default function ApplicationPage({
       }
     };
 
-    if (session?.user) {
+    if (session?.user && params.id) {
       fetchData();
     }
   }, [params.id, stallId, session, router]);
