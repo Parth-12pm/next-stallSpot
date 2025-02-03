@@ -1,9 +1,9 @@
 // middleware.ts
-import { withAuth } from "next-auth/middleware";
+import withAuth from "next-auth/middleware";
 import { NextResponse } from "next/server";
 
 export default withAuth(
-  function middleware(req) {
+  function middleware(req: { nextauth: { token: any; }; nextUrl: { pathname: any; }; url: string | URL | undefined; }) {
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
     
@@ -51,7 +51,7 @@ export default withAuth(
   },
   {
     callbacks: {
-      authorized: ({ token }) => !!token
+      authorized: ({ token }: { token: any | null }) => !!token
     },
   }
 );

@@ -5,7 +5,7 @@ import { categories } from "@/components/exhibitions/mock"
 import { Event } from "@/components/events/types/types"
 
 async function getExhibitions() {
-  const res = await fetch(`${process.env.NEXTAUTH_PUBLIC_URL}/api/exhibitions`, {
+  const res = await fetch(`${process.env.NEXTAUTH_URL}/api/exhibitions`, {
     cache: 'no-store'
   })
   
