@@ -24,11 +24,11 @@ interface ApplicationBody {
   };
 }
 
-// Fix: Use NextRequest type and correct params type
 export async function POST(
-  request: NextRequest,
+  request: NextRequest, 
   { params }: { params: { id: string } }
 ) {
+  const { id } = params;
   let connection;
   const session = await getServerSession();
 
@@ -42,7 +42,7 @@ export async function POST(
     }
 
     // Validate exhibition ID
-    if (!isValidObjectId(params.id)) {
+    if (!isValidObjectId(id)) {
       return NextResponse.json(
         { error: "Invalid exhibition ID format" }, 
         { status: 400 }
@@ -58,7 +58,7 @@ export async function POST(
     try {
       return await sess.withTransaction(async () => {
         // Get event and validate with population
-        const event = await Event.findById(params.id)
+        const event = await Event.findById(id)
           .populate('organizerId', 'email')
           .session(sess)
           .exec();
