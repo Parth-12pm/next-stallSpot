@@ -16,11 +16,14 @@ interface UserWithRole extends Session {
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+
+
   try {
+
     // Validate ID format
-    if (!isValidObjectId(params.id)) {
+    if (!isValidObjectId((await params).id)) {
       return NextResponse.json(
         { error: "Invalid exhibition ID format" }, 
         { status: 400 }
@@ -31,7 +34,7 @@ export async function GET(
     await dbConnect();
 
     // Explicitly type the event response and use exec()
-    const event = await Event.findById(params.id).lean().exec() as IEvent | null;
+    const event = await Event.findById((await params).id).lean().exec() as IEvent | null;
     
     if (!event) {
       return NextResponse.json(
