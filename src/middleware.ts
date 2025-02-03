@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // middleware.ts
 import withAuth from "next-auth/middleware";
 import { NextResponse } from "next/server";
