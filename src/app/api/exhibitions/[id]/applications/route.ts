@@ -26,9 +26,9 @@ interface ApplicationBody {
 
 export async function POST(
   request: NextRequest, 
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = params;
+  const { id } = await params;
   let connection;
   const session = await getServerSession();
 
