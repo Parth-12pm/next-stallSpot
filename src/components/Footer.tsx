@@ -20,7 +20,7 @@ const sections = [
   {
     title: "Legal",
     links: [
-      { name: "Privacy Policy", href: "/privacy" },
+      { name: "Privacy Policy", href: "/policy" },
       { name: "Terms of Service", href: "/terms" },
     ],
   },
@@ -62,7 +62,7 @@ export const Footer = memo(function Footer() {
               <Link href="/terms">Terms and Conditions</Link>
             </li>
             <li className="hover:text-primary transition-colors duration-200">
-              <Link href="/privacy">Privacy Policy</Link>
+              <Link href="/policy">Privacy Policy</Link>
             </li>
           </ul>
         </div>
