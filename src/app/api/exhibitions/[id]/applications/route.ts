@@ -1,5 +1,5 @@
 // app/api/exhibitions/[id]/applications/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import dbConnect from "@/lib/mongodb";
 import Application from "@/models/Application";
@@ -26,7 +26,7 @@ interface ApplicationBody {
 
 // Fix: Use NextRequest type and correct params type
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   let connection;
