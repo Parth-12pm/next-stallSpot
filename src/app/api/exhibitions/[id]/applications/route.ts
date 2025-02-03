@@ -24,6 +24,7 @@ interface ApplicationBody {
   };
 }
 
+// Fix: Use NextRequest type and correct params type
 export async function POST(
   request: Request,
   { params }: { params: { id: string } }
@@ -70,8 +71,8 @@ export async function POST(
           throw new Error("Exhibition is not accepting applications");
         }
 
-        // Validate request body
-        const body: ApplicationBody = await request.json();
+        // Parse request body
+        const body = await request.json() as ApplicationBody;
         const { stallId, products, fees } = body;
 
         if (!stallId || !products || !fees) {
