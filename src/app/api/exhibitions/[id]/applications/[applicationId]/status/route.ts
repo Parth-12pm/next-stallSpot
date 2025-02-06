@@ -18,50 +18,34 @@ interface PopulatedVendor {
   name: string
 }
 
-// Update the type definition to match Next.js route handler requirements
-export async function POST(
-  request: NextRequest,
-  context: { params: { id: string; applicationId: string } },
-): Promise<NextResponse> {
-  let connection
-
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     // Get session using authOptions
     const session = await getServerSession(authOptions)
 
-    // Debug log session
-    console.log("Session in status update:", {
-      session,
-      userId: session?.user?.id,
-      role: session?.user?.role,
-    })
-
-    // Check authentication
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    // Check authentication and authorization
+    if (!session?.user?.id || session.user.role !== "organizer") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Check authorization
-    if (session.user.role !== "organizer") {
-      return NextResponse.json({ error: "Access denied - Organizer role required" }, { status: 403 })
-    }
+    await dbConnect()
 
-    // Connect to database
-    connection = await dbConnect()
-
-    const { id: eventId, applicationId } = context.params
-
-    // Rest of your code remains the same...
-    const body: StatusUpdateBody = await request.json()
-    const { status, rejectionReason } = body
+    // Extract dynamic route parameters from URL
+    const pathname = new URL(request.url).pathname
+    const pathParts = pathname.split("/").filter(Boolean)
+    const eventId = pathParts[pathParts.length - 3]
+    const applicationId = pathParts[pathParts.length - 1]
 
     // Debug log request data
     console.log("Processing status update:", {
       eventId,
       applicationId,
-      status,
       userId: session.user.id,
     })
+
+    // Validate request body
+    const body: StatusUpdateBody = await request.json()
+    const { status, rejectionReason } = body
 
     if (!["approved", "rejected"].includes(status)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 })
@@ -93,7 +77,7 @@ export async function POST(
     }
 
     // Start a session for transaction
-    const sess = await connection.startSession()
+    const sess = await (await dbConnect()).startSession()
 
     try {
       await sess.withTransaction(async () => {
@@ -103,9 +87,8 @@ export async function POST(
           if (!stall || stall.status !== "reserved") {
             throw new Error("Stall is no longer available")
           }
-        }
 
-        if (status === "approved") {
+          // Update stall status to reserved if approved
           await Event.updateOne(
             {
               _id: eventId,
