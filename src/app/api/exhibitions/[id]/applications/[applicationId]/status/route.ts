@@ -1,6 +1,7 @@
 // app/api/exhibitions/[id]/applications/[applicationId]/status/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/auth-options";  // Added import for authOptions
 import dbConnect from "@/lib/mongodb";
 import { type NextRequest } from 'next/server';
 import Application from "@/models/Application";
@@ -19,28 +20,51 @@ interface PopulatedVendor {
 }
 
 export async function POST(
-  request: NextRequest
+  request: NextRequest,
+  { params }: { params: { id: string; applicationId: string } }
 ): Promise<NextResponse> {
   let connection;
-  const session = await getServerSession();
   
   try {
-    if (!session?.user || (session.user as { role?: string })?.role !== 'organizer') {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Get session using authOptions
+    const session = await getServerSession(authOptions);
+    
+    // Debug log session
+    console.log("Session in status update:", {
+      session,
+      userId: session?.user?.id,
+      role: session?.user?.role
+    });
+
+    // Check authentication
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    // Check authorization
+    if (session.user.role !== 'organizer') {
+      return NextResponse.json(
+        { error: "Access denied - Organizer role required" }, 
+        { status: 403 }
+      );
     }
 
     // Connect to database
     connection = await dbConnect();
 
-    // Extract dynamic route parameters from URL
-    const pathname = new URL(request.url).pathname;
-    const pathParts = pathname.split('/').filter(Boolean);
-    const eventId = pathParts[pathParts.length - 3];
-    const applicationId = pathParts[pathParts.length - 1];
+    const { id: eventId, applicationId } = params;
 
     // Validate request body
     const body: StatusUpdateBody = await request.json();
     const { status, rejectionReason } = body;
+
+    // Debug log request data
+    console.log("Processing status update:", {
+      eventId,
+      applicationId,
+      status,
+      userId: session.user.id
+    });
 
     if (!['approved', 'rejected'].includes(status)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
@@ -84,6 +108,19 @@ export async function POST(
           if (!stall || stall.status !== 'reserved') {
             throw new Error("Stall is no longer available");
           }
+        }
+
+        if (status === 'approved') {
+          await Event.updateOne(
+            { 
+              _id: eventId, 
+              "stallConfiguration.stallId": application.stallId 
+            },
+            { 
+              $set: { "stallConfiguration.$.status": "reserved" } 
+            },
+            { session: sess }
+          );
         }
 
         // Update application

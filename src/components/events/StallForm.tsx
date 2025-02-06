@@ -38,6 +38,7 @@ export default function StallForm({
   onSave,
   readOnly = false,
   isOrganizer = false,
+  onStallSelect,
   
 }: StallFormProps) {
   const [isLoading, setIsLoading] = useState(false);
@@ -581,7 +582,11 @@ export default function StallForm({
                   {/* Vendor Apply Button */}
                   {!isOrganizer && selectedStall.status === "available" && (
                     <div className="pt-4">
-                      <Button className="w-full" size="lg">
+                      <Button 
+                      className="w-full" 
+                      size="lg"
+                      onClick={() => onStallSelect?.(selectedStall)}  // Add this
+                      >
                         <Building2 className="w-4 h-4 mr-2" />
                         Apply for This Stall
                       </Button>

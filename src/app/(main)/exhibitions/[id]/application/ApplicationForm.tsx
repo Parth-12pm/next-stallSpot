@@ -89,16 +89,18 @@ export function ApplicationForm({ event, stall, vendorProfile }: ApplicationForm
           }
         }),
       });
-
+  
+      const data = await response.json();
+  
       if (!response.ok) {
-        throw new Error('Failed to submit application');
+        throw new Error(data.error || 'Failed to submit application');
       }
-
+  
       toast({
         title: "Application Submitted",
         description: "Your application has been submitted successfully.",
       });
-
+  
       router.push('/dashboard/applications');
     } catch (error) {
       toast({

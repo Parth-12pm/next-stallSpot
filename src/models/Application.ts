@@ -32,8 +32,16 @@ export interface IApplication extends Document {
 }
 
 const ProductSchema = new Schema({
-  productName: { type: String, required: true },
-  productDetails: { type: String, required: true }
+  productName: { 
+    type: String, 
+    required: true,
+    minlength: 2 
+  },
+  productDetails: { 
+    type: String, 
+    required: true,
+    minlength: 10 
+  }
 }, { _id: false });
 
 const FeesSchema = new Schema({
@@ -61,7 +69,18 @@ const ApplicationSchema = new Schema({
     enum: ['pending', 'approved', 'rejected', 'payment_pending', 'payment_completed', 'expired'],
     default: 'pending'
   },
-  products: [ProductSchema],
+  products: {
+    type: [ProductSchema],
+    required: true,
+    validate: [
+      {
+        validator: function(products: IProduct[]) {
+          return products.length > 0;
+        },
+        message: 'At least one product is required'
+      }
+    ]
+  },
   applicationDate: { type: Date, default: Date.now },
   approvalDate: Date,
   rejectionReason: String,

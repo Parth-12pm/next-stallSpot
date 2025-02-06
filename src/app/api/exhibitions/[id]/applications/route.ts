@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // app/api/exhibitions/[id]/applications/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/auth-options";  // Add this import
 import dbConnect from "@/lib/mongodb";
 import Application from "@/models/Application";
 import Event from "@/models/Event";
@@ -30,34 +32,39 @@ export async function POST(
 ) {
   const { id } = await params;
   let connection;
-  const session = await getServerSession();
-
+  
   try {
-    // Check authentication
-    if (!session?.user) {
+    // Get session with authOptions
+    const session = await getServerSession(authOptions);
+    
+    // Enhanced session validation
+    if (!session?.user?.id) {
+      console.error("Session or user ID missing:", session);
       return NextResponse.json(
-        { error: "Unauthorized" }, 
+        { error: "Unauthorized - Valid session required" }, 
         { status: 401 }
       );
     }
 
-    // Validate exhibition ID
-    if (!isValidObjectId(id)) {
-      return NextResponse.json(
-        { error: "Invalid exhibition ID format" }, 
-        { status: 400 }
-      );
-    }
+    // Log the session data
+    console.log("Session data:", {
+      userId: session.user.id,
+      role: session.user.role
+    });
 
     // Connect to database
     connection = await dbConnect();
+
+    // Parse request body early to validate
+    const body = await request.json();
+    console.log("Request body:", body);
 
     // Start a session for transaction
     const sess = await connection.startSession();
 
     try {
       return await sess.withTransaction(async () => {
-        // Get event and validate with population
+        // Get event and validate
         const event = await Event.findById(id)
           .populate('organizerId', 'email')
           .session(sess)
@@ -67,14 +74,14 @@ export async function POST(
           throw new Error("Exhibition not found");
         }
 
+        // Validate event status
         if (event.status !== 'published') {
           throw new Error("Exhibition is not accepting applications");
         }
 
-        // Parse request body
-        const body = await request.json() as ApplicationBody;
         const { stallId, products, fees } = body;
 
+        // Validate required fields
         if (!stallId || !products || !fees) {
           throw new Error("Missing required fields");
         }
@@ -103,7 +110,9 @@ export async function POST(
           throw new Error("You already have an active application for this exhibition");
         }
 
-        // Create application
+        // Create application with explicit session user ID
+        console.log("Creating application with vendor ID:", session.user.id);
+        
         const application = await Application.create([{
           eventId: event._id,
           vendorId: session.user.id,
@@ -114,7 +123,7 @@ export async function POST(
           fees,
         }], { session: sess });
 
-        // Update stall status to reserved
+        // Update stall status
         await Event.updateOne(
           { 
             _id: event._id, 
@@ -126,10 +135,8 @@ export async function POST(
           { session: sess }
         );
 
-        // Get organizer's email from populated event
+        // Get organizer's email and send notification
         const organizerEmail = (event.organizerId as IUser).email;
-
-        // Send notification to organizer
         if (organizerEmail) {
           await sendApplicationNotification(
             organizerEmail,
@@ -145,6 +152,7 @@ export async function POST(
         });
       });
     } catch (error) {
+      console.error("Transaction Error:", error);
       if (error instanceof Error) {
         return NextResponse.json(
           { error: error.message },
@@ -158,7 +166,7 @@ export async function POST(
   } catch (error) {
     console.error("[APPLICATION_SUBMIT]", error);
     return NextResponse.json(
-      { error: "Failed to submit application" },
+      { error: error instanceof Error ? error.message : "Failed to submit application" },
       { status: 500 }
     );
   }

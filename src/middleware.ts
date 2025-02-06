@@ -62,6 +62,8 @@ export const config = {
     '/dashboard/:path*',
     '/organizer/:path*',
     '/vendor/:path*',
-    '/profile/:path*'
+    '/profile/:path*',
+    '/api/exhibitions/:path*',  // Add this for exhibition APIs
+    '/api/events/:path*'        // Add this if you have event APIs
   ]
 };

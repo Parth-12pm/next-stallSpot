@@ -13,6 +13,7 @@ import { EventsTable } from "@/components/events/EventsTable"
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Event } from "@/components/events/types/types"
+import { OrganizerApplicationsTable } from '../applications/OrganizerApplicationsTable'
 
 interface DashboardStats {
   activeEvents: number
@@ -225,12 +226,10 @@ export function OrganizerDashboard({ user }: DashboardProps) {
           <Card>
             <CardHeader>
               <CardTitle>Vendor Applications</CardTitle>
-              <CardDescription>Review and manage vendor applications</CardDescription>
+              <CardDescription>Review and manage stall applications from vendors</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center text-muted-foreground py-8">
-                No pending applications to review
-              </div>
+              <OrganizerApplicationsTable />
             </CardContent>
           </Card>
         </TabsContent>
