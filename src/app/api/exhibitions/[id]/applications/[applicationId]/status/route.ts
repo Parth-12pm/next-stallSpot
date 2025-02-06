@@ -1,9 +1,8 @@
 // app/api/exhibitions/[id]/applications/[applicationId]/status/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/auth-options";  // Added import for authOptions
+import { authOptions } from "@/app/api/auth/[...nextauth]/auth-options";
 import dbConnect from "@/lib/mongodb";
-import { type NextRequest } from 'next/server';
 import Application from "@/models/Application";
 import Event from "@/models/Event";
 import type { IStall } from "@/models/Event";
@@ -20,22 +19,13 @@ interface PopulatedVendor {
 }
 
 export async function POST(
-  request: NextRequest,
+  req: Request,
   { params }: { params: { id: string; applicationId: string } }
-): Promise<NextResponse> {
+) {
   let connection;
-  
-  try {
-    // Get session using authOptions
-    const session = await getServerSession(authOptions);
-    
-    // Debug log session
-    console.log("Session in status update:", {
-      session,
-      userId: session?.user?.id,
-      role: session?.user?.role
-    });
+  const session = await getServerSession(authOptions);
 
+  try {
     // Check authentication
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
@@ -53,18 +43,8 @@ export async function POST(
     connection = await dbConnect();
 
     const { id: eventId, applicationId } = params;
-
-    // Validate request body
-    const body: StatusUpdateBody = await request.json();
+    const body: StatusUpdateBody = await req.json();
     const { status, rejectionReason } = body;
-
-    // Debug log request data
-    console.log("Processing status update:", {
-      eventId,
-      applicationId,
-      status,
-      userId: session.user.id
-    });
 
     if (!['approved', 'rejected'].includes(status)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
@@ -101,16 +81,15 @@ export async function POST(
     const sess = await connection.startSession();
     
     try {
-      await sess.withTransaction(async () => {
+      const result = await sess.withTransaction(async () => {
         // For approvals, check if stall is still available
         if (status === 'approved') {
           const stall = event.stallConfiguration.find((s: IStall) => s.stallId === application.stallId);
           if (!stall || stall.status !== 'reserved') {
             throw new Error("Stall is no longer available");
           }
-        }
 
-        if (status === 'approved') {
+          // Update stall status
           await Event.updateOne(
             { 
               _id: eventId, 
@@ -161,7 +140,7 @@ export async function POST(
 
       return NextResponse.json({
         message: `Application ${status} successfully`,
-        application: application
+        application: result
       });
 
     } catch (error) {
