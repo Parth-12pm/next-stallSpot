@@ -3,18 +3,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Eye, Check, X } from "lucide-react"
-import { 
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -22,13 +15,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -51,7 +38,7 @@ interface Application {
     contact: string
   }
   stallId: number
-  status: 'pending' | 'approved' | 'rejected' | 'payment_pending' | 'payment_completed' | 'expired'
+  status: "pending" | "approved" | "rejected" | "payment_pending" | "payment_completed" | "expired"
   applicationDate: string
   products: Array<{
     productName: string
@@ -79,93 +66,87 @@ export function OrganizerApplicationsTable() {
     fetchApplications()
   }, [])
 
-// In OrganizerApplicationsTable.tsx, update the fetchApplications function:
-const fetchApplications = async () => {
-  try {
-    const response = await fetch("/api/exhibitions/applications");
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.error || "Failed to fetch applications");
+  const fetchApplications = async () => {
+    try {
+      const response = await fetch("/api/exhibitions/applications")
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to fetch applications")
+      }
+
+      setApplications(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load applications")
+      console.error("Error fetching applications:", err)
+    } finally {
+      setLoading(false)
     }
-    
-    setApplications(data);
-  } catch (err) {
-    setError(err instanceof Error ? err.message : "Failed to load applications");
-    console.error("Error fetching applications:", err);
-  } finally {
-    setLoading(false);
   }
-};
 
-// In OrganizerApplicationsTable.tsx
+  const handleStatusUpdate = async (applicationId: string, status: "approved" | "rejected") => {
+    try {
+      setIsSubmitting(true)
 
-const handleStatusUpdate = async (applicationId: string, status: 'approved' | 'rejected') => {
-  try {
-    setIsSubmitting(true);
-    
-    // Extract just the ID string from the event
-    const eventId = selectedApplication?.eventId?._id?.toString();
-    
-    if (!eventId) {
-      throw new Error('Missing event ID');
-    }
+      // Extract just the ID string from the event
+      const eventId = selectedApplication?.eventId?._id?.toString()
 
-    // Debug log before making request
-    console.log('Sending status update request:', {
-      eventId,
-      applicationId,
-      status
-    });
+      if (!eventId) {
+        throw new Error("Missing event ID")
+      }
 
-    const response = await fetch(
-      `/api/exhibitions/${eventId}/applications/${applicationId}/status`,
-      {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
+      // Debug log before making request
+      console.log("Sending status update request:", {
+        eventId,
+        applicationId,
+        status,
+      })
+
+      const response = await fetch(`/api/exhibitions/${eventId}/applications/${applicationId}/status`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
           // Add this to ensure credentials are sent
-          credentials: 'include'
+          credentials: "include",
         },
         body: JSON.stringify({
           status,
-          rejectionReason: status === 'rejected' ? rejectionReason : undefined
-        })
+          rejectionReason: status === "rejected" ? rejectionReason : undefined,
+        }),
+      })
+
+      const data = await response.json()
+
+      // Debug log response
+      console.log("Status update response:", {
+        ok: response.ok,
+        status: response.status,
+        data,
+      })
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to update application status")
       }
-    );
 
-    const data = await response.json();
+      toast({
+        title: `Application ${status}`,
+        description: `The application has been ${status} successfully.`,
+      })
 
-    // Debug log response
-    console.log('Status update response:', {
-      ok: response.ok,
-      status: response.status,
-      data
-    });
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Failed to update application status');
+      setShowPreview(false)
+      setRejectionReason("")
+      await fetchApplications()
+    } catch (error) {
+      console.error("Status update error:", error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update application status",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
     }
-
-    toast({
-      title: `Application ${status}`,
-      description: `The application has been ${status} successfully.`
-    });
-
-    setShowPreview(false);
-    setRejectionReason("");
-    await fetchApplications();
-  } catch (error) {
-    console.error('Status update error:', error);
-    toast({
-      title: "Error",
-      description: error instanceof Error ? error.message : "Failed to update application status",
-      variant: "destructive"
-    });
-  } finally {
-    setIsSubmitting(false);
   }
-};
 
   const statusStyles = {
     pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300",
@@ -173,7 +154,7 @@ const handleStatusUpdate = async (applicationId: string, status: 'approved' | 'r
     rejected: "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300",
     payment_pending: "bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300",
     payment_completed: "bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300",
-    expired: "bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-300"
+    expired: "bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-300",
   }
 
   if (error) {
@@ -195,8 +176,8 @@ const handleStatusUpdate = async (applicationId: string, status: 'approved' | 'r
   }
 
   return (
-    <div className="space-y-4">
-      <Table>
+    <div className="space-y-4 w-full overflow-x-auto">
+      <Table className="min-w-[800px]">
         <TableHeader>
           <TableRow>
             <TableHead>Event</TableHead>
@@ -234,11 +215,8 @@ const handleStatusUpdate = async (applicationId: string, status: 'approved' | 'r
                 <TableCell>{format(new Date(application.applicationDate), "MMM d, yyyy")}</TableCell>
                 <TableCell>₹{application.fees.totalAmount.toLocaleString()}</TableCell>
                 <TableCell>
-                  <Badge 
-                    className={statusStyles[application.status]}
-                    variant="secondary"
-                  >
-                    {application.status.replace('_', ' ').toUpperCase()}
+                  <Badge className={statusStyles[application.status]} variant="secondary">
+                    {application.status.replace("_", " ").toUpperCase()}
                   </Badge>
                 </TableCell>
                 <TableCell>
@@ -261,12 +239,10 @@ const handleStatusUpdate = async (applicationId: string, status: 'approved' | 'r
       </Table>
 
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Application Details</DialogTitle>
-            <DialogDescription>
-              Review vendor application details and update status
-            </DialogDescription>
+            <DialogDescription>Review vendor application details and update status</DialogDescription>
           </DialogHeader>
 
           {selectedApplication && (
@@ -276,7 +252,7 @@ const handleStatusUpdate = async (applicationId: string, status: 'approved' | 'r
                 <CardHeader>
                   <CardTitle>Vendor Details</CardTitle>
                 </CardHeader>
-                <CardContent className="grid grid-cols-2 gap-4">
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label className="text-muted-foreground">Name</Label>
                     <p className="font-medium">{selectedApplication.vendorId.name}</p>
@@ -301,9 +277,7 @@ const handleStatusUpdate = async (applicationId: string, status: 'approved' | 'r
                   {selectedApplication.products.map((product, index) => (
                     <div key={index} className="p-4 bg-muted rounded-lg">
                       <p className="font-medium">{product.productName}</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {product.productDetails}
-                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">{product.productDetails}</p>
                     </div>
                   ))}
                 </CardContent>
@@ -314,26 +288,26 @@ const handleStatusUpdate = async (applicationId: string, status: 'approved' | 'r
                 <CardHeader>
                   <CardTitle>Fee Breakdown</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
+                <CardContent className="p-3 sm:p-6">
+                  <div className="space-y-2 text-sm sm:text-base">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
                       <span>Base Price:</span>
-                      <span>₹{selectedApplication.fees.stallPrice.toLocaleString()}</span>
+                      <span className="font-medium">₹{selectedApplication.fees.stallPrice.toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between text-muted-foreground">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1 text-muted-foreground">
                       <span>Platform Fee (5%):</span>
                       <span>₹{selectedApplication.fees.platformFee.toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between text-muted-foreground">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1 text-muted-foreground">
                       <span>Entry Fee:</span>
                       <span>₹{selectedApplication.fees.entryFee.toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between text-muted-foreground">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1 text-muted-foreground">
                       <span>GST (18%):</span>
                       <span>₹{selectedApplication.fees.gst.toLocaleString()}</span>
                     </div>
-                    <Separator />
-                    <div className="flex justify-between font-bold pt-2">
+                    <Separator className="my-2" />
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1 font-bold pt-2">
                       <span>Total Amount:</span>
                       <span>₹{selectedApplication.fees.totalAmount.toLocaleString()}</span>
                     </div>
@@ -341,7 +315,7 @@ const handleStatusUpdate = async (applicationId: string, status: 'approved' | 'r
                 </CardContent>
               </Card>
 
-              {selectedApplication.status === 'pending' && (
+              {selectedApplication.status === "pending" && (
                 <>
                   <Textarea
                     placeholder="Enter reason for rejection (required only if rejecting)"
@@ -350,17 +324,17 @@ const handleStatusUpdate = async (applicationId: string, status: 'approved' | 'r
                     className="min-h-[100px]"
                   />
 
-                  <DialogFooter>
+                  <DialogFooter className="flex-col sm:flex-row gap-2">
                     <Button
                       variant="outline"
-                      onClick={() => handleStatusUpdate(selectedApplication._id, 'rejected')}
+                      onClick={() => handleStatusUpdate(selectedApplication._id, "rejected")}
                       disabled={isSubmitting}
                     >
                       <X className="h-4 w-4 mr-1" />
                       Reject
                     </Button>
                     <Button
-                      onClick={() => handleStatusUpdate(selectedApplication._id, 'approved')}
+                      onClick={() => handleStatusUpdate(selectedApplication._id, "approved")}
                       disabled={isSubmitting}
                     >
                       <Check className="h-4 w-4 mr-1" />
@@ -376,3 +350,4 @@ const handleStatusUpdate = async (applicationId: string, status: 'approved' | 'r
     </div>
   )
 }
+
