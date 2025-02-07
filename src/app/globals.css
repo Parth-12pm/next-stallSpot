@@ -7,64 +7,64 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
+    --background: 230 30% 98%; /* Cool, airy white with a blue tint */
+    --foreground: 240 60% 15%; /* Deep navy for text */
+    --card: 230 30% 96%; /* Subtle off-white for cards */
+    --card-foreground: 240 50% 20%; /* Darker navy for contrast */
+    --popover: var(--card); /* Align with card background */
+    --popover-foreground: var(--card-foreground);
+    --primary: 242 50% 27%; /* #312b81 */
+    --primary-foreground: 60 100% 98%; /* Soft, warm white */
+    --secondary: 51 92% 55%; /* #f6de21 */
+    --secondary-foreground: 240 70% 10%; /* Deep blue contrast */
+    --muted: 240 20% 88%; /* Light blue-gray for muted elements */
+    --muted-foreground: 240 40% 20%;
+    --accent: 242 50% 27%; /* Match primary */
+    --accent-foreground: 60 100% 98%; 
+    --destructive: 0 70% 60%; /* Soft red for destructive actions */
     --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 5.9% 10%;
-    --radius: 0.5rem;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --border: 240 20% 85%; /* Subtle blue border */
+    --input: 240 20% 85%; /* Match border for input fields */
+    --ring: 242 50% 27%; /* #312b81 for focus states */
+    --radius: 0.5rem; /* Same as original scheme */
+    --chart-1: 242 50% 27%; /* Deep Purple */
+    --chart-2: 51 92% 55%; /* Bright Yellow */
+    --chart-3: 35 85% 45%; /* Soft orange as a third tone */
+    --chart-4: 240 50% 30%; /* Rich navy */
+    --chart-5: 60 95% 67%; /* Lighter yellow-green for energy */
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-primary: 242 50% 27%; /* #312b81 */
+    --sidebar-primary-foreground: 0 0% 98%; 
+    --sidebar-accent: 51 92% 55%; /* #f6de21 */
+    --sidebar-accent-foreground: 242 50% 27%; 
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
+    --background: 240 20% 15%; /* Deep navy for dark mode */
+    --foreground: 60 100% 90%; /* Soft white for text */
+    --card: 240 20% 20%; /* Slightly lighter navy for cards */
+    --card-foreground: 60 100% 85%; 
+    --popover: var(--card);
+    --popover-foreground: var(--card-foreground);
+    --primary: 51 92% 55%; /* Bright Yellow (#f6de21) for pops in dark mode */
+    --primary-foreground: 242 50% 15%; /* Deep Purple contrast */
+    --secondary: 242 50% 27%; /* Deep Purple (#312b81) */
+    --secondary-foreground: 60 100% 98%; /* Soft, warm white */
+    --muted: 240 20% 25%;
+    --muted-foreground: 60 100% 85%;
+    --accent: 51 92% 55%; /* Match primary */
+    --accent-foreground: 242 50% 15%; /* Match secondary foreground */
+    --destructive: 0 62.8% 30.6%; /* Muted red for dark mode */
     --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    --border: 240 20% 20%;
+    --input: 240 20% 20%;
+    --ring: 51 92% 55%; /* Vibrant Yellow for focus */
+    --radius: 0.5rem;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;

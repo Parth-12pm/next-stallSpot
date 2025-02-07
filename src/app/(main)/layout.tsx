@@ -20,7 +20,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
     <div className="flex flex-col min-h-screen bg-background antialiased">
       <Navigation />
       <Suspense fallback={<LoadingSpinner />}>
-        <main className="flex-1 w-full mx-auto">
+        <main className="flex-1 w-full mx-auto min-h-screen">
           {children}
         </main>
       </Suspense>
