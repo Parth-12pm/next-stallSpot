@@ -1,7 +1,7 @@
 // models/Application.ts
 import mongoose, { Schema, Document } from 'mongoose';
-import { IUser } from './User';
-import { IEvent } from './Event';
+import { IUser } from '@/models/User';
+import { IEvent } from '@/models/Event';
 
 interface IProduct {
   productName: string;
