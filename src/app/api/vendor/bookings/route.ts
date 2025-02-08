@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/auth-options"
 import Application from "@/models/Application"
-import connectToDatabase from "@/lib/mongodb"
+import dbConnect from "@/lib/mongodb"
 
 export async function GET() {
   try {
@@ -11,7 +11,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    await connectToDatabase()
+    await dbConnect()
 
     const bookings = await Application.find({
       vendorId: session.user.id,

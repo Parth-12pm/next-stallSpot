@@ -113,7 +113,18 @@ const MobileNav = () => {
                   </Avatar>
                   <span className="font-medium">{session.user.name}</span>
                 </div>
-                <Button variant="outline" className="w-full" onClick={() => signOut()}>
+                {/* Add Profile and Dashboard links */}
+                <Link href="/profile">
+                  <Button variant="ghost" className="w-full justify-start">
+                    Profile
+                  </Button>
+                </Link>
+                <Link href="/dashboard">
+                  <Button variant="ghost" className="w-full justify-start">
+                    Dashboard
+                  </Button>
+                </Link>
+                <Button variant="outline" className="w-full text-red-500" onClick={() => signOut()}>
                   Logout
                 </Button>
               </>
