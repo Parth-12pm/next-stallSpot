@@ -69,85 +69,83 @@ export function OrganizerApplicationsTable() {
   const fetchApplications = async () => {
     try {
       const response = await fetch("/api/exhibitions/applications")
-      const data = await response.json()
-
+      
       if (!response.ok) {
-        throw new Error(data.error || "Failed to fetch applications")
+        throw new Error("Failed to fetch applications")
       }
-
-      setApplications(data)
+  
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || "Failed to fetch applications");
+      }
+  
+      setApplications(data.applications);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load applications")
-      console.error("Error fetching applications:", err)
+      setError(err instanceof Error ? err.message : "Failed to load applications");
+      setApplications([]); // Set empty array on error
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleStatusUpdate = async (applicationId: string, status: "approved" | "rejected") => {
     try {
-      setIsSubmitting(true)
-
-      // Extract just the ID string from the event
-      const eventId = selectedApplication?.eventId?._id?.toString()
-
+      setIsSubmitting(true);
+  
+      // Debug log the IDs before making request
+      console.log("Selected Application:", selectedApplication);
+  
+      // Extract eventId properly
+      const eventId = selectedApplication?.eventId?._id;
       if (!eventId) {
-        throw new Error("Missing event ID")
+        throw new Error("Missing event ID");
       }
-
-      // Debug log before making request
-      console.log("Sending status update request:", {
-        eventId,
-        applicationId,
-        status,
-      })
-
+  
+      // Validate IDs
+      if (!applicationId || !eventId) {
+        throw new Error("Invalid application or event ID");
+      }
+  
+      // Log the URL being called
+      console.log(`Calling: /api/exhibitions/${eventId}/applications/${applicationId}/status`);
+  
       const response = await fetch(`/api/exhibitions/${eventId}/applications/${applicationId}/status`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          // Add this to ensure credentials are sent
-          credentials: "include",
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
           status,
-          rejectionReason: status === "rejected" ? rejectionReason : undefined,
-        }),
-      })
-
-      const data = await response.json()
-
-      // Debug log response
-      console.log("Status update response:", {
-        ok: response.ok,
-        status: response.status,
-        data,
-      })
-
+          rejectionReason: status === "rejected" ? rejectionReason : undefined
+        })
+      });
+  
+      const data = await response.json();
+  
       if (!response.ok) {
-        throw new Error(data.error || "Failed to update application status")
+        throw new Error(data.error || "Failed to update application status");
       }
-
+  
       toast({
         title: `Application ${status}`,
-        description: `The application has been ${status} successfully.`,
-      })
-
-      setShowPreview(false)
-      setRejectionReason("")
-      await fetchApplications()
+        description: `The application has been ${status} successfully.`
+      });
+  
+      setShowPreview(false);
+      setRejectionReason("");
+      await fetchApplications();
     } catch (error) {
-      console.error("Status update error:", error)
+      console.error("Status update error:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to update application status",
-        variant: "destructive",
-      })
+        variant: "destructive"
+      });
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
-
+  };
   const statusStyles = {
     pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300",
     approved: "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300",

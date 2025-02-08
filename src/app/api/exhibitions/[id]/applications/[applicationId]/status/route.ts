@@ -5,7 +5,6 @@ import dbConnect from "@/lib/mongodb"
 import type { NextRequest } from "next/server"
 import Application from "@/models/Application"
 import Event from "@/models/Event"
-import type { IStall } from "@/models/Event"
 import { sendApplicationStatusUpdate } from "@/lib/email"
 
 interface StatusUpdateBody {
@@ -18,23 +17,22 @@ interface PopulatedVendor {
   name: string
 }
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { id: string; applicationId: string } },
+): Promise<NextResponse> {
   try {
-    // Get session using authOptions
     const session = await getServerSession(authOptions)
+    const { id: eventId, applicationId } = params
 
-    // Check authentication and authorization
     if (!session?.user?.id || session.user.role !== "organizer") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    await dbConnect()
+    // Debug log IDs
+    console.log("Processing status update:", { eventId, applicationId })
 
-    // Extract dynamic route parameters from URL
-    const pathname = new URL(request.url).pathname
-    const pathParts = pathname.split("/").filter(Boolean)
-    const eventId = pathParts[pathParts.length - 3]
-    const applicationId = pathParts[pathParts.length - 1]
+    await dbConnect()
 
     // Debug log request data
     console.log("Processing status update:", {
@@ -83,43 +81,71 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       await sess.withTransaction(async () => {
         // For approvals, check if stall is still available
         if (status === "approved") {
-          const stall = event.stallConfiguration.find((s: IStall) => s.stallId === application.stallId)
+          // First, verify stall exists and check its current status
+          const event = await Event.findOne(
+            {
+              _id: eventId,
+              "stallConfiguration.stallId": application.stallId,
+            },
+            { "stallConfiguration.$": 1 },
+          ).session(sess)
+
+          const stall = event?.stallConfiguration[0]
           if (!stall || stall.status !== "reserved") {
             throw new Error("Stall is no longer available")
           }
 
-          // Update stall status to reserved if approved
+          // Update stall status to reserved
           await Event.updateOne(
             {
               _id: eventId,
               "stallConfiguration.stallId": application.stallId,
             },
             {
-              $set: { "stallConfiguration.$.status": "reserved" },
+              $set: {
+                "stallConfiguration.$.status": "reserved",
+                "stallConfiguration.$.lastUpdated": new Date(),
+              },
             },
             { session: sess },
           )
         }
 
-        // Update application
+        // Update application with more detailed status tracking
         const updates = {
           status: status === "approved" ? "payment_pending" : "rejected",
           rejectionReason: status === "rejected" ? rejectionReason : undefined,
           approvalDate: status === "approved" ? new Date() : undefined,
           paymentDeadline: status === "approved" ? new Date(Date.now() + 24 * 60 * 60 * 1000) : undefined,
+          statusHistory: {
+            status: status === "approved" ? "payment_pending" : "rejected",
+            updatedAt: new Date(),
+            updatedBy: session.user.id,
+          },
         }
 
         const updatedApplication = await Application.findByIdAndUpdate(
           applicationId,
-          { $set: updates },
+          {
+            $set: updates,
+            $push: { statusHistory: updates.statusHistory },
+          },
           { new: true, session: sess },
         )
 
-        // Update stall status if rejected
+        // If rejected, update stall status back to available
         if (status === "rejected") {
           await Event.updateOne(
-            { _id: eventId, "stallConfiguration.stallId": application.stallId },
-            { $set: { "stallConfiguration.$.status": "available" } },
+            {
+              _id: eventId,
+              "stallConfiguration.stallId": application.stallId,
+            },
+            {
+              $set: {
+                "stallConfiguration.$.status": "available",
+                "stallConfiguration.$.lastUpdated": new Date(),
+              },
+            },
             { session: sess },
           )
         }
@@ -136,12 +162,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             : undefined,
         )
 
-        return updatedApplication
+        // Return both updated application and stall status
+        return {
+          application: updatedApplication,
+          stallStatus: status === "approved" ? "reserved" : "available",
+        }
       })
 
+      // Update the response to include stall status
       return NextResponse.json({
         message: `Application ${status} successfully`,
         application: application,
+        stallStatus: status === "approved" ? "reserved" : "available",
       })
     } catch (error) {
       throw error
@@ -151,7 +183,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   } catch (error) {
     console.error("[APPLICATION_STATUS_UPDATE]", error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to update application status" },
+      {
+        error: error instanceof Error ? error.message : "Failed to update application status",
+      },
       { status: 500 },
     )
   }

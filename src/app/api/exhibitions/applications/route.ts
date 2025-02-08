@@ -10,31 +10,28 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     
-    // Log session info for debugging
-    console.log("Session data:", {
-      userId: session?.user?.id,
-      role: session?.user?.role,
-      authenticated: !!session
-    });
-
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+      return NextResponse.json({ 
+        success: false,
+        error: "Not authenticated" 
+      }, { status: 401 });
     }
 
     if (session.user.role !== 'organizer') {
-      return NextResponse.json({ error: "Unauthorized - Organizer access only" }, { status: 403 });
+      return NextResponse.json({ 
+        success: false,
+        error: "Unauthorized - Organizer access only" 
+      }, { status: 403 });
     }
 
     await dbConnect();
 
-    // First get all events by this organizer
     const organizerEvents = await Event.find({ 
       organizerId: session.user.id 
     }).select('_id title venue startDate');
 
     const eventIds = organizerEvents.map(event => event._id);
 
-    // Then get all applications for these events
     const applications = await Application.find({
       eventId: { $in: eventIds }
     })
@@ -43,15 +40,18 @@ export async function GET() {
     .sort({ applicationDate: -1 })
     .lean();
 
-    console.log(`Found ${applications.length} applications for organizer ${session.user.id}`);
-
-    return NextResponse.json(applications);
+    return NextResponse.json({
+      success: true,
+      applications,
+      total: applications.length
+    });
 
   } catch (error) {
     console.error("[FETCH_APPLICATIONS]", error);
-    return NextResponse.json(
-      { error: "Failed to fetch applications" },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      success: false,
+      error: "Failed to fetch applications",
+      applications: []
+    }, { status: 500 });
   }
 }

@@ -23,26 +23,37 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { format } from "date-fns"
 
 interface Application {
-  _id: string
-  eventId: {
-    title: string
-    venue: string
-    startDate: string
-  }
-  stallId: number
-  status: 'pending' | 'approved' | 'rejected' | 'payment_pending' | 'payment_completed' | 'expired'
-  applicationDate: string
+  _id: string;
+  eventId: {    
+    _id: string;
+    title: string;
+    venue: string;
+    startDate: string;
+  };
+  vendorId: {   
+    name: string;
+    email: string;
+    contact: string;
+  };
+  stallId: number;
+  status: 'pending' | 'approved' | 'rejected' | 'payment_pending' | 'payment_completed' | 'expired';
   products: Array<{
-    productName: string
-    productDetails: string
-  }>
+    productName: string;
+    productDetails: string;
+  }>;
+  applicationDate: string;
+  approvalDate?: string;
+  rejectionReason?: string;
+  paymentDeadline?: string;
   fees: {
-    stallPrice: number
-    platformFee: number
-    entryFee: number
-    gst: number
-    totalAmount: number
-  }
+    stallPrice: number;
+    platformFee: number;
+    entryFee: number;
+    gst: number;
+    totalAmount: number;
+  };
+  createdAt: string;
+  updatedAt: string;
 }
 
 export function ApplicationsTable() {
@@ -182,65 +193,93 @@ export function ApplicationsTable() {
       </Table>
 
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Application Details</DialogTitle>
-          </DialogHeader>
-          {selectedApplication && (
-            <div className="space-y-6">
-              <div className="grid gap-4">
-                <div>
-                  <h3 className="font-semibold mb-2">Event Details</h3>
-                  <p className="text-lg font-medium">{selectedApplication.eventId.title}</p>
-                  <p className="text-muted-foreground">{selectedApplication.eventId.venue}</p>
-                  <p className="text-muted-foreground">
-                    Starting {format(new Date(selectedApplication.eventId.startDate), "MMMM d, yyyy")}
-                  </p>
-                </div>
+      <DialogContent className="max-w-3xl">
+  <DialogHeader>
+    <DialogTitle>Application Details</DialogTitle>
+  </DialogHeader>
+  {selectedApplication && (
+    <div className="space-y-6">
+      <div className="grid gap-4">
+        {/* Event Details */}
+        <div>
+          <h3 className="font-semibold mb-2">Event Details</h3>
+          <p className="text-lg font-medium">{selectedApplication.eventId.title}</p>
+          <p className="text-muted-foreground">{selectedApplication.eventId.venue}</p>
+          <p className="text-muted-foreground">
+            Starting {format(new Date(selectedApplication.eventId.startDate), "MMMM d, yyyy")}
+          </p>
+        </div>
 
-                <div>
-                  <h3 className="font-semibold mb-2">Products</h3>
-                  <div className="space-y-4">
-                    {selectedApplication.products.map((product, index) => (
-                      <div key={index} className="bg-muted p-4 rounded-lg">
-                        <p className="font-medium">{product.productName}</p>
-                        <p className="text-muted-foreground">{product.productDetails}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold mb-2">Fee Breakdown</h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span>Stall Price:</span>
-                      <span>₹{selectedApplication.fees.stallPrice.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>Platform Fee (5%):</span>
-                      <span>₹{selectedApplication.fees.platformFee.toLocaleString()}</span>
-                    </div>
-                    {selectedApplication.fees.entryFee > 0 && (
-                      <div className="flex justify-between text-muted-foreground">
-                        <span>Entry Fee:</span>
-                        <span>₹{selectedApplication.fees.entryFee.toLocaleString()}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>GST (18%):</span>
-                      <span>₹{selectedApplication.fees.gst.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between font-bold border-t pt-2">
-                      <span>Total Amount:</span>
-                      <span>₹{selectedApplication.fees.totalAmount.toLocaleString()}</span>
-                    </div>
-                  </div>
+        {/* Application Status Information */}
+        <div>
+          <h3 className="font-semibold mb-2">Application Status</h3>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Badge className={statusStyles[selectedApplication.status]} variant="secondary">
+                {selectedApplication.status.replace('_', ' ').toUpperCase()}
+              </Badge>
+              {selectedApplication.paymentDeadline && selectedApplication.status === 'payment_pending' && (
+                <p className="text-sm text-muted-foreground">
+                  Payment due by: {format(new Date(selectedApplication.paymentDeadline), "MMM d, yyyy h:mm a")}
+                </p>
+              )}
+            </div>
+            {selectedApplication.status === 'rejected' && selectedApplication.rejectionReason && (
+              <div className="mt-2">
+                <p className="text-sm font-medium text-destructive">Rejection Reason:</p>
+                <div className="mt-1 p-3 bg-destructive/10 rounded-md">
+                  <p className="text-sm text-destructive">{selectedApplication.rejectionReason}</p>
                 </div>
               </div>
+            )}
+          </div>
+        </div>
+
+        {/* Products Section */}
+        <div>
+          <h3 className="font-semibold mb-2">Products</h3>
+          <div className="space-y-4">
+            {selectedApplication.products.map((product, index) => (
+              <div key={index} className="bg-muted p-4 rounded-lg">
+                <p className="font-medium">{product.productName}</p>
+                <p className="text-muted-foreground">{product.productDetails}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Fee Breakdown */}
+        <div>
+          <h3 className="font-semibold mb-2">Fee Breakdown</h3>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span>Stall Price:</span>
+              <span>₹{selectedApplication.fees.stallPrice.toLocaleString()}</span>
             </div>
-          )}
-        </DialogContent>
+            <div className="flex justify-between text-muted-foreground">
+              <span>Platform Fee (5%):</span>
+              <span>₹{selectedApplication.fees.platformFee.toLocaleString()}</span>
+            </div>
+            {selectedApplication.fees.entryFee > 0 && (
+              <div className="flex justify-between text-muted-foreground">
+                <span>Entry Fee:</span>
+                <span>₹{selectedApplication.fees.entryFee.toLocaleString()}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-muted-foreground">
+              <span>GST (18%):</span>
+              <span>₹{selectedApplication.fees.gst.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between font-bold border-t pt-2">
+              <span>Total Amount:</span>
+              <span>₹{selectedApplication.fees.totalAmount.toLocaleString()}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )}
+</DialogContent>
       </Dialog>
     </div>
   )
