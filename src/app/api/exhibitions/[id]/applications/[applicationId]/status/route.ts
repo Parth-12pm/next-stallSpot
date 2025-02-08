@@ -19,11 +19,11 @@ interface PopulatedVendor {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string; applicationId: string } },
+  { params }: { params: Promise<{ id: string; applicationId: string }> },
 ): Promise<NextResponse> {
   try {
     const session = await getServerSession(authOptions)
-    const { id: eventId, applicationId } = params
+    const { id: eventId, applicationId } = await params // Await the params
 
     if (!session?.user?.id || session.user.role !== "organizer") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
