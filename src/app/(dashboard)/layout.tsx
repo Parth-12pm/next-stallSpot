@@ -1,18 +1,26 @@
 // app/(dashboard)/layout.tsx
-import { redirect } from 'next/navigation';
+import type React from "react"
+import { redirect } from "next/navigation"
 import { getServerSession } from "next-auth"
-import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import DashboardLayout from "@/components/dashboard/DashboardLayout"
+import Script from "next/script"
 
 export default async function DashboardRootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
-  const session = await getServerSession();
+  const session = await getServerSession()
 
   if (!session?.user) {
-    redirect('/auth/login');
+    redirect("/auth/login")
   }
 
-  return <DashboardLayout>{children}</DashboardLayout>;
+  return (
+    <>
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+      <DashboardLayout>{children}</DashboardLayout>
+    </>
+  )
 }
+

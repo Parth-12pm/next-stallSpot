@@ -167,7 +167,6 @@ export function ExhibitionComponents({ exhibitions = [] }: ExhibitionComponentsP
 
         {/* Exhibition List */}
         <div className="flex-1">
-          <ScrollArea className="h-[calc(100vh-200px)]">
             <div className="space-y-4">
               {filteredExhibitions.length > 0 ? (
                 filteredExhibitions.map((exhibition) => (
@@ -179,7 +178,6 @@ export function ExhibitionComponents({ exhibitions = [] }: ExhibitionComponentsP
                 </div>
               )}
             </div>
-          </ScrollArea>
         </div>
       </div>
     </div>
