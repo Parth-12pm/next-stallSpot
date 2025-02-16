@@ -1,4 +1,6 @@
 // src/types/razorpay.d.ts
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 declare module "razorpay" {
   interface RazorpayPayoutOptions {
     account_number: string
