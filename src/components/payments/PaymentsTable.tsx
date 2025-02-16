@@ -1,3 +1,4 @@
+// src/components/payments/PaymentsTable.tsx
 "use client"
 
 import { useState, useEffect } from "react"

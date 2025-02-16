@@ -1,4 +1,4 @@
-// app/api/vendor/applications/route.ts
+// src/app/api/vendor/applications/route.ts
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/auth-options"
@@ -21,7 +21,7 @@ export async function GET() {
     })
       .populate({
         path: "eventId",
-        select: "title venue startDate endDate"
+        select: "title venue startDate endDate",
       })
       .sort({ applicationDate: -1 })
       .lean()
@@ -29,9 +29,7 @@ export async function GET() {
     return NextResponse.json(applications)
   } catch (error) {
     console.error("Error fetching vendor applications:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch applications" }, 
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Failed to fetch applications" }, { status: 500 })
   }
 }
+

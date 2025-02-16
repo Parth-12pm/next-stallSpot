@@ -1,3 +1,4 @@
+// src/app/api/vendor/stats/route.ts
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/auth-options"
@@ -5,7 +6,6 @@ import "@/models/User"
 import "@/models/Event"
 import Application from "@/models/Application"
 import dbConnect from "@/lib/mongodb"
-
 
 export async function GET() {
   try {

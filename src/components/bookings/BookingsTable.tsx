@@ -1,3 +1,4 @@
+// src/components/bookings/BookingsTable.tsx
 "use client"
 
 import { useState, useEffect } from "react"

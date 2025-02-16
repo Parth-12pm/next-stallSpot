@@ -1,3 +1,4 @@
+// src/components/applications/ApplicationsTable.tsx
 "use client"
 
 import { useEffect, useState } from "react"

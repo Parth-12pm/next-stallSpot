@@ -1,3 +1,5 @@
+// app/api\exhibitions\[id]\applications\[applicationId]\status\route.ts
+
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/auth-options"
@@ -23,25 +25,22 @@ export async function POST(
 ): Promise<NextResponse> {
   try {
     const session = await getServerSession(authOptions)
-    const { id: eventId, applicationId } = await params // Await the params
+    const { id: eventId, applicationId } = await params
 
     if (!session?.user?.id || session.user.role !== "organizer") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Debug log IDs
     console.log("Processing status update:", { eventId, applicationId })
 
     await dbConnect()
 
-    // Debug log request data
     console.log("Processing status update:", {
       eventId,
       applicationId,
       userId: session.user.id,
     })
 
-    // Validate request body
     const body: StatusUpdateBody = await request.json()
     const { status, rejectionReason } = body
 
@@ -49,7 +48,6 @@ export async function POST(
       return NextResponse.json({ error: "Invalid status" }, { status: 400 })
     }
 
-    // Use Promise.all for parallel queries
     const [event, application] = await Promise.all([
       Event.findOne({
         _id: eventId,
@@ -74,14 +72,11 @@ export async function POST(
       return NextResponse.json({ error: "Application does not match event" }, { status: 400 })
     }
 
-    // Start a session for transaction
     const sess = await (await dbConnect()).startSession()
 
     try {
       await sess.withTransaction(async () => {
-        // For approvals, check if stall is still available
         if (status === "approved") {
-          // First, verify stall exists and check its current status
           const event = await Event.findOne(
             {
               _id: eventId,
@@ -95,7 +90,6 @@ export async function POST(
             throw new Error("Stall is no longer available")
           }
 
-          // Update stall status to reserved
           await Event.updateOne(
             {
               _id: eventId,
@@ -111,7 +105,6 @@ export async function POST(
           )
         }
 
-        // Update application with more detailed status tracking
         const updates = {
           status: status === "approved" ? "payment_pending" : "rejected",
           rejectionReason: status === "rejected" ? rejectionReason : undefined,
@@ -133,7 +126,6 @@ export async function POST(
           { new: true, session: sess },
         )
 
-        // If rejected, update stall status back to available
         if (status === "rejected") {
           await Event.updateOne(
             {
@@ -150,7 +142,6 @@ export async function POST(
           )
         }
 
-        // Send email notification
         await sendApplicationStatusUpdate(
           application.vendorId.email,
           event.title,
@@ -162,14 +153,12 @@ export async function POST(
             : undefined,
         )
 
-        // Return both updated application and stall status
         return {
           application: updatedApplication,
           stallStatus: status === "approved" ? "reserved" : "available",
         }
       })
 
-      // Update the response to include stall status
       return NextResponse.json({
         message: `Application ${status} successfully`,
         application: application,
