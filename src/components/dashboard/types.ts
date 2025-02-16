@@ -11,7 +11,7 @@ export interface ExtendedSession {
     name?: string | null
     email?: string | null
     image?: string | null
-    role?: 'organizer' | 'vendor' | null
+    role?:  'admin' | 'organizer' | 'vendor' | null
   }
 }
 

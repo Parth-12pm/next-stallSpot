@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { EventsTable } from "@/components/events/EventsTable";
+import { EventsTable as AdminEventsTable } from "@/components/admin/EventsTable";
 
 
 export default function EventsPage() {
   const { session } = useAuth();
   const isOrganizer = (session?.user as { role?: string })?.role === 'organizer';
+  const isAdmin = (session?.user as { role?: string })?.role === 'admin';
 
   return (
     <div className="p-6">
@@ -28,9 +30,7 @@ export default function EventsPage() {
         )}
       </div>
 
-      <div className="rounded-md border">
-        <EventsTable />
-      </div>
+      <div className="rounded-md border">{isAdmin ? <AdminEventsTable /> : <EventsTable />}</div>
     </div>
   );
 }

@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     const organizerAmount = totalAmount - platformFee
 
     const order = await razorpay.orders.create({
-      amount: totalAmount * 100, // Razorpay expects amount in paise
+      amount: totalAmount * 100, 
       currency: "INR",
       receipt: applicationId,
       notes: {

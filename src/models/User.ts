@@ -5,7 +5,7 @@ export interface IUser extends Document {
   email: string
   password?: string
   name: string
-  role: "organizer" | "vendor"
+  role: "organizer" | "vendor" | "admin"
   profileComplete: boolean
   dateOfBirth?: Date
   googleId?: string
@@ -59,7 +59,7 @@ const UserSchema = new Schema(
     email: { type: String, required: true, unique: true },
     password: { type: String },
     name: { type: String, required: true },
-    role: { type: String, enum: ["organizer", "vendor"], required: true },
+    role: { type: String, enum: ["organizer", "vendor", "admin"], required: true },
     profileComplete: { type: Boolean, default: false },
     dateOfBirth: { type: Date },
     googleId: String,

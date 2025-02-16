@@ -1,10 +1,10 @@
 "use client"
 
-import * as React from "react"
+import type * as React from "react"
 import Link from "next/link"
 import { useSession, signOut } from "next-auth/react"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, CalendarDays, Store, CreditCard } from 'lucide-react'
+import { LayoutDashboard, CalendarDays, Store, CreditCard, Users, FileText, MessageSquare } from "lucide-react"
 
 import {
   Sidebar,
@@ -18,12 +18,7 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import type { NavItem, ExtendedSession } from "./types"
 
 const organizerNavItems: NavItem[] = [
@@ -80,6 +75,45 @@ const vendorNavItems: NavItem[] = [
   },
 ]
 
+const adminNavItems: NavItem[] = [
+  {
+    title: "Overview",
+    href: "/dashboard",
+    icon: LayoutDashboard,
+    description: "Admin dashboard overview",
+  },
+  {
+    title: "Users",
+    href: "/dashboard/users",
+    icon: Users,
+    description: "Manage all users",
+  },
+  {
+    title: "Events",
+    href: "/dashboard/events",
+    icon: CalendarDays,
+    description: "Manage all events",
+  },
+  {
+    title: "Applications",
+    href: "/dashboard/applications",
+    icon: FileText,
+    description: "Manage all applications",
+  },
+  {
+    title: "Payments",
+    href: "/dashboard/payments",
+    icon: CreditCard,
+    description: "View all payments",
+  },
+  {
+    title: "Contacts",
+    href: "/dashboard/contacts",
+    icon: MessageSquare,
+    description: "Manage contact submissions",
+  },
+]
+
 interface DashboardLayoutProps {
   children: React.ReactNode
 }
@@ -108,9 +142,26 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   const userRole = session.user.role
-  const isOrganizer = userRole === "organizer"
-  const navItems = isOrganizer ? organizerNavItems : vendorNavItems
-  const dashboardTitle = isOrganizer ? "Organizer Dashboard" : "Vendor Dashboard"
+  let navItems: NavItem[]
+  let dashboardTitle: string
+
+  switch (userRole) {
+    case "organizer":
+      navItems = organizerNavItems
+      dashboardTitle = "Organizer Dashboard"
+      break
+    case "vendor":
+      navItems = vendorNavItems
+      dashboardTitle = "Vendor Dashboard"
+      break
+    case "admin":
+      navItems = adminNavItems
+      dashboardTitle = "Admin Dashboard"
+      break
+    default:
+      navItems = []
+      dashboardTitle = "Dashboard"
+  }
 
   return (
     <SidebarProvider>
@@ -125,11 +176,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <SidebarMenu>
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname === item.href}
-                    tooltip={item.description}
-                  >
+                  <SidebarMenuButton asChild isActive={pathname === item.href} tooltip={item.description}>
                     <Link href={item.href}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
@@ -146,13 +193,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   <DropdownMenuTrigger asChild>
                     <SidebarMenuButton size="lg">
                       <Avatar>
-                        <AvatarImage src={session.user.image || '/placeholder.svg'} alt={session.user.name || ''} />
+                        <AvatarImage src={session.user.image || "/placeholder.svg"} alt={session.user.name || ""} />
                         <AvatarFallback>
                           {session.user.name
-                            ?.split(' ')
-                            .map(n => n[0])
-                            .join('')
-                            .toUpperCase() || '?'}
+                            ?.split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .toUpperCase() || "?"}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col gap-0.5 text-left">
@@ -162,15 +209,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     </SidebarMenuButton>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-[200px]">
-                  <DropdownMenuItem asChild>
+                    <DropdownMenuItem asChild>
                       <Link href="/">Home</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link href="/dashboard/settings">Profile</Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => signOut()}>
-                      Log out
-                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => signOut()}>Log out</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </SidebarMenuItem>
@@ -181,7 +226,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         {/* Main Content */}
         <div className="flex-1 overflow-auto bg-background">
           <header className="sticky top-0 z-10 flex h-14 items-center gap-4  bg-background px-6">
-          <SidebarTrigger />
+            <SidebarTrigger />
           </header>
           <div className="flex-1">{children}</div>
         </div>

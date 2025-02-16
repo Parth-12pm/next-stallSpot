@@ -9,14 +9,14 @@ declare module 'next-auth' {
       name?: string | null;
       email?: string | null;
       image?: string | null;
-      role?: 'organizer' | 'vendor' | null;
+      role?:  'admin' |'organizer' | 'vendor' | null;
       profileComplete?: boolean;
     };
   }
 
   interface User {
     id?: string;
-    role?: 'organizer' | 'vendor';
+    role?: 'admin' |'organizer' | 'vendor';
     profileComplete?: boolean;
   }
 }
@@ -24,7 +24,7 @@ declare module 'next-auth' {
 declare module 'next-auth/jwt' {
   interface JWT {
     id?: string;
-    role?: 'organizer' | 'vendor';
+    role?:  'admin'|'organizer' | 'vendor';
     profileComplete?: boolean;
   }
 }

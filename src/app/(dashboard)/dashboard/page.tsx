@@ -1,20 +1,21 @@
 // app/dashboard/page.tsx
-'use client';
+"use client"
 
-import { useAuth } from "@/hooks/useAuth";
-import { OrganizerDashboard } from "@/components/dashboard/OrganizerDashboard";
-import { VendorDashboard } from "@/components/dashboard/VendorDashboard";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/hooks/useAuth"
+import { OrganizerDashboard } from "@/components/dashboard/OrganizerDashboard"
+import { VendorDashboard } from "@/components/dashboard/VendorDashboard"
+import { AdminDashboard } from "@/components/dashboard/AdminDashboard"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function DashboardPage() {
-  const { session, status } = useAuth();
+  const { session, status } = useAuth()
 
   // Add this console.log for debugging
   console.log("Dashboard Session:", {
     status,
     role: session?.user?.role,
-    user: session?.user
-  });
+    user: session?.user,
+  })
 
   if (status === "loading") {
     return (
@@ -27,21 +28,23 @@ export default function DashboardPage() {
         </div>
         <Skeleton className="h-[300px]" />
       </div>
-    );
+    )
   }
 
   if (!session?.user?.role) {
-    return null;
+    return null
   }
 
   // More explicit role check
-  if (session.user.role === 'organizer') {
-    return <OrganizerDashboard user={session.user} />;
+  switch (session.user.role) {
+    case "organizer":
+      return <OrganizerDashboard user={session.user} />
+    case "vendor":
+      return <VendorDashboard user={session.user} />
+    case "admin":
+      return <AdminDashboard user={session.user} />
+    default:
+      return null
   }
-
-  if (session.user.role === 'vendor') {
-    return <VendorDashboard user={session.user} />;
-  }
-
-  return null;
 }
+
