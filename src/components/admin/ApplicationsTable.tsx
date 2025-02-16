@@ -5,8 +5,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button"
 import type { IApplication } from "@/models/Application"
 
+type ApplicationWithId = IApplication & { _id: string }
+
 export function ApplicationsTable() {
-  const [applications, setApplications] = useState<IApplication[]>([])
+  const [applications, setApplications] = useState<ApplicationWithId[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {

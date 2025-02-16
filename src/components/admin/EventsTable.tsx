@@ -5,8 +5,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button"
 import type { IEvent } from "@/models/Event"
 
+type EventWithId = IEvent & { _id: string }
+
 export function EventsTable() {
-  const [events, setEvents] = useState<IEvent[]>([])
+  const [events, setEvents] = useState<EventWithId[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {

@@ -5,8 +5,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button"
 import type { IContact } from "@/models/Contact"
 
+type ContactWithId = IContact & { _id: string }
+
+
 export function ContactsTable() {
-  const [contacts, setContacts] = useState<IContact[]>([])
+  const [contacts, setContacts] = useState<ContactWithId[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
