@@ -76,7 +76,7 @@ export function BookingsTable() {
             </TableCell>
           </TableRow>
         ) : (
-          bookings.map((booking) => (
+          bookings.map((booking: Booking) => (
             <TableRow key={booking._id}>
               <TableCell>
                 <div>

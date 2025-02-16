@@ -36,11 +36,11 @@ export async function POST(request: Request) {
     }
 
     const { totalAmount } = application.fees
-    const vendorAmount = Math.round(totalAmount * 1.05) // 5% extra for vendor
-    const organizerAmount = Math.round(totalAmount * 0.95) // 5% less for organizer
+    const platformFee = Math.round(totalAmount * 0.05) // 5% platform fee
+    const organizerAmount = totalAmount - platformFee
 
     const order = await razorpay.orders.create({
-      amount: vendorAmount * 100, // Razorpay expects amount in paise
+      amount: totalAmount * 100, // Razorpay expects amount in paise
       currency: "INR",
       receipt: applicationId,
       notes: {
@@ -48,14 +48,15 @@ export async function POST(request: Request) {
         eventId: application.eventId._id.toString(),
         vendorId: application.vendorId._id.toString(),
         organizerId: application.eventId.organizerId.toString(),
-        vendorAmount: vendorAmount.toString(),
+        totalAmount: totalAmount.toString(),
+        platformFee: platformFee.toString(),
         organizerAmount: organizerAmount.toString(),
       },
     })
 
     return NextResponse.json({
       orderId: order.id,
-      amount: vendorAmount,
+      amount: totalAmount,
       currency: order.currency,
       vendorName: application.vendorId.name,
       vendorEmail: application.vendorId.email,

@@ -28,7 +28,8 @@ interface RazorpayOrder {
     eventId?: string
     vendorId?: string
     organizerId?: string
-    vendorAmount?: string
+    totalAmount?: string
+    platformFee?: string
     organizerAmount?: string
   }
 }
@@ -66,32 +67,31 @@ export async function POST(request: Request) {
       throw new Error("Invalid order: missing application ID")
     }
 
-    const amountInRupees = typeof order.amount === "string" ? Number.parseFloat(order.amount) / 100 : order.amount / 100
+    const totalAmount = Number(order.notes.totalAmount)
+    const platformFee = Number(order.notes.platformFee)
+    const organizerAmount = Number(order.notes.organizerAmount)
 
     // Update application status
-    const application = await Application.findById(order.notes.applicationId)
+    const application = await Application.findByIdAndUpdate(
+      order.notes.applicationId,
+      {
+        status: "payment_completed",
+        paymentDetails: {
+          razorpayOrderId: razorpay_order_id,
+          razorpayPaymentId: razorpay_payment_id,
+          amount: totalAmount,
+          platformFee,
+          organizerAmount,
+          paidAt: new Date(),
+        },
+      },
+      { new: true },
+    )
       .populate("eventId", "title organizerId")
       .populate("vendorId", "name email")
 
     if (!application) {
       throw new Error("Application not found")
-    }
-
-    const platformFee = Math.round(amountInRupees * 0.05) // 5% platform fee
-
-    await Application.findByIdAndUpdate(order.notes.applicationId, {
-      status: "payment_completed",
-      paymentDetails: {
-        razorpayOrderId: razorpay_order_id,
-        razorpayPaymentId: razorpay_payment_id,
-        amount: amountInRupees,
-        platformFee,
-        paidAt: new Date(),
-      },
-    })
-
-    if (!order.notes.eventId || !order.notes.vendorId) {
-      throw new Error("Invalid order: missing event ID or vendor ID")
     }
 
     // Update stall status in the event
@@ -119,7 +119,7 @@ export async function POST(request: Request) {
       const payout = await razorpay.payouts.create({
         account_number: process.env.RAZORPAY_ACCOUNT_NUMBER!,
         fund_account_id: organizer.accountDetails.razorpayFundAccountId,
-        amount: Math.round((amountInRupees - platformFee) * 100), // Convert to paise
+        amount: organizerAmount * 100, // Convert to paise
         currency: "INR",
         mode: "IMPS",
         purpose: "payout",
@@ -138,22 +138,20 @@ export async function POST(request: Request) {
 
       // Send payment confirmation emails
       await Promise.all([
-        // Send confirmation to vendor
         sendPaymentConfirmationEmail(
           application.vendorId.email,
           application.eventId.title,
           application.stallId.toString(),
-          amountInRupees,
+          totalAmount,
           razorpay_payment_id,
           platformFee,
         ),
-        // Send notification to organizer
         sendOrganizerPaymentNotification(
           organizer.email,
           application.eventId.title,
           application.stallId.toString(),
           application.vendorId.name,
-          amountInRupees,
+          totalAmount,
           platformFee,
           payout.id,
         ),

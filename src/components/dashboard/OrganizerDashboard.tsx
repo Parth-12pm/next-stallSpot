@@ -2,6 +2,7 @@
 
 import { Calendar, Store, PlusCircle, CheckCircle2, Edit, CheckCircle, AlertCircle } from 'lucide-react'
 import { DashboardProps } from "./types"
+import { PaymentsTable } from "../payments/PaymentsTable"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -74,6 +75,7 @@ export function OrganizerDashboard({ user }: DashboardProps) {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="events">Events</TabsTrigger>
           <TabsTrigger value="applications">Applications</TabsTrigger>
+          <TabsTrigger value="payments">Payments</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -230,6 +232,17 @@ export function OrganizerDashboard({ user }: DashboardProps) {
             </CardHeader>
             <CardContent>
               <OrganizerApplicationsTable />
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="payments">
+          <Card>
+            <CardHeader>
+              <CardTitle>Payments</CardTitle>
+              <CardDescription>View all payments received for your events</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <PaymentsTable />
             </CardContent>
           </Card>
         </TabsContent>

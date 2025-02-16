@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import { CircleDollarSign, Clock, Store, CheckCircle2 } from "lucide-react"
 import type { DashboardProps } from "./types"
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -93,7 +92,7 @@ export function VendorDashboard({ user }: DashboardProps) {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">{stats?.activeBookings}</div>
-                    <p className="text-xs text-muted-foreground">Current active bookings</p>
+                    <p className="text-xs text-muted-foreground">Current active stalls</p>
                   </CardContent>
                 </Card>
 

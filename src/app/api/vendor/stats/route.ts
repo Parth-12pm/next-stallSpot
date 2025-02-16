@@ -22,9 +22,11 @@ export async function GET() {
     }).populate("eventId")
 
     // Calculate statistics
-    const activeBookings = applications.filter(
-      (app) => app.status === "payment_completed" && new Date(app.eventId.endDate) >= new Date(),
-    ).length
+    const activeBookings = await Application.countDocuments({
+      vendorId: session.user.id,
+      status: "payment_completed",
+      "eventId.endDate": { $gte: new Date() },
+    })
 
     const pendingApplications = applications.filter((app) => ["pending", "payment_pending"].includes(app.status)).length
 
