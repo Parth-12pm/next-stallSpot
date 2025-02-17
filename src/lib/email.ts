@@ -1,4 +1,4 @@
-// lib/email.ts
+// src/lib/email.ts
 import { Resend } from "resend"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
@@ -7,7 +7,7 @@ export async function sendPasswordResetEmail(email: string, resetToken: string) 
   const resetUrl = `${process.env.NEXTAUTH_URL}/auth/reset-password?token=${resetToken}`
 
   try {
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from: "onboarding@resend.dev",
       to: email,
       subject: "Reset Your Password",
@@ -18,6 +18,10 @@ export async function sendPasswordResetEmail(email: string, resetToken: string) 
         <p>This link will expire in 1 hour.</p>
       `,
     })
+    if (result.error) {
+      throw new Error(`Failed to send reset email: ${result.error.message}`)
+    }
+    console.log(`Password reset email sent successfully to ${email}`)
   } catch (error) {
     console.error("Failed to send reset email:", error)
     throw new Error("Failed to send reset email")
@@ -33,7 +37,7 @@ export async function sendApplicationNotification(
   const dashboardUrl = `${process.env.NEXTAUTH_URL}/dashboard/applications`
 
   try {
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from: "onboarding@resend.dev",
       to,
       subject: `New Application for ${eventTitle}`,
@@ -44,6 +48,10 @@ export async function sendApplicationNotification(
         <a href="${dashboardUrl}" style="display: inline-block; padding: 12px 20px; background-color: #0070f3; color: white; text-decoration: none; border-radius: 5px;">View Application</a>
       `,
     })
+    if (result.error) {
+      throw new Error(`Failed to send application notification: ${result.error.message}`)
+    }
+    console.log(`Application notification email sent successfully to ${to}`)
   } catch (error) {
     console.error("Failed to send application notification:", error)
     // Don't throw error to prevent blocking the application process
@@ -83,14 +91,21 @@ export async function sendApplicationStatusUpdate(
         <p>You can apply for other available stalls in our exhibitions.</p>
       `
 
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from: "onboarding@resend.dev",
       to,
       subject,
       html,
     })
+
+    if (result.error) {
+      throw new Error(`Failed to send status update email: ${result.error.message}`)
+    }
+
+    console.log(`Status update email sent successfully to ${to}`)
   } catch (error) {
     console.error("Failed to send status update email:", error)
+    throw new Error("Failed to send status update email")
   }
 }
 
@@ -103,7 +118,7 @@ export async function sendPaymentConfirmationEmail(
   platformFee: number,
 ) {
   try {
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from: "onboarding@resend.dev",
       to,
       subject: `Payment Confirmation - ${eventTitle}`,
@@ -121,8 +136,15 @@ export async function sendPaymentConfirmationEmail(
         <a href="${process.env.NEXTAUTH_URL}/dashboard" style="display: inline-block; padding: 12px 20px; background-color: #0070f3; color: white; text-decoration: none; border-radius: 5px;">Go to Dashboard</a>
       `,
     })
+
+    if (result.error) {
+      throw new Error(`Failed to send payment confirmation email: ${result.error.message}`)
+    }
+
+    console.log(`Payment confirmation email sent successfully to ${to}`)
   } catch (error) {
     console.error("Failed to send payment confirmation email:", error)
+    throw new Error("Failed to send payment confirmation email")
   }
 }
 
@@ -136,7 +158,7 @@ export async function sendOrganizerPaymentNotification(
   payoutId: string,
 ) {
   try {
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from: "onboarding@resend.dev",
       to,
       subject: `Payment Received - ${eventTitle}`,
@@ -156,6 +178,10 @@ export async function sendOrganizerPaymentNotification(
         <a href="${process.env.NEXTAUTH_URL}/dashboard/payments" style="display: inline-block; padding: 12px 20px; background-color: #0070f3; color: white; text-decoration: none; border-radius: 5px;">View Payment Details</a>
       `,
     })
+    if (result.error) {
+      throw new Error(`Failed to send organizer payment notification: ${result.error.message}`)
+    }
+    console.log(`Organizer payment notification email sent successfully to ${to}`)
   } catch (error) {
     console.error("Failed to send organizer payment notification:", error)
   }
@@ -163,7 +189,7 @@ export async function sendOrganizerPaymentNotification(
 
 export async function sendPaymentFailureNotification(to: string, eventTitle: string, stallId: string, error: string) {
   try {
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from: "onboarding@resend.dev",
       to,
       subject: `Payment Failed - ${eventTitle}`,
@@ -175,6 +201,10 @@ export async function sendPaymentFailureNotification(to: string, eventTitle: str
         <a href="${process.env.NEXTAUTH_URL}/dashboard/applications" style="display: inline-block; padding: 12px 20px; background-color: #0070f3; color: white; text-decoration: none; border-radius: 5px;">Try Again</a>
       `,
     })
+    if (result.error) {
+      throw new Error(`Failed to send payment failure notification: ${result.error.message}`)
+    }
+    console.log(`Payment failure notification email sent successfully to ${to}`)
   } catch (error) {
     console.error("Failed to send payment failure notification:", error)
   }
