@@ -47,6 +47,7 @@ export interface StallFormProps {
     onSave?: (stalls: Stall[]) => Promise<void>;
     readOnly?: boolean;
     isOrganizer?: boolean;
+    userRole?: string;
     onStallSelect?: (stall: Stall) => void; // Added this prop
 }
 

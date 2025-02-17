@@ -80,13 +80,30 @@ export function EventsTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          <TableRow>
-            <TableCell colSpan={5} className="text-center">Loading events...</TableCell>
-          </TableRow>
+          {[...Array(5)].map((_, index) => (
+            <TableRow key={index}>
+              <TableCell>
+                <div className="h-4 w-[200px] animate-pulse rounded-md bg-gray-200" />
+              </TableCell>
+              <TableCell>
+                <div className="h-4 w-[150px] animate-pulse rounded-md bg-gray-200" />
+              </TableCell>
+              <TableCell>
+                <div className="h-4 w-[80px] animate-pulse rounded-md bg-gray-200" />
+              </TableCell>
+              <TableCell>
+                <div className="h-4 w-[100px] animate-pulse rounded-md bg-gray-200" />
+              </TableCell>
+              <TableCell>
+                <div className="h-8 w-8 animate-pulse rounded-md bg-gray-200" />
+              </TableCell>
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
     );
   }
+
 
   return (
     <Table>

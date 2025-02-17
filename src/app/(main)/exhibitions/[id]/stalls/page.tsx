@@ -4,6 +4,8 @@
 import { useRouter, useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import StallForm from "@/components/events/StallForm";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -55,7 +57,61 @@ export default function ExhibitionStallsPage() {
     }
   };
 
-  if (loading || !event) return <div>Loading...</div>;
+// In the loading section, replace the existing skeleton with:
+
+if (loading || !event) {
+  return (
+    <div className="min-h-screen bg-gradient-to-b p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header Skeleton */}
+        <div className="flex justify-between items-center mb-8">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-[200px]" /> {/* Back button */}
+            <Skeleton className="h-10 w-[300px]" /> {/* Title */}
+          </div>
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left Side - Layout Skeleton */}
+          <div className="space-y-6">
+            <Card className="p-6 shadow-lg rounded-xl">
+              <Skeleton className="h-8 w-[200px] mb-4" /> {/* Section title */}
+              <Skeleton className="w-full aspect-video mb-6" /> {/* Layout image */}
+              
+              {/* Stall Grid Skeleton */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3">
+                {[...Array(12)].map((_, i) => (
+                  <Skeleton key={i} className="aspect-square w-full" />
+                ))}
+              </div>
+            </Card>
+          </div>
+
+          {/* Right Side - Details Skeleton */}
+          <div className="space-y-6">
+            <Card className="p-6 shadow-lg rounded-xl">
+              <Skeleton className="h-8 w-[250px] mb-6" /> {/* Details title */}
+              <div className="space-y-4">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <div className="grid grid-cols-2 gap-4">
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                </div>
+                <Skeleton className="h-12 w-full mt-4" />
+              </div>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -63,30 +119,38 @@ export default function ExhibitionStallsPage() {
       <div className="mb-8 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href={`/exhibitions/${params.id}`}>
-            <Button variant="ghost" size="sm">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="hover:bg-secondary transition-colors"
+            >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Event Details
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold">{event.title}</h1>
-            <p className="text-muted-foreground">Select a stall to view details and apply</p>
+            <h1 className="text-2xl font-bold tracking-tight">{event.title}</h1>
+            <p className="text-muted-foreground text-sm">
+              Select a stall to view details and apply
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Stall Selection Form */}
-      <StallForm
-        eventId={params.id as string}
-        eventDetails={{
-          category: event.category,
-          numberOfStalls: event.numberOfStalls,
-          layout: event.layout || ''
-        }}
-        readOnly
-        isOrganizer={false}
-        onStallSelect={handleStallSelect}
-      />
+      {/* Stall Selection Form wrapped in a card */}
+      <Card className="p-6">
+        <StallForm
+          eventId={params.id as string}
+          eventDetails={{
+            category: event.category,
+            numberOfStalls: event.numberOfStalls,
+            layout: event.layout || ''
+          }}
+          readOnly
+          isOrganizer={false}
+          onStallSelect={handleStallSelect}
+        />
+      </Card>
     </div>
   );
 }

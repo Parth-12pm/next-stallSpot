@@ -172,13 +172,53 @@ export function ApplicationsTable() {
 
   if (loading) {
     return (
-      <div className="space-y-3">
-        {[...Array(5)].map((_, i) => (
-          <Skeleton key={i} className="h-20 w-full" />
-        ))}
+      <div className="space-y-4">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Event</TableHead>
+              <TableHead>Stall ID</TableHead>
+              <TableHead>Applied On</TableHead>
+              <TableHead>Total Amount</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {[...Array(5)].map((_, index) => (
+              <TableRow key={index}>
+                <TableCell>
+                  <div className="space-y-2">
+                    <div className="h-5 w-[180px] animate-pulse rounded-md bg-gray-200" />
+                    <div className="h-4 w-[140px] animate-pulse rounded-md bg-gray-100" />
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="h-4 w-[60px] animate-pulse rounded-md bg-gray-200" />
+                </TableCell>
+                <TableCell>
+                  <div className="h-4 w-[120px] animate-pulse rounded-md bg-gray-200" />
+                </TableCell>
+                <TableCell>
+                  <div className="h-4 w-[100px] animate-pulse rounded-md bg-gray-200" />
+                </TableCell>
+                <TableCell>
+                  <div className="h-6 w-[100px] animate-pulse rounded-full bg-gray-200" />
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-[90px] animate-pulse rounded-md bg-gray-200" />
+                    <div className="h-8 w-[90px] animate-pulse rounded-md bg-gray-200" />
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
-    )
+    );
   }
+
 
   return (
     <div className="space-y-4">

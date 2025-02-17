@@ -66,8 +66,38 @@ export default function EditEventContent({ id }: Props) {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="p-6 space-y-8">
+        {/* Back Button Skeleton */}
+        <div className="mb-6">
+          <div className="h-10 w-24 animate-pulse rounded-md bg-gray-200" />
+        </div>
+
+        {/* Form Header Skeleton */}
+        <div className="space-y-4">
+          <div className="h-8 w-[250px] animate-pulse rounded-md bg-gray-200" />
+          <div className="h-4 w-[400px] animate-pulse rounded-md bg-gray-100" />
+        </div>
+
+        {/* Form Fields Skeleton */}
+        <div className="space-y-6">
+          {[...Array(6)].map((_, index) => (
+            <div key={index} className="space-y-2">
+              <div className="h-4 w-[100px] animate-pulse rounded-md bg-gray-200" />
+              <div className="h-10 w-full animate-pulse rounded-md bg-gray-100" />
+            </div>
+          ))}
+        </div>
+
+        {/* Form Actions Skeleton */}
+        <div className="flex gap-4 pt-6">
+          <div className="h-10 w-[100px] animate-pulse rounded-md bg-gray-200" />
+          <div className="h-10 w-[100px] animate-pulse rounded-md bg-gray-200" />
+        </div>
+      </div>
+    );
   }
+
 
   if (error || !event) {
     return (

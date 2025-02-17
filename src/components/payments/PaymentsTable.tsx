@@ -5,6 +5,7 @@ import { useState, useEffect } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
 import { useSession } from "next-auth/react"
 
@@ -89,8 +90,97 @@ export function PaymentsTable() {
     }
   }, [session])
 
-  if (loading) return <div>Loading...</div>
-  if (error) return <div>Error: {error}</div>
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        {/* Earnings Summary Card Skeleton */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Earnings Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4">
+              {[...Array(3)].map((_, index) => (
+                <div key={index}>
+                  <div className="h-4 w-24 animate-pulse rounded-md bg-gray-200 mb-2" />
+                  <div className="h-8 w-32 animate-pulse rounded-md bg-gray-200" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Table Skeleton */}
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Event</TableHead>
+              <TableHead>Stall ID</TableHead>
+              <TableHead>Amount</TableHead>
+              <TableHead>Your Earnings</TableHead>
+              <TableHead>Payment Date</TableHead>
+              <TableHead>Transaction ID</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {[...Array(5)].map((_, index) => (
+              <TableRow key={index}>
+                <TableCell>
+                  <div className="h-4 w-[200px] animate-pulse rounded-md bg-gray-200" />
+                </TableCell>
+                <TableCell>
+                  <div className="h-4 w-[80px] animate-pulse rounded-md bg-gray-200" />
+                </TableCell>
+                <TableCell>
+                  <div className="h-4 w-[100px] animate-pulse rounded-md bg-gray-200" />
+                </TableCell>
+                <TableCell>
+                  <div className="h-4 w-[100px] animate-pulse rounded-md bg-gray-200" />
+                </TableCell>
+                <TableCell>
+                  <div className="h-4 w-[120px] animate-pulse rounded-md bg-gray-200" />
+                </TableCell>
+                <TableCell>
+                  <div className="h-4 w-[150px] animate-pulse rounded-md bg-gray-200" />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+        <div className="flex items-center space-x-2">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6 text-red-500"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <h3 className="text-sm font-medium text-red-800">Failed to load payments</h3>
+        </div>
+        <div className="mt-2 text-sm text-red-700">{error}</div>
+        <Button 
+          variant="outline" 
+          className="mt-4"
+          onClick={() => window.location.reload()}
+        >
+          Try Again
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
