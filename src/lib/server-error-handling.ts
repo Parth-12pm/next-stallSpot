@@ -1,6 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-unknown */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 // lib/server-error-handling.ts
 
 import { ZodError } from "zod"
