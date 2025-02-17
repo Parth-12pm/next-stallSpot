@@ -13,6 +13,7 @@ import type { Stall, StallFormProps } from "@/components/events/types/types"
 import { useRouter } from "next/navigation"
 import { toast } from "@/hooks/use-toast"
 import Image from "next/image"
+import { useAuth } from "@/hooks/useAuth"
 
 const DEFAULT_CATEGORIES = ["Art", "Food", "Jewelry", "Clothing", "Handicrafts", "Electronics", "Books", "General"]
 
@@ -23,7 +24,6 @@ export default function StallForm({
   readOnly = false,
   isOrganizer = false,
   onStallSelect,
-  userRole,
 }: StallFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -32,6 +32,7 @@ export default function StallForm({
   const [customSize, setCustomSize] = useState("")
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES)
   const router = useRouter()
+  const { session } = useAuth()
 
   const [stalls, setStalls] = useState<Stall[]>(() =>
     Array.from({ length: eventDetails.numberOfStalls }, (_, i) => ({
@@ -162,8 +163,10 @@ export default function StallForm({
     return `${colors[status]} ${type === "premium" ? "border-yellow-400" : ""}`
   }
 
+  const isVendor = session?.user?.role === "vendor"
+
   return (
-    <div className="min-h-screen bg-gradient-to-b  p-6 mb-16">
+    <div className="min-h-screen bg-gradient-to-b p-6 mb-16">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Stall Configuration</h1>
@@ -194,10 +197,10 @@ export default function StallForm({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Side - Layout and Stalls */}
           <div className="space-y-6">
-            <Card className="p-6  shadow-lg rounded-xl">
-              <h2 className="text-xl font-semibold  mb-4">Stall Layout</h2>
+            <Card className="p-6 shadow-lg rounded-xl">
+              <h2 className="text-xl font-semibold mb-4">Stall Layout</h2>
               <div className="aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden mb-6">
-                <div className="w-full h-full flex items-center justify-center ">
+                <div className="w-full h-full flex items-center justify-center">
                   {eventDetails.layout ? (
                     <Image
                       src={eventDetails.layout || "/placeholder.svg"}
@@ -236,7 +239,7 @@ export default function StallForm({
                       </div>
                       <Badge
                         variant="default"
-                        className={`mt-1 w-full h-auto justify-center text-xs  ${
+                        className={`mt-1 w-full h-auto justify-center text-xs ${
                           stall.status === "available"
                             ? "bg-green-500 text-white"
                             : "bg-gray-300 text-gray-100 dark:bg-gray-800 dark:text-gray-400"
@@ -253,7 +256,7 @@ export default function StallForm({
 
           {/* Right Side - Stall Details */}
           <div className="space-y-6">
-            <Card className="p-6  shadow-lg rounded-xl">
+            <Card className="p-6 shadow-lg rounded-xl">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
                 {selectedStall ? `Stall ${selectedStall.displayId} Details` : "Select a stall to view details"}
               </h2>
@@ -473,13 +476,13 @@ export default function StallForm({
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="stallStatus" className="text-gray-700 dark:text-gray-300 ">
+                      <Label htmlFor="stallStatus" className="text-gray-700 dark:text-gray-300">
                         Status
                       </Label>
                       {!isOrganizer ? (
                         <Badge
                           variant="default"
-                          className={`mt-1 ml-4 ${
+                          className={`mt-1 ${
                             selectedStall.status === "available"
                               ? "bg-green-500 text-white"
                               : "bg-gray-300 text-gray-800 dark:bg-gray-600 dark:text-gray-200"
@@ -521,18 +524,18 @@ export default function StallForm({
                   )}
 
                   {/* Vendor Apply Button */}
-                  {!isOrganizer && selectedStall.status === "available" && (
+                  {!isOrganizer && selectedStall && selectedStall.status === "available" && (
                     <div className="pt-4">
                       <Button
                         className="w-full bg-blue-600 text-white hover:bg-blue-700"
                         size="lg"
                         onClick={() => onStallSelect?.(selectedStall)}
-                        disabled={userRole !== "vendor"}
+                        disabled={!isVendor}
                       >
                         <Building2 className="w-4 h-4 mr-2" />
                         Apply for This Stall
                       </Button>
-                      {userRole !== "vendor" && (
+                      {!isVendor && (
                         <p className="text-sm text-gray-500 mt-2 text-center">Only vendors can apply for stalls.</p>
                       )}
                     </div>
