@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect,useCallback } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -69,11 +69,7 @@ export function PaymentsTable() {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
 
-  useEffect(() => {
-    fetchPayments(currentPage)
-  }, [currentPage])
-
-  const fetchPayments = async (page: number) => {
+  const fetchPayments = useCallback(async (page: number) => {
     try {
       setLoading(true)
       const response = await fetch(
@@ -91,7 +87,13 @@ export function PaymentsTable() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [session?.user?.role])
+
+  useEffect(() => {
+    fetchPayments(currentPage)
+  }, [currentPage, fetchPayments])
+
+
 
   const handleShowDetails = (payment: VendorPayment | OrganizerPayment) => {
     setSelectedPayment(payment)

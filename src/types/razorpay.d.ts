@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+
 declare module "razorpay" {
   interface RazorpayOptions {
     key: string
