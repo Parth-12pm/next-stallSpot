@@ -16,17 +16,31 @@ interface IFees {
   totalAmount: number
 }
 
+interface IPaymentDetails {
+  razorpayOrderId?: string
+  razorpayPaymentId?: string
+  amount?: number
+  platformFee?: number
+  organizerAmount?: number
+  paidAt?: Date
+  payoutId?: string
+  payoutStatus?: string
+  failedAt?: Date
+  failureReason?: string
+}
+
 export interface IApplication extends Document {
   eventId: mongoose.Types.ObjectId | IEvent
   vendorId: mongoose.Types.ObjectId | IUser
   stallId: number
-  status: "pending" | "approved" | "rejected" | "payment_pending" | "payment_completed" | "expired"
+  status: "pending" | "approved" | "rejected" | "payment_pending" | "payment_completed" | "expired" | "payment_failed"
   products: IProduct[]
   applicationDate: Date
   approvalDate?: Date
   rejectionReason?: string
   paymentDeadline?: Date
   fees: IFees
+  paymentDetails?: IPaymentDetails
   createdAt: Date
   updatedAt: Date
 }
@@ -58,6 +72,22 @@ const FeesSchema = new Schema(
   { _id: false },
 )
 
+const PaymentDetailsSchema = new Schema(
+  {
+    razorpayOrderId: String,
+    razorpayPaymentId: String,
+    amount: Number,
+    platformFee: Number,
+    organizerAmount: Number,
+    paidAt: Date,
+    payoutId: String,
+    payoutStatus: String,
+    failedAt: Date,
+    failureReason: String,
+  },
+  { _id: false },
+)
+
 const ApplicationSchema = new Schema(
   {
     eventId: {
@@ -73,7 +103,7 @@ const ApplicationSchema = new Schema(
     stallId: { type: Number, required: true },
     status: {
       type: String,
-      enum: ["pending", "approved", "rejected", "payment_pending", "payment_completed", "expired"],
+      enum: ["pending", "approved", "rejected", "payment_pending", "payment_completed", "expired", "payment_failed"],
       default: "pending",
     },
     products: {
@@ -91,6 +121,7 @@ const ApplicationSchema = new Schema(
     rejectionReason: String,
     paymentDeadline: Date,
     fees: FeesSchema,
+    paymentDetails: PaymentDetailsSchema,
   },
   {
     timestamps: true,

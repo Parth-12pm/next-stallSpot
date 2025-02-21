@@ -1,15 +1,15 @@
-// src/components/applications/ApplicationsTable.tsx
 "use client"
 
 import { useEffect, useState } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Eye, CreditCard } from "lucide-react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Eye, CreditCard, AlertTriangle } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { format } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
+import { useRouter } from "next/navigation"
 import type { IApplication } from "@/models/Application"
 import type { IEvent } from "@/models/Event"
 import type { Types } from "mongoose"
@@ -60,6 +60,7 @@ export function ApplicationsTable() {
   const [selectedApplication, setSelectedApplication] = useState<ExtendedApplication | null>(null)
 
   const { toast } = useToast()
+  const router = useRouter()
 
   useEffect(() => {
     fetchApplications()
@@ -100,10 +101,11 @@ export function ApplicationsTable() {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
         amount: orderData.amount,
         currency: orderData.currency,
-        name: "Your Company Name",
+        name: "StallSpot",
         description: `Payment for ${orderData.eventTitle}`,
         order_id: orderData.orderId,
         handler: async (response: RazorpayResponse) => {
+          let verifyData
           try {
             const verifyResponse = await fetch("/api/payments/verify", {
               method: "POST",
@@ -117,22 +119,30 @@ export function ApplicationsTable() {
               }),
             })
 
-            if (verifyResponse.ok) {
+            verifyData = await verifyResponse.json()
+
+            if (verifyResponse.ok && verifyData.success) {
               toast({
                 title: "Payment Successful",
                 description: "Your payment has been processed successfully.",
               })
-              fetchApplications()
+              router.push(verifyData.redirectUrl)
             } else {
-              throw new Error("Payment verification failed")
+              throw new Error(verifyData.error || "Payment verification failed")
             }
           } catch (error) {
             console.error("Error verifying payment:", error)
             toast({
-              title: "Payment Verification Failed",
-              description: "There was an issue verifying your payment. Please contact support.",
+              title: "Payment Failed",
+              description:
+                error instanceof Error
+                  ? error.message
+                  : "There was an issue with your payment. Please try again or contact support.",
               variant: "destructive",
             })
+            if (verifyData && verifyData.redirectUrl) {
+              router.push(verifyData.redirectUrl)
+            }
           }
         },
         prefill: {
@@ -215,9 +225,8 @@ export function ApplicationsTable() {
           </TableBody>
         </Table>
       </div>
-    );
+    )
   }
-
 
   return (
     <div className="space-y-4">
@@ -268,6 +277,12 @@ export function ApplicationsTable() {
                         Pay Now
                       </Button>
                     )}
+                    {application.status === "payment_failed" && (
+                      <Button size="sm" variant="destructive" onClick={() => handlePayment(application._id)}>
+                        <AlertTriangle className="h-4 w-4 mr-1" />
+                        Retry Payment
+                      </Button>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>
@@ -280,8 +295,57 @@ export function ApplicationsTable() {
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>Application Details</DialogTitle>
+            <DialogDescription>Review your application information</DialogDescription>
           </DialogHeader>
-          {selectedApplication && <div className="space-y-6">{/* Application details content */}</div>}
+          {selectedApplication && (
+            <div className="space-y-6">
+              <div>
+                <h3 className="font-semibold">Event Details</h3>
+                <p>Title: {selectedApplication.eventId.title}</p>
+                <p>Venue: {selectedApplication.eventId.venue}</p>
+                <p>Date: {format(new Date(selectedApplication.eventId.startDate), "MMM d, yyyy")}</p>
+              </div>
+              <div>
+                <h3 className="font-semibold">Stall Details</h3>
+                <p>Stall ID: {selectedApplication.stallId}</p>
+                <p>Status: {selectedApplication.status.replace("_", " ").toUpperCase()}</p>
+              </div>
+              <div>
+                <h3 className="font-semibold">Fee Details</h3>
+                <p>Stall Price: ₹{selectedApplication.fees.stallPrice.toLocaleString()}</p>
+                <p>Platform Fee: ₹{selectedApplication.fees.platformFee.toLocaleString()}</p>
+                <p>Entry Fee: ₹{selectedApplication.fees.entryFee.toLocaleString()}</p>
+                <p>GST: ₹{selectedApplication.fees.gst.toLocaleString()}</p>
+                <p className="font-bold">Total Amount: ₹{selectedApplication.fees.totalAmount.toLocaleString()}</p>
+              </div>
+              {selectedApplication.status === "payment_pending" && (
+                <div className="space-y-4">
+                  <Button onClick={() => handlePayment(selectedApplication._id)}>Proceed to Payment</Button>
+                </div>
+              )}
+              {selectedApplication.status === "payment_failed" && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    Your last payment attempt failed. Please try again or contact support if the issue persists.
+                  </AlertDescription>
+                </Alert>
+              )}
+              {selectedApplication.status === "payment_completed" && selectedApplication.paymentDetails && (
+                <div>
+                  <h3 className="font-semibold">Payment Details</h3>
+                  <p>Transaction ID: {selectedApplication.paymentDetails.razorpayPaymentId || "N/A"}</p>
+                  <p>Paid Amount: ₹{(selectedApplication.paymentDetails.amount || 0).toLocaleString()}</p>
+                  <p>
+                    Paid At:{" "}
+                    {selectedApplication.paymentDetails.paidAt
+                      ? format(new Date(selectedApplication.paymentDetails.paidAt), "MMM d, yyyy HH:mm:ss")
+                      : "N/A"}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
@@ -294,6 +358,7 @@ const statusStyles: Record<string, string> = {
   rejected: "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300",
   payment_pending: "bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300",
   payment_completed: "bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300",
+  payment_failed: "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300",
   expired: "bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-300",
 }
 

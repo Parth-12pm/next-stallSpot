@@ -1,4 +1,4 @@
-// src/app/api/vendor/payments/route.ts
+// This route handles fetching payments for vendors
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/auth-options"
@@ -36,7 +36,7 @@ export async function GET(request: Request) {
       applicationId: payment._id,
       amount: payment.fees.totalAmount,
       status: "completed",
-      paymentDate: payment.paymentDetails?.paidAt || payment.updatedAt, // Fallback to updatedAt if paidAt is not available
+      paymentDate: payment.paymentDetails?.paidAt || payment.updatedAt,
       paymentMethod: "Razorpay",
       transactionId: payment.paymentDetails?.razorpayPaymentId || "N/A",
     }))

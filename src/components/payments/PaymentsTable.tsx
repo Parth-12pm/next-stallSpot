@@ -1,4 +1,3 @@
-// src/components/payments/PaymentsTable.tsx
 "use client"
 
 import { useState, useEffect } from "react"
@@ -6,8 +5,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { format } from "date-fns"
 import { useSession } from "next-auth/react"
+import { Eye } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 const parseDate = (dateString: string) => {
   const date = new Date(dateString)
@@ -44,142 +47,67 @@ interface EarningsSummary {
   organizerEarnings: number
 }
 
-interface VendorPaymentsResponse {
-  payments: VendorPayment[]
+interface PaymentsResponse {
+  payments: VendorPayment[] | OrganizerPayment[]
   pagination: {
     total: number
     pages: number
     page: number
     limit: number
   }
+  earnings?: EarningsSummary
 }
 
 export function PaymentsTable() {
   const { data: session } = useSession()
-  const [vendorPayments, setVendorPayments] = useState<VendorPayment[]>([])
-  const [organizerPayments, setOrganizerPayments] = useState<OrganizerPayment[]>([])
+  const [payments, setPayments] = useState<VendorPayment[] | OrganizerPayment[]>([])
   const [earnings, setEarnings] = useState<EarningsSummary>({ total: 0, platformFees: 0, organizerEarnings: 0 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showDetails, setShowDetails] = useState(false)
+  const [selectedPayment, setSelectedPayment] = useState<VendorPayment | OrganizerPayment | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
 
   useEffect(() => {
-    const fetchPayments = async () => {
-      try {
-        const response = await fetch(
-          session?.user?.role === "organizer" ? "/api/organizer/payments" : "/api/vendor/payments",
-        )
-        if (!response.ok) throw new Error("Failed to fetch payments")
-        const data = await response.json()
-        if (session?.user?.role === "organizer") {
-          setOrganizerPayments(data.payments)
-          setEarnings(data.earnings)
-        } else {
-          // Handle the vendor payments response
-          const vendorData = data as VendorPaymentsResponse
-          setVendorPayments(vendorData.payments)
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load payments")
-      } finally {
-        setLoading(false)
+    fetchPayments(currentPage)
+  }, [currentPage])
+
+  const fetchPayments = async (page: number) => {
+    try {
+      setLoading(true)
+      const response = await fetch(
+        `${session?.user?.role === "organizer" ? "/api/organizer/payments" : "/api/vendor/payments"}?page=${page}&limit=10`,
+      )
+      if (!response.ok) throw new Error("Failed to fetch payments")
+      const data: PaymentsResponse = await response.json()
+      setPayments(data.payments)
+      setTotalPages(data.pagination.pages)
+      if (session?.user?.role === "organizer" && data.earnings) {
+        setEarnings(data.earnings)
       }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load payments")
+    } finally {
+      setLoading(false)
     }
-
-    if (session?.user?.role) {
-      fetchPayments()
-    }
-  }, [session])
-
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        {/* Earnings Summary Card Skeleton */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Earnings Summary</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-4">
-              {[...Array(3)].map((_, index) => (
-                <div key={index}>
-                  <div className="h-4 w-24 animate-pulse rounded-md bg-gray-200 mb-2" />
-                  <div className="h-8 w-32 animate-pulse rounded-md bg-gray-200" />
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Table Skeleton */}
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Event</TableHead>
-              <TableHead>Stall ID</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Your Earnings</TableHead>
-              <TableHead>Payment Date</TableHead>
-              <TableHead>Transaction ID</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {[...Array(5)].map((_, index) => (
-              <TableRow key={index}>
-                <TableCell>
-                  <div className="h-4 w-[200px] animate-pulse rounded-md bg-gray-200" />
-                </TableCell>
-                <TableCell>
-                  <div className="h-4 w-[80px] animate-pulse rounded-md bg-gray-200" />
-                </TableCell>
-                <TableCell>
-                  <div className="h-4 w-[100px] animate-pulse rounded-md bg-gray-200" />
-                </TableCell>
-                <TableCell>
-                  <div className="h-4 w-[100px] animate-pulse rounded-md bg-gray-200" />
-                </TableCell>
-                <TableCell>
-                  <div className="h-4 w-[120px] animate-pulse rounded-md bg-gray-200" />
-                </TableCell>
-                <TableCell>
-                  <div className="h-4 w-[150px] animate-pulse rounded-md bg-gray-200" />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    );
   }
+
+  const handleShowDetails = (payment: VendorPayment | OrganizerPayment) => {
+    setSelectedPayment(payment)
+    setShowDetails(true)
+  }
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage)
+  }
+
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-        <div className="flex items-center space-x-2">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6 text-red-500"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          <h3 className="text-sm font-medium text-red-800">Failed to load payments</h3>
-        </div>
-        <div className="mt-2 text-sm text-red-700">{error}</div>
-        <Button 
-          variant="outline" 
-          className="mt-4"
-          onClick={() => window.location.reload()}
-        >
-          Try Again
-        </Button>
-      </div>
-    );
+      <Alert variant="destructive">
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    )
   }
 
   return (
@@ -208,49 +136,148 @@ export function PaymentsTable() {
         </Card>
       )}
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Event</TableHead>
-            {session?.user?.role === "organizer" && <TableHead>Stall ID</TableHead>}
-            <TableHead>Amount</TableHead>
-            {session?.user?.role === "organizer" && <TableHead>Your Earnings</TableHead>}
-            <TableHead>Payment Date</TableHead>
-            <TableHead>Transaction ID</TableHead>
-            {session?.user?.role === "vendor" && <TableHead>Status</TableHead>}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {session?.user?.role === "organizer"
-            ? organizerPayments.map((payment) => (
-                <TableRow key={payment._id}>
-                  <TableCell>{payment.eventTitle}</TableCell>
-                  <TableCell>#{payment.stallId}</TableCell>
-                  <TableCell>₹{payment.amount.toLocaleString()}</TableCell>
-                  <TableCell>₹{payment.organizerAmount.toLocaleString()}</TableCell>
-                  <TableCell>{format(parseDate(payment.paymentDate), "MMM d, yyyy")}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{payment.transactionId}</Badge>
+      <Card>
+        <CardHeader>
+          <CardTitle>Payment History</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Event</TableHead>
+                {session?.user?.role === "organizer" && <TableHead>Stall ID</TableHead>}
+                <TableHead>Amount</TableHead>
+                {session?.user?.role === "organizer" && <TableHead>Your Earnings</TableHead>}
+                <TableHead>Payment Date</TableHead>
+                <TableHead>Transaction ID</TableHead>
+                {session?.user?.role === "vendor" && <TableHead>Status</TableHead>}
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                [...Array(5)].map((_, index) => (
+                  <TableRow key={index}>
+                    <TableCell colSpan={session?.user?.role === "organizer" ? 7 : 6}>
+                      <Skeleton className="h-12 w-full" />
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : payments.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={session?.user?.role === "organizer" ? 7 : 6} className="text-center py-4">
+                    No payments found
                   </TableCell>
                 </TableRow>
-              ))
-            : vendorPayments.map((payment) => (
-                <TableRow key={payment._id}>
-                  <TableCell>{payment.eventId.title}</TableCell>
-                  <TableCell>₹{payment.amount.toLocaleString()}</TableCell>
-                  <TableCell>{format(parseDate(payment.paymentDate), "MMM d, yyyy")}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{payment.transactionId}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={payment.status === "completed" ? "default" : "destructive"}>
-                      {payment.status.toUpperCase()}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-        </TableBody>
-      </Table>
+              ) : (
+                payments.map((payment) => (
+                  <TableRow key={payment._id}>
+                    <TableCell>{"eventTitle" in payment ? payment.eventTitle : payment.eventId.title}</TableCell>
+                    {session?.user?.role === "organizer" && "stallId" in payment && (
+                      <TableCell>#{payment.stallId}</TableCell>
+                    )}
+                    <TableCell>₹{payment.amount.toLocaleString()}</TableCell>
+                    {session?.user?.role === "organizer" && "organizerAmount" in payment && (
+                      <TableCell>₹{payment.organizerAmount.toLocaleString()}</TableCell>
+                    )}
+                    <TableCell>{format(parseDate(payment.paymentDate), "MMM d, yyyy")}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{payment.transactionId}</Badge>
+                    </TableCell>
+                    {session?.user?.role === "vendor" && "status" in payment && (
+                      <TableCell>
+                        <Badge variant={payment.status === "completed" ? "default" : "destructive"}>
+                          {payment.status.toUpperCase()}
+                        </Badge>
+                      </TableCell>
+                    )}
+                    <TableCell>
+                      <Button variant="outline" size="sm" onClick={() => handleShowDetails(payment)}>
+                        <Eye className="h-4 w-4 mr-1" />
+                        Details
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+
+          {/* Pagination */}
+          <div className="flex justify-center mt-4 space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1 || loading}
+            >
+              Previous
+            </Button>
+            <span className="py-2 px-3 bg-secondary rounded-md">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages || loading}
+            >
+              Next
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Dialog open={showDetails} onOpenChange={setShowDetails}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Payment Details</DialogTitle>
+            <DialogDescription>Detailed information about the payment</DialogDescription>
+          </DialogHeader>
+          {selectedPayment && (
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium">Event</p>
+                <p className="text-lg">
+                  {"eventTitle" in selectedPayment ? selectedPayment.eventTitle : selectedPayment.eventId.title}
+                </p>
+              </div>
+              {"stallId" in selectedPayment && (
+                <div>
+                  <p className="text-sm font-medium">Stall ID</p>
+                  <p className="text-lg">#{selectedPayment.stallId}</p>
+                </div>
+              )}
+              <div>
+                <p className="text-sm font-medium">Amount</p>
+                <p className="text-lg">₹{selectedPayment.amount.toLocaleString()}</p>
+              </div>
+              {"organizerAmount" in selectedPayment && (
+                <div>
+                  <p className="text-sm font-medium">Your Earnings</p>
+                  <p className="text-lg">₹{selectedPayment.organizerAmount.toLocaleString()}</p>
+                </div>
+              )}
+              <div>
+                <p className="text-sm font-medium">Payment Date</p>
+                <p className="text-lg">{format(parseDate(selectedPayment.paymentDate), "MMM d, yyyy HH:mm:ss")}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">Transaction ID</p>
+                <p className="text-lg">{selectedPayment.transactionId}</p>
+              </div>
+              {"status" in selectedPayment && (
+                <div>
+                  <p className="text-sm font-medium">Status</p>
+                  <Badge variant={selectedPayment.status === "completed" ? "default" : "destructive"}>
+                    {selectedPayment.status.toUpperCase()}
+                  </Badge>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

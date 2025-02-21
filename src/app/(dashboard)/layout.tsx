@@ -18,7 +18,7 @@ export default async function DashboardRootLayout({
 
   return (
     <>
-      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+      <Script src="https://checkout.razorpay.com/v2/checkout.js" strategy="lazyOnload" />
       <DashboardLayout>{children}</DashboardLayout>
     </>
   )

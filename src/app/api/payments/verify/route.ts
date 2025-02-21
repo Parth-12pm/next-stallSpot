@@ -5,34 +5,13 @@ import crypto from "crypto"
 import dbConnect from "@/lib/mongodb"
 import Application from "@/models/Application"
 import Event from "@/models/Event"
-import User from "@/models/User"
 import Razorpay from "razorpay"
-import {
-  sendPaymentConfirmationEmail,
-  sendOrganizerPaymentNotification,
-  sendPaymentFailureNotification,
-} from "@/lib/email"
+import { sendPaymentConfirmationEmail, sendPaymentFailureNotification } from "@/lib/email"
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID!,
   key_secret: process.env.RAZORPAY_KEY_SECRET!,
 })
-
-interface RazorpayOrder {
-  id: string
-  amount: string | number
-  currency: string
-  receipt?: string
-  notes?: {
-    applicationId?: string
-    eventId?: string
-    vendorId?: string
-    organizerId?: string
-    totalAmount?: string
-    platformFee?: string
-    organizerAmount?: string
-  }
-}
 
 interface PaymentVerificationBody {
   razorpay_order_id: string
@@ -60,125 +39,102 @@ export async function POST(request: Request) {
 
     await dbConnect()
 
-    // Fetch the order details from Razorpay
-    const order: RazorpayOrder = await razorpay.orders.fetch(razorpay_order_id)
+    const order = await razorpay.orders.fetch(razorpay_order_id)
+    const payment = await razorpay.payments.fetch(razorpay_payment_id)
 
     if (!order.notes || !order.notes.applicationId) {
       throw new Error("Invalid order: missing application ID")
     }
 
-    const totalAmount = Number(order.notes.totalAmount)
-    const platformFee = Number(order.notes.platformFee)
-    const organizerAmount = Number(order.notes.organizerAmount)
-
-    // Update application status
-    const application = await Application.findByIdAndUpdate(
-      order.notes.applicationId,
-      {
-        status: "payment_completed",
-        paymentDetails: {
-          razorpayOrderId: razorpay_order_id,
-          razorpayPaymentId: razorpay_payment_id,
-          amount: totalAmount,
-          platformFee,
-          organizerAmount,
-          paidAt: new Date(),
-        },
-      },
-      { new: true },
-    )
-      .populate("eventId", "title organizerId")
+    const application = await Application.findById(order.notes.applicationId)
+      .populate("eventId", "title")
       .populate("vendorId", "name email")
 
     if (!application) {
       throw new Error("Application not found")
     }
 
-    // Update stall status in the event
-    await Event.updateOne(
-      {
-        _id: order.notes.eventId,
-        "stallConfiguration.stallId": application.stallId,
-      },
-      {
-        $set: {
-          "stallConfiguration.$.status": "booked",
-          "stallConfiguration.$.bookedBy": order.notes.vendorId,
-        },
-      },
-    )
-
-    try {
-      // Fetch organizer details
-      const organizer = await User.findById(order.notes.organizerId)
-      if (!organizer || !organizer.accountDetails?.razorpayFundAccountId) {
-        throw new Error("Organizer account details not found")
-      }
-
-      // Create payout to organizer
-      const payout = await razorpay.payouts.create({
-        account_number: process.env.RAZORPAY_ACCOUNT_NUMBER!,
-        fund_account_id: organizer.accountDetails.razorpayFundAccountId,
-        amount: organizerAmount * 100, // Convert to paise
-        currency: "INR",
-        mode: "IMPS",
-        purpose: "payout",
-        queue_if_low_balance: true,
-        reference_id: `payout_${application._id}`,
-        narration: `Payout for event ${application.eventId.title}`,
-      })
-
-      // Update application with payout details
-      await Application.findByIdAndUpdate(application._id, {
-        $set: {
-          "paymentDetails.payoutId": payout.id,
-          "paymentDetails.payoutStatus": payout.status,
+    if (payment.status === "captured") {
+      // Payment successful
+      await Application.findByIdAndUpdate(order.notes.applicationId, {
+        status: "payment_completed",
+        paymentDetails: {
+          razorpayOrderId: razorpay_order_id,
+          razorpayPaymentId: razorpay_payment_id,
+          amount: payment.amount / 100,
+          paidAt: new Date(payment.created_at * 1000),
         },
       })
 
-      // Send payment confirmation emails
-      await Promise.all([
-        sendPaymentConfirmationEmail(
-          application.vendorId.email,
-          application.eventId.title,
-          application.stallId.toString(),
-          totalAmount,
-          razorpay_payment_id,
-          platformFee,
-        ),
-        sendOrganizerPaymentNotification(
-          organizer.email,
-          application.eventId.title,
-          application.stallId.toString(),
-          application.vendorId.name,
-          totalAmount,
-          platformFee,
-          payout.id,
-        ),
-      ])
+      // Update stall status in the event
+      await Event.updateOne(
+        {
+          _id: order.notes.eventId,
+          "stallConfiguration.stallId": application.stallId,
+        },
+        {
+          $set: {
+            "stallConfiguration.$.status": "booked",
+            "stallConfiguration.$.bookedBy": order.notes.vendorId,
+          },
+        },
+      )
+
+      // Send payment confirmation email
+      const platformFee = (payment.amount / 100) * 0.05
+      await sendPaymentConfirmationEmail(
+        application.vendorId.email,
+        application.eventId.title,
+        application.stallId.toString(),
+        payment.amount / 100,
+        razorpay_payment_id,
+        platformFee
+      )
 
       return NextResponse.json({
         success: true,
-        payoutId: payout.id,
+        message: "Payment successful",
+        paymentId: razorpay_payment_id,
+        redirectUrl: "/dashboard/applications",
       })
-    } catch (payoutError) {
-      console.error("Payout error:", payoutError)
+    } else {
+      // Payment failed
+      await Application.findByIdAndUpdate(order.notes.applicationId, {
+        status: "payment_failed",
+        paymentDetails: {
+          razorpayOrderId: razorpay_order_id,
+          razorpayPaymentId: razorpay_payment_id,
+          amount: payment.amount / 100,
+          failedAt: new Date(payment.created_at * 1000),
+          failureReason: payment.error_description || "Payment failed",
+        },
+      })
 
       // Send payment failure notification
       await sendPaymentFailureNotification(
         application.vendorId.email,
         application.eventId.title,
         application.stallId.toString(),
-        payoutError instanceof Error ? payoutError.message : "Failed to process payout",
+        payment.error_description || "Payment failed",
       )
 
-      throw payoutError
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Payment failed",
+          paymentId: razorpay_payment_id,
+          failureReason: payment.error_description || "Payment failed",
+          redirectUrl: "/dashboard/applications",
+        },
+        { status: 400 },
+      )
     }
   } catch (error) {
     console.error("Error verifying payment:", error)
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Failed to verify payment",
+        redirectUrl: "/dashboard/applications",
       },
       { status: 500 },
     )
