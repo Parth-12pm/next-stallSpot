@@ -23,6 +23,7 @@ export interface ProfileFormData {
   contact: string;
   address: string;
   companyDetails: CompanyDetails;
+  companyDetailsSkipped: boolean;
   accountDetails: AccountDetails;
   selfDescription: string;
   profilePicture?: string;

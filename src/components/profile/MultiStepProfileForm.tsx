@@ -14,7 +14,7 @@ import { initialFormData } from "@/components/profile/utils/profile"
 import { useFormPersistence } from "@/hooks/useFormPersistence"
 import { useAutosave } from "@/hooks/useAutosave"
 import { AutosaveIndicator } from "./AutosaveIndicator"
-import type { ProfileFormData, FormStep, CompanyDetails } from "@/components/profile/types/profile"
+import type { ProfileFormData, FormStep } from "@/components/profile/types/profile"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -92,8 +92,9 @@ export function MultiStepProfileForm({ isCompletion = false, initialData, onComp
       if (initialData.name && initialData.dateOfBirth && initialData.contact && initialData.address) {
         initialStep = "company"
         if (
-          (initialData.companyDetails?.companyName && initialData.companyDetails?.registrationNumber) ||
-          (initialData.role === "vendor" && !initialData.companyDetails)
+          isOrganizer ||
+          (initialData.companyDetails && Object.keys(initialData.companyDetails).length > 0) ||
+          initialData.companyDetailsSkipped
         ) {
           initialStep = "bank"
           if (
@@ -107,44 +108,41 @@ export function MultiStepProfileForm({ isCompletion = false, initialData, onComp
       }
       setCurrentStep(initialStep)
     }
-  }, [isCompletion, initialData, setCurrentStep])
+  }, [isCompletion, initialData, setCurrentStep, isOrganizer])
 
   // Check if company step should be marked as complete for vendors
   useEffect(() => {
     if (!isOrganizer && currentStep === "bank" && !completedSteps.includes("company")) {
-      const hasAnyCompanyDetails = !!(
+      const hasCompanyDetails = !!(
         formData.companyDetails?.companyName ||
         formData.companyDetails?.registrationNumber ||
         formData.companyDetails?.registrationType
       )
+      const hasSkippedCompanyDetails = formData.companyDetailsSkipped
 
-      const hasAllCompanyDetails = !!(
-        formData.companyDetails?.companyName &&
-        formData.companyDetails?.registrationNumber &&
-        formData.companyDetails?.registrationType
-      )
-
-      if (!hasAnyCompanyDetails || hasAllCompanyDetails) {
+      if (hasCompanyDetails || hasSkippedCompanyDetails) {
         const newCompletedSteps = [...completedSteps, "company"] as FormStep[]
         handleStepUpdate({ _completedSteps: newCompletedSteps })
       }
     }
-  }, [currentStep, completedSteps, formData.companyDetails, isOrganizer, handleStepUpdate])
+  }, [currentStep, completedSteps, formData, isOrganizer, handleStepUpdate])
 
   const handleSubmit = async () => {
     setLoading(true)
     try {
-      const payload = {
+      const payload: Partial<ProfileFormData> = {
         ...formData,
         dateOfBirth: new Date(formData.dateOfBirth).toISOString(),
       }
 
       if (session?.user?.role === "vendor") {
-        const { companyName, registrationNumber, registrationType } = formData.companyDetails || {}
-        const hasIncompleteDetails = !companyName || !registrationNumber || !registrationType
-
-        if (hasIncompleteDetails) {
-          payload.companyDetails = {} as CompanyDetails
+        if (formData.companyDetailsSkipped) {
+          delete payload.companyDetails
+        } else if (formData.companyDetails) {
+          const { companyName, registrationNumber, registrationType } = formData.companyDetails
+          if (!companyName || !registrationNumber || !registrationType) {
+            delete payload.companyDetails
+          }
         }
       }
 

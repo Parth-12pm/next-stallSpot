@@ -7,6 +7,7 @@ import { handleServerError } from "@/lib/server-error-handling"
 import { authOptions } from "../[...nextauth]/auth-options"
 import { z } from "zod"
 
+// We'll use this type, so we can keep the import
 type CompanyDetails = NonNullable<IUser["companyDetails"]>
 
 const profileSchema = z.object({
@@ -25,6 +26,7 @@ const profileSchema = z.object({
       website: z.string().url().optional().or(z.literal("")),
     })
     .optional(),
+  companyDetailsSkipped: z.boolean().optional(),
   accountDetails: z.object({
     bankName: z.string().min(2, "Bank name is required"),
     accountNumber: z.string().min(8, "Account number must be at least 8 characters long"),
@@ -63,12 +65,21 @@ export async function PUT(req: Request) {
 
     // Handle profile picture change
     if (validatedData.profilePicture && validatedData.profilePicture !== user.profilePicture) {
-      validatedData.profilePicture = await handleImageChange(validatedData.profilePicture, user.profilePicture)
+      validatedData.profilePicture = await handleImageChange(
+        validatedData.profilePicture,
+        user.profilePicture || undefined,
+      )
     }
 
     // Handle company details for vendors
-    if (user.role === "vendor" && !validatedData.companyDetails?.companyName) {
-      validatedData.companyDetails = undefined
+    if (user.role === "vendor") {
+      if (validatedData.companyDetailsSkipped) {
+        validatedData.companyDetails = undefined
+      } else if (!validatedData.companyDetails?.companyName) {
+        validatedData.companyDetails = undefined
+      }
+    } else if (user.role === "organizer" && !validatedData.companyDetails?.companyName) {
+      return NextResponse.json({ message: "Company details are required for organizers" }, { status: 400 })
     }
 
     // Update user data
