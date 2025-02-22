@@ -8,12 +8,6 @@ Next StallSpot is a cutting-edge web application designed to revolutionize exhib
 
 ## 🚀 Key Features
 
-### 🗺️ Interactive 2D Floor Plan
-
-- **Drag-and-Drop Interface**: Effortlessly create and modify floor plans
-- **Real-Time Visualization**: See stall availability instantly
-- **Responsive Design**: Works seamlessly across devices
-
 ### 🎫 Smart Booking System
 
 - **One-Click Stall Booking**: Similar to popular ticketing platforms
