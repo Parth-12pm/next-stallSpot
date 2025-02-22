@@ -1,17 +1,14 @@
 // components/profile/AutosaveIndicator.tsx
-import { Loader2, Check } from 'lucide-react';
+// components/profile/AutosaveIndicator.tsx
+import { Loader2, Check } from "lucide-react"
 
 interface AutosaveIndicatorProps {
-  lastSaved: Date | null;
-  isSaving: boolean;
-  hasChanges: boolean;
+  lastSaved: Date | null
+  isSaving: boolean
+  hasChanges: boolean
 }
 
-export function AutosaveIndicator({ 
-  lastSaved, 
-  isSaving, 
-  hasChanges 
-}: AutosaveIndicatorProps) {
+export function AutosaveIndicator({ lastSaved, isSaving, hasChanges }: AutosaveIndicatorProps) {
   return (
     <div className="text-xs text-muted-foreground absolute top-4 right-4">
       {isSaving ? (
@@ -28,5 +25,6 @@ export function AutosaveIndicator({
         </span>
       ) : null}
     </div>
-  );
+  )
 }
+

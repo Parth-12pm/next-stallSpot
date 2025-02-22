@@ -1,20 +1,8 @@
-// app/api/auth/[...nextauth]/route.ts
 import type { AuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
 import dbConnect from "@/lib/mongodb"
 import User from "@/models/User"
-
-interface UserDocument {
-  _id: string
-  name: string
-  email: string
-  password: string
-  role: "organizer" | "vendor" | "admin"
-  profileComplete: boolean
-  profilePicture?: string
-  __v: number
-}
 
 declare module "next-auth" {
   interface Session {
@@ -50,26 +38,23 @@ export const authOptions: AuthOptions = {
           if (!credentials?.email || !credentials.password) return null
 
           await dbConnect()
-          const dbUser = (await User.findOne({ email: credentials.email }).lean()) as UserDocument
+          const user = await User.findOne({ email: credentials.email })
 
-          if (!dbUser) return null
+          if (!user) return null
 
-          const isValid = await bcrypt.compare(credentials.password, dbUser.password)
+          const isValid = await bcrypt.compare(credentials.password, user.password)
           if (!isValid) return null
 
-          // Debug log
-          console.log("DB User:", dbUser)
-
           return {
-            id: dbUser._id.toString(),
-            name: dbUser.name,
-            email: dbUser.email,
-            role: dbUser.role,
-            profileComplete: dbUser.profileComplete,
-            image: dbUser.profilePicture || null,
+            id: user._id.toString(),
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            profileComplete: user.profileComplete,
+            image: user.profilePicture || null,
           }
         } catch (error) {
-          console.error("Authorization Error:", error)
+          console.error("Authentication error:", error)
           return null
         }
       },
@@ -78,25 +63,18 @@ export const authOptions: AuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        console.log("Setting JWT from user:", user)
         token.id = user.id
         token.role = user.role
         token.profileComplete = user.profileComplete
       }
-
-      console.log("JWT Token:", token)
       return token
     },
     async session({ session, token }) {
-      console.log("Setting session from token:", token)
-
       if (session?.user) {
-        session.user.id = token.id
-        session.user.role = token.role
-        session.user.profileComplete = token.profileComplete
+        session.user.id = token.id as string
+        session.user.role = token.role as "organizer" | "vendor" | "admin"
+        session.user.profileComplete = token.profileComplete as boolean
       }
-
-      console.log("Final session:", session)
       return session
     },
   },
@@ -107,6 +85,5 @@ export const authOptions: AuthOptions = {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  debug: true,
 }
 

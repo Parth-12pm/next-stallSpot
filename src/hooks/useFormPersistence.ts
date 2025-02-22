@@ -116,5 +116,6 @@ export function useFormPersistence(
     handleNext,
     handlePrev,
     clearFormData,
+    setCurrentStep,
   };
 }

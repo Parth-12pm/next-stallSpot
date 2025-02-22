@@ -1,165 +1,158 @@
-'use client';
+"use client"
 
-import { useForm } from 'react-hook-form';
-import { useState, useEffect } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Label } from '@/components/ui/label';
+import { useForm } from "react-hook-form"
+import { useState, useEffect } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
+import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Eye, EyeOff } from "lucide-react"
+import { toast } from "@/hooks/use-toast"
+import { handleApiError } from "@/lib/error-handling"
 
+const signupSchema = z
+  .object({
+    name: z.string().min(2, "Name must be at least 2 characters"),
+    email: z.string().email("Invalid email address"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  })
 
-const signupSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
-
-type SignupFormData = z.infer<typeof signupSchema>;
+type SignupFormData = z.infer<typeof signupSchema>
 
 export default function SignupForm() {
-  const [error, setError] = useState('');
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const [showPassword, setShowPassword] = useState(false);
-  const role = searchParams.get('role');
-  
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<SignupFormData>({
+  const [isLoading, setIsLoading] = useState(false)
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const [showPassword, setShowPassword] = useState(false)
+  const role = searchParams.get("role")
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
-  });
+  })
 
   useEffect(() => {
-    if (!role || !['organizer', 'vendor'].includes(role)) {
-      router.push('/auth/role-select');
+    if (!role || !["organizer", "vendor"].includes(role)) {
+      router.push("/auth/role-select")
     }
-  }, [role, router]);
+  }, [role, router])
 
-  // Don't render the form if no valid role
-  if (!role || !['organizer', 'vendor'].includes(role)) {
-    return null;
+  if (!role || !["organizer", "vendor"].includes(role)) {
+    return null
   }
 
   const onSubmit = async (data: SignupFormData) => {
+    setIsLoading(true)
     try {
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...data,
           role,
         }),
-      });
+      })
 
-      const result = await response.json();
+      const result = await response.json()
 
       if (!response.ok) {
-        throw new Error(result.message || 'Something went wrong');
+        throw new Error(result.message || "Something went wrong")
       }
 
-      router.push('/auth/login?registered=true');
+      toast({
+        title: "Success",
+        description: "Your account has been created. Please log in.",
+      })
+      router.push("/auth/login?registered=true")
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'An error occurred');
+      const apiError = handleApiError(error)
+      toast({
+        title: "Error",
+        description: apiError.message,
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
     }
-  };
+  }
 
   return (
     <Card className="max-w-md w-full mx-auto mt-8">
       <CardHeader>
         <CardTitle>Create your account</CardTitle>
-        <CardDescription>
-          Sign up as a {role === 'organizer' ? 'Exhibition Organizer' : 'Vendor'}
-        </CardDescription>
+        <CardDescription>Sign up as a {role === "organizer" ? "Exhibition Organizer" : "Vendor"}</CardDescription>
       </CardHeader>
       <CardContent>
-        {error && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Name</Label>
-            <Input
-              id="name"
-              {...register('name')}
-              placeholder="Enter your name"
-              autoComplete="name"
-            />
-            {errors.name && (
-              <p className="text-sm text-destructive">{errors.name.message}</p>
-            )}
+            <Input id="name" {...register("name")} placeholder="Enter your name" autoComplete="name" />
+            {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              {...register('email')}
-              type="email"
-              placeholder="Enter your email"
-              autoComplete="email"
-            />
-            {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
-            )}
+            <Input id="email" {...register("email")} type="email" placeholder="Enter your email" autoComplete="email" />
+            {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
             <div className="relative">
-            <Input
-              id="password"
-              type={showPassword ? "text" : "password"}
-              {...register('password')}
-              placeholder="Create a password"
-              autoComplete="new-password" />
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                {...register("password")}
+                placeholder="Create a password"
+                autoComplete="new-password"
+              />
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
                 className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                onClick={() => setShowPassword(!showPassword)} >
+                onClick={() => setShowPassword(!showPassword)}
+              >
                 {showPassword ? (
                   <EyeOff className="h-4 w-4 text-muted-foreground" />
                 ) : (
                   <Eye className="h-4 w-4 text-muted-foreground" />
                 )}
                 <span className="sr-only">{showPassword ? "Hide password" : "Show password"}</span>
-                </Button>
-                </div>
-            {errors.password && (
-              <p className="text-sm text-destructive">{errors.password.message}</p>
-            )}
+              </Button>
+            </div>
+            {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirm Password</Label>
             <Input
               id="confirmPassword"
-              {...register('confirmPassword')}
+              {...register("confirmPassword")}
               type="password"
               placeholder="Confirm your password"
               autoComplete="new-password"
             />
-            {errors.confirmPassword && (
-              <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
-            )}
+            {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>}
           </div>
 
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? 'Creating Account...' : 'Sign Up'}
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? "Creating Account..." : "Sign Up"}
           </Button>
         </form>
       </CardContent>
     </Card>
-  );
+  )
 }
+

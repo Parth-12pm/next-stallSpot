@@ -1,94 +1,104 @@
-import { useState } from 'react';
-import { useSession } from 'next-auth/react';
-import { StepProps, REGISTRATION_TYPES, UserRole } from '@/components/profile/types/profile';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { validateProfileData } from '@/components/profile/utils/profile';
-import { useToast } from '@/hooks/use-toast';
-import { Info } from 'lucide-react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { Switch } from '@/components/ui/switch';
+"use client"
+
+import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
+import { type StepProps, REGISTRATION_TYPES, type UserRole } from "@/components/profile/types/profile"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { validateProfileData } from "@/components/profile/utils/profile"
+import { useToast } from "@/hooks/use-toast"
+import { Info } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Switch } from "@/components/ui/switch"
 
 const registrationFormats = {
-  CIN: 'Format: L12345AB1234ABC123456',
-  GSTIN: 'Format: 22AAAAA0000A1Z5',
-  UDYAM: 'Format: UDYAM-XX-00-0000000'
-};
+  CIN: "Format: L12345AB1234ABC123456",
+  GSTIN: "Format: 22AAAAA0000A1Z5",
+  UDYAM: "Format: UDYAM-XX-00-0000000",
+}
 
-export function CompanyDetailsStep({
-  data,
-  onUpdate,
-  onNext,
-  onPrev,
-}: StepProps) {
-  const { toast } = useToast();
-  const { data: session } = useSession();
-  const [errors, setErrors] = useState<Record<string, string>>({});
+export function CompanyDetailsStep({ data, onUpdate, onNext, onPrev }: StepProps) {
+  const { toast } = useToast()
+  const { data: session } = useSession()
+  const [errors, setErrors] = useState<Record<string, string>>({})
   const [includeCompanyDetails, setIncludeCompanyDetails] = useState(
-    !!data.companyDetails?.companyName || session?.user?.role === 'organizer'
-  );
-  
-  const isOrganizer = session?.user?.role === 'organizer';
+    !!data.companyDetails?.companyName || session?.user?.role === "organizer",
+  )
+
+  const isOrganizer = session?.user?.role === "organizer"
+
+  useEffect(() => {
+    // Initialize companyDetails if it's undefined
+    if (!data.companyDetails) {
+      onUpdate({
+        companyDetails: {
+          companyName: "",
+          registrationType: "GSTIN",
+          registrationNumber: "",
+          website: "",
+        },
+      })
+    }
+  }, [data.companyDetails, onUpdate])
 
   const handleToggleCompanyDetails = (checked: boolean) => {
-    setIncludeCompanyDetails(checked);
+    setIncludeCompanyDetails(checked)
     if (!checked) {
       // Set company details to undefined when toggled off
       onUpdate({
-        companyDetails: undefined
-      });
-      setErrors({});
+        companyDetails: undefined,
+      })
+      setErrors({})
+    } else {
+      // Initialize company details when toggled on
+      onUpdate({
+        companyDetails: {
+          companyName: "",
+          registrationType: "GSTIN",
+          registrationNumber: "",
+          website: "",
+        },
+      })
     }
-  };
+  }
 
   const handleChange = (field: string, value: string) => {
-    setErrors(prev => ({ ...prev, [field]: '' }));
+    setErrors((prev) => ({ ...prev, [field]: "" }))
     onUpdate({
       companyDetails: {
         ...data.companyDetails,
-        [field]: value
-      }
-    });
-  };
+        [field]: value,
+      },
+    })
+  }
 
   const validateAndContinue = () => {
     // Skip validation if vendor doesn't want to include company details
     if (!isOrganizer && !includeCompanyDetails) {
-      onNext?.();
-      return;
+      onNext?.()
+      return
     }
 
-    const userRole = (session?.user?.role as UserRole) || 'vendor';
-    const validationErrors = validateProfileData(data, 'company', userRole);
+    const userRole = (session?.user?.role as UserRole) || "vendor"
+    const validationErrors = validateProfileData(data, "company", userRole)
     if (validationErrors.length > 0) {
-      const errorMap: Record<string, string> = {};
-      validationErrors.forEach(error => {
-        const field = error.toLowerCase().includes('registration') ? 'registrationNumber' : 'companyName';
-        errorMap[field] = error;
-      });
-      setErrors(errorMap);
+      const errorMap: Record<string, string> = {}
+      validationErrors.forEach((error) => {
+        const field = error.toLowerCase().includes("registration") ? "registrationNumber" : "companyName"
+        errorMap[field] = error
+      })
+      setErrors(errorMap)
       toast({
         title: "Validation Error",
         description: validationErrors[0],
         variant: "destructive",
-      });
-      return;
+      })
+      return
     }
-    onNext?.();
-  };
+    onNext?.()
+  }
 
   return (
     <div className="space-y-6">
@@ -96,18 +106,13 @@ export function CompanyDetailsStep({
         <div className="flex items-center justify-between border-b pb-4">
           <div className="space-y-0.5">
             <Label className="text-base">Company Registration</Label>
-            <p className="text-sm text-muted-foreground">
-              Would you like to add your company details?
-            </p>
+            <p className="text-sm text-muted-foreground">Would you like to add your company details?</p>
           </div>
-          <Switch
-            checked={includeCompanyDetails}
-            onCheckedChange={handleToggleCompanyDetails}
-          />
+          <Switch checked={includeCompanyDetails} onCheckedChange={handleToggleCompanyDetails} />
         </div>
       )}
 
-      {(isOrganizer || includeCompanyDetails) && (
+      {(isOrganizer || includeCompanyDetails) && data.companyDetails && (
         <div className="grid gap-6">
           <div className="grid gap-2">
             <Label htmlFor="companyName">
@@ -117,13 +122,11 @@ export function CompanyDetailsStep({
             <Input
               id="companyName"
               value={data.companyDetails.companyName}
-              onChange={(e) => handleChange('companyName', e.target.value)}
+              onChange={(e) => handleChange("companyName", e.target.value)}
               placeholder="Enter your company name"
-              className={errors.companyName ? 'border-destructive' : ''}
+              className={errors.companyName ? "border-destructive" : ""}
             />
-            {errors.companyName && (
-              <p className="text-sm text-destructive">{errors.companyName}</p>
-            )}
+            {errors.companyName && <p className="text-sm text-destructive">{errors.companyName}</p>}
           </div>
 
           <div className="grid gap-2">
@@ -133,7 +136,7 @@ export function CompanyDetailsStep({
             </Label>
             <Select
               value={data.companyDetails.registrationType}
-              onValueChange={(value) => handleChange('registrationType', value)}
+              onValueChange={(value) => handleChange("registrationType", value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select registration type" />
@@ -168,13 +171,11 @@ export function CompanyDetailsStep({
             <Input
               id="registrationNumber"
               value={data.companyDetails.registrationNumber}
-              onChange={(e) => handleChange('registrationNumber', e.target.value.toUpperCase())}
+              onChange={(e) => handleChange("registrationNumber", e.target.value.toUpperCase())}
               placeholder="Enter registration number"
-              className={errors.registrationNumber ? 'border-destructive' : ''}
+              className={errors.registrationNumber ? "border-destructive" : ""}
             />
-            {errors.registrationNumber && (
-              <p className="text-sm text-destructive">{errors.registrationNumber}</p>
-            )}
+            {errors.registrationNumber && <p className="text-sm text-destructive">{errors.registrationNumber}</p>}
           </div>
 
           <div className="grid gap-2">
@@ -183,7 +184,7 @@ export function CompanyDetailsStep({
               id="website"
               type="url"
               value={data.companyDetails.website}
-              onChange={(e) => handleChange('website', e.target.value)}
+              onChange={(e) => handleChange("website", e.target.value)}
               placeholder="https://"
             />
           </div>
@@ -191,20 +192,14 @@ export function CompanyDetailsStep({
       )}
 
       <div className="flex justify-between pt-6">
-        <Button 
-          variant="outline" 
-          onClick={onPrev}
-          className="w-24"
-        >
+        <Button variant="outline" onClick={onPrev} className="w-24">
           Back
         </Button>
-        <Button 
-          onClick={validateAndContinue}
-          className="w-24"
-        >
+        <Button onClick={validateAndContinue} className="w-24">
           Continue
         </Button>
       </div>
     </div>
-  );
+  )
 }
+
