@@ -20,6 +20,7 @@ export const initialFormData: ProfileFormData = {
     ifscCode: '',
   },
   selfDescription: '',
+  companyDetailsSkipped: false
 };
 
 export const calculateAge = (dob: string): number => {
