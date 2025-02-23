@@ -2,7 +2,6 @@
 // middleware.ts
 import withAuth from "next-auth/middleware"
 import { NextResponse } from "next/server"
-import "@/jobs/updateEventStatuses"; // Import cron job on server startup
 
 
 export default withAuth(
