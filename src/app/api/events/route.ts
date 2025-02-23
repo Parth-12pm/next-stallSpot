@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
+
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "../auth/[...nextauth]/auth-options"
@@ -6,8 +9,6 @@ import Event, { type IEvent } from "@/models/Event"
 import { handleEventImageUploads } from "@/lib/event-upload"
 import { handleServerError } from "@/lib/server-error-handling"
 import { rateLimit } from "@/lib/rate-limit"
-import { sanitizeInput } from "@/lib/sanitize-input"
-import { cache } from "@/lib/cache"
 import { z } from "zod"
 
 const limiter = rateLimit({
@@ -67,13 +68,6 @@ export async function GET(request: Request) {
           configurationComplete: true,
         }
 
-    const cacheKey = `events_${isOrganizer ? session.user.id : "public"}_${page}_${limit}`
-    const cachedData = await cache.get(cacheKey)
-
-    if (cachedData) {
-      return apiResponse(true, JSON.parse(cachedData))
-    }
-
     let events = await Event.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit)
 
     // Update status for each event
@@ -98,8 +92,6 @@ export async function GET(request: Request) {
         limit,
       },
     }
-
-    await cache.set(cacheKey, JSON.stringify(responseData),{ttl: 60}) // Cache for 1 minute
 
     return apiResponse(true, responseData)
   } catch (error) {
@@ -131,17 +123,17 @@ export async function POST(request: Request) {
     const layout = formData.get("layout") as File | null
 
     const eventData = {
-      title: sanitizeInput(formData.get("eventName") as string),
-      description: sanitizeInput(formData.get("description") as string),
-      venue: sanitizeInput(formData.get("venue") as string),
+      title: formData.get("eventName") as string,
+      description: formData.get("description") as string,
+      venue: formData.get("venue") as string,
       numberOfStalls: Number(formData.get("numberOfStalls")),
-      startDate: formData.get("startDate"),
-      endDate: formData.get("endDate"),
-      startTime: formData.get("startTime"),
-      endTime: formData.get("endTime"),
-      entryFee: formData.get("entryFee") || undefined,
-      facilities: formData.getAll("facilities").map((f) => sanitizeInput(f as string)),
-      category: sanitizeInput(formData.get("category") as string),
+      startDate: formData.get("startDate") as string,
+      endDate: formData.get("endDate") as string,
+      startTime: formData.get("startTime") as string,
+      endTime: formData.get("endTime") as string,
+      entryFee: (formData.get("entryFee") as string) || undefined,
+      facilities: formData.getAll("facilities") as string[],
+      category: formData.get("category") as string,
     }
 
     const validatedData = eventFormSchema.parse(eventData)
