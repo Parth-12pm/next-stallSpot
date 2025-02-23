@@ -48,6 +48,7 @@ export interface IApplication extends Document {
     | "payment_completed"
     | "cancelled"
     | "expired"
+    | "payment_failed"
   products: IProduct[]
   applicationDate: Date
   approvalDate?: Date
