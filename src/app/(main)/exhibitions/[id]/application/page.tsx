@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useSearchParams, useRouter, useParams } from 'next/navigation';
 import { ApplicationForm } from './ApplicationForm';
-import type { Event, Stall } from '@/components/events/types/types';
+import type { IEvent, IStall } from '@/models/Event';
 import type { ProfileFormData } from '@/components/profile/types/profile';
 
 export default function ApplicationPage() {
@@ -15,8 +15,8 @@ export default function ApplicationPage() {
   const router = useRouter();
   const { data: session } = useSession();
   
-  const [event, setEvent] = useState<Event | null>(null);
-  const [selectedStall, setSelectedStall] = useState<Stall | null>(null);
+  const [event, setEvent] = useState<IEvent | null>(null);
+  const [selectedStall, setSelectedStall] = useState<IStall | null>(null);
   const [vendorProfile, setVendorProfile] = useState<ProfileFormData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -33,7 +33,7 @@ export default function ApplicationPage() {
         // Find selected stall
         if (stallId) {
           const stall = eventData.stallConfiguration.find(
-            (s: Stall) => s.stallId.toString() === stallId
+            (s: IStall) => s.stallId.toString() === stallId
           );
           setSelectedStall(stall);
         }

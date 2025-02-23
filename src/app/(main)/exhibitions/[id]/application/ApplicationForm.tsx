@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
-import type { Event, Stall } from '@/components/events/types/types';
+import type { IEvent, IStall } from '@/models/Event';
 import type { ProfileFormData } from '@/components/profile/types/profile';
 
 interface ProductData {
@@ -21,8 +21,8 @@ interface ProductData {
 }
 
 interface ApplicationFormProps {
-  event: Event;
-  stall: Stall;
+  event: IEvent;
+  stall: IStall;
   vendorProfile: ProfileFormData;
 }
 
