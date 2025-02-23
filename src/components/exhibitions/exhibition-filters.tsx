@@ -67,15 +67,6 @@ export const stallTypes = [
   { value: "corner", label: "Corner Stalls" },
 ];
 
- const tags = [
-  { id: "popular", label: "Popular" },
-  { id: "featured", label: "Featured" },
-  { id: "early-bird", label: "Early Bird Discount" },
-  { id: "last-minute", label: "Last Minute Deals" },
-  { id: "free-entry", label: "Free Entry" },
-  { id: "weekend", label: "Weekend Events" },
-  { id: "family", label: "Family Friendly" },
-  { id: "international", label: "International" }];
 
 interface FiltersProps {
   filters: FilterState

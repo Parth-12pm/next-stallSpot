@@ -34,7 +34,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { useEffect } from "react"
 
 
 const SwirlyBackground = () => {
