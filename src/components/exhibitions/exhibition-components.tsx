@@ -10,13 +10,14 @@ import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import Image from "next/image"
-import type { Event, FilterState } from "@/components/events/types/types"
+import type { FilterState } from "@/components/events/types/types"
+import type { IEvent } from "@/models/Event"
 import { tags } from "./mock"
 import { ExhibitionFilters } from "./exhibition-filters"
 import Link from "next/link"
 
 interface ExhibitionComponentsProps {
-  exhibitions?: Event[],
+  exhibitions?: IEvent[],
   categories: string[]
 }
 
@@ -170,7 +171,7 @@ export function ExhibitionComponents({ exhibitions = [] }: ExhibitionComponentsP
             <div className="space-y-4">
               {filteredExhibitions.length > 0 ? (
                 filteredExhibitions.map((exhibition) => (
-                  <ExhibitionCard key={exhibition._id} exhibition={exhibition} />
+                  <ExhibitionCard key={exhibition._id.toString()} exhibition={exhibition} />
                 ))
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
@@ -184,7 +185,7 @@ export function ExhibitionComponents({ exhibitions = [] }: ExhibitionComponentsP
   )
 }
 
-function ExhibitionCard({ exhibition }: { exhibition: Event }) {
+function ExhibitionCard({ exhibition }: { exhibition: IEvent }) {
   const {
     _id,
     title,

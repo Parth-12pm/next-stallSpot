@@ -1,4 +1,3 @@
-// src/models/Application.ts
 import mongoose, { Schema, type Document } from "mongoose"
 import type { IUser } from "@/models/User"
 import type { IEvent } from "@/models/Event"
@@ -29,11 +28,26 @@ interface IPaymentDetails {
   failureReason?: string
 }
 
+export interface IStatusHistory {
+  status: string
+  timestamp: Date
+  updatedBy: mongoose.Types.ObjectId | IUser
+  reason?: string
+}
+
 export interface IApplication extends Document {
   eventId: mongoose.Types.ObjectId | IEvent
   vendorId: mongoose.Types.ObjectId | IUser
   stallId: number
-  status: "pending" | "approved" | "rejected" | "payment_pending" | "payment_completed" | "expired" | "payment_failed"
+  status:
+    | "pending"
+    | "under_review"
+    | "approved"
+    | "rejected"
+    | "payment_pending"
+    | "payment_completed"
+    | "cancelled"
+    | "expired"
   products: IProduct[]
   applicationDate: Date
   approvalDate?: Date
@@ -41,6 +55,7 @@ export interface IApplication extends Document {
   paymentDeadline?: Date
   fees: IFees
   paymentDetails?: IPaymentDetails
+  statusHistory: IStatusHistory[]
   createdAt: Date
   updatedAt: Date
 }
@@ -88,6 +103,16 @@ const PaymentDetailsSchema = new Schema(
   { _id: false },
 )
 
+const StatusHistorySchema = new Schema(
+  {
+    status: { type: String, required: true },
+    timestamp: { type: Date, default: Date.now },
+    updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    reason: String,
+  },
+  { _id: false },
+)
+
 const ApplicationSchema = new Schema(
   {
     eventId: {
@@ -103,7 +128,16 @@ const ApplicationSchema = new Schema(
     stallId: { type: Number, required: true },
     status: {
       type: String,
-      enum: ["pending", "approved", "rejected", "payment_pending", "payment_completed", "expired", "payment_failed"],
+      enum: [
+        "pending",
+        "under_review",
+        "approved",
+        "rejected",
+        "payment_pending",
+        "payment_completed",
+        "cancelled",
+        "expired",
+      ],
       default: "pending",
     },
     products: {
@@ -122,6 +156,7 @@ const ApplicationSchema = new Schema(
     paymentDeadline: Date,
     fees: FeesSchema,
     paymentDetails: PaymentDetailsSchema,
+    statusHistory: [StatusHistorySchema],
   },
   {
     timestamps: true,
@@ -141,6 +176,18 @@ ApplicationSchema.index(
 
 // Auto-expire payment_pending applications after 24 hours
 ApplicationSchema.index({ paymentDeadline: 1 }, { expireAfterSeconds: 0 })
+
+// Add a new pre-save hook to update status history
+ApplicationSchema.pre("save", function (next) {
+  if (this.isModified("status")) {
+    this.statusHistory.push({
+      status: this.status,
+      timestamp: new Date(),
+      updatedBy: this.vendorId, // Assuming the vendor is making the change
+    })
+  }
+  next()
+})
 
 const Application = mongoose.models.Application || mongoose.model<IApplication>("Application", ApplicationSchema)
 

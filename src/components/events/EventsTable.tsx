@@ -1,70 +1,70 @@
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Eye, Edit, Settings } from "lucide-react";
-import type { Event } from '@/components/events/types/types';
-import { Badge } from '@/components/ui/badge';
+"use client"
+
+import { useEffect, useState, useCallback } from "react"
+import { useRouter } from "next/navigation"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
+import { MoreHorizontal, Eye, Edit, Settings } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import type { IEvent } from "@/models/Event"
 
 export function EventsTable() {
-  const router = useRouter();
-  const [events, setEvents] = useState<Event[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter()
+  const [events, setEvents] = useState<IEvent[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchEvents = useCallback(async () => {
+    try {
+      const response = await fetch("/api/events")
+      if (!response.ok) {
+        throw new Error("Failed to fetch events")
+      }
+      const data = await response.json()
+      setEvents(data.data.events)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load events")
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const response = await fetch('/api/events');
-        if (!response.ok) {
-          throw new Error('Failed to fetch events');
-        }
-        const data = await response.json();
-        setEvents(data.events);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load events');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    fetchEvents()
 
-    fetchEvents();
-  }, []);
+    // Refresh events every minute
+    const intervalId = setInterval(fetchEvents, 60000)
 
-  const getStatusBadge = (status: Event['status']) => {
-    const variants = {
-      draft: 'secondary',
-      published: 'default',
-      completed: 'outline',
-      cancelled: 'destructive'
-    } as const;
+    return () => clearInterval(intervalId)
+  }, [fetchEvents])
 
-    return <Badge variant={variants[status]}>{status}</Badge>;
-  };
+  const getStatusBadge = (status: IEvent["status"]) => {
+    const variants: { [key in IEvent["status"]]: "default" | "secondary" | "outline" | "destructive" } = {
+      draft: "secondary",
+      pending_review: "secondary",
+      approved: "default",
+      published: "default",
+      ongoing: "default",
+      completed: "outline",
+      cancelled: "destructive",
+    }
+
+    return <Badge variant={variants[status]}>{status.replace("_", " ")}</Badge>
+  }
 
   if (error) {
     return (
       <Table>
         <TableBody>
           <TableRow>
-            <TableCell colSpan={5} className="text-center text-red-500">{error}</TableCell>
+            <TableCell colSpan={5} className="text-center text-red-500">
+              {error}
+            </TableCell>
           </TableRow>
         </TableBody>
       </Table>
-    );
+    )
   }
 
   if (isLoading) {
@@ -101,9 +101,8 @@ export function EventsTable() {
           ))}
         </TableBody>
       </Table>
-    );
+    )
   }
-
 
   return (
     <Table>
@@ -125,7 +124,7 @@ export function EventsTable() {
           </TableRow>
         ) : (
           events.map((event) => (
-            <TableRow key={event._id}>
+            <TableRow key={event._id.toString()}>
               <TableCell>{event.title}</TableCell>
               <TableCell>
                 {new Date(event.startDate).toLocaleDateString()} - {new Date(event.endDate).toLocaleDateString()}
@@ -144,7 +143,7 @@ export function EventsTable() {
                       <Eye className="mr-2 h-4 w-4" />
                       View
                     </DropdownMenuItem>
-                    {event.status === 'draft' && (
+                    {event.status === "draft" && (
                       <>
                         <DropdownMenuItem onClick={() => router.push(`/dashboard/events/${event._id}/edit`)}>
                           <Edit className="mr-2 h-4 w-4" />
@@ -164,5 +163,6 @@ export function EventsTable() {
         )}
       </TableBody>
     </Table>
-  );
+  )
 }
+

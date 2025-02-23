@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { Event, Stall } from "@/components/events/types/types";
+import { IEvent, IStall } from "@/models/Event";
 import { useEffect, useState } from 'react';
 
 export default function ExhibitionStallsPage() {
@@ -17,7 +17,7 @@ export default function ExhibitionStallsPage() {
   const eventId = params.id as string; // Extract id once
   const router = useRouter();
   const { data: session } = useSession();
-  const [event, setEvent] = useState<Event | null>(null);
+  const [event, setEvent] = useState<IEvent | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -47,7 +47,7 @@ export default function ExhibitionStallsPage() {
     fetchEvent();
   }, [eventId, router]);
 
-  const handleStallSelect = (stall: Stall) => {
+  const handleStallSelect = (stall: IStall) => {
     if (!session) {
       router.push('/auth/login');
       return;

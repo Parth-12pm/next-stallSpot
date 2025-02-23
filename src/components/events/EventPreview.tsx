@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Event } from "./types/types";
+import { IEvent } from "@/models/Event";
 
 interface EventPreviewProps {
   eventId: string;
@@ -18,7 +18,7 @@ interface EventPreviewProps {
 
 export default function EventPreview({ eventId, isOrganizer = false }: EventPreviewProps) {
   const router = useRouter();
-  const [event, setEvent] = useState<Event | null>(null);
+  const [event, setEvent] = useState<IEvent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);

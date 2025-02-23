@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Save, Plus, Building2 } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import type { Stall, StallFormProps } from "@/components/events/types/types"
+import type { StallFormProps } from "@/components/events/types/types"
+import { IStall } from "@/models/Event"
 import { useRouter } from "next/navigation"
 import { toast } from "@/hooks/use-toast"
 import Image from "next/image"
@@ -27,14 +28,14 @@ export default function StallForm({
 }: StallFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [selectedStall, setSelectedStall] = useState<Stall | null>(null)
+  const [selectedStall, setSelectedStall] = useState<IStall | null>(null)
   const [customCategory, setCustomCategory] = useState("")
   const [customSize, setCustomSize] = useState("")
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES)
   const router = useRouter()
   const { session } = useAuth()
 
-  const [stalls, setStalls] = useState<Stall[]>(() =>
+  const [stalls, setStalls] = useState<IStall[]>(() =>
     Array.from({ length: eventDetails.numberOfStalls }, (_, i) => ({
       stallId: i + 1,
       displayId: `${i + 1}`,
@@ -67,7 +68,7 @@ export default function StallForm({
     }
   }, [eventId])
 
-  const handleStallClick = (stall: Stall) => {
+  const handleStallClick = (stall: IStall) => {
     if (readOnly && stall.status !== "available") return
     setSelectedStall(stall)
   }
@@ -76,7 +77,7 @@ export default function StallForm({
     return /^\d+(\.\d+)?x\d+(\.\d+)?$/.test(size)
   }
 
-  const updateStallDetails = (field: keyof Stall, value: string) => {
+  const updateStallDetails = (field: keyof IStall, value: string) => {
     if (!selectedStall || readOnly) return
 
     setStalls((prevStalls) =>
@@ -146,7 +147,7 @@ export default function StallForm({
     }
   }
 
-  const getStallColorByStatus = (status: Stall["status"], type: string) => {
+  const getStallColorByStatus = (status: IStall["status"], type: string) => {
     if (!isOrganizer) {
       return status === "available"
         ? `bg-green-100 border-green-300 ${type === "premium" ? "border-yellow-400" : ""}`
@@ -493,7 +494,7 @@ export default function StallForm({
                       ) : (
                         <Select
                           value={selectedStall.status}
-                          onValueChange={(value: Stall["status"]) => updateStallDetails("status", value)}
+                          onValueChange={(value: IStall["status"]) => updateStallDetails("status", value)}
                           disabled={readOnly}
                         >
                           <SelectTrigger className="w-full p-2 border border-gray-300 rounded-md">

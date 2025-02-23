@@ -13,7 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useRouter } from "next/navigation"
 import { toast } from "@/hooks/use-toast"
-import type { Event } from "./types/types"
+import type { IEvent } from "@/models/Event"
 import { Save, FileImage, Calendar, Clock } from "lucide-react"
 
 interface FormState {
@@ -28,11 +28,12 @@ interface FormState {
   entryFee: string
   facilities: string[]
   category: string
+  status: IEvent["status"]
 }
 
 interface EventFormProps {
   onSubmit?: (formData: globalThis.FormData) => Promise<void>
-  initialData?: Event
+  initialData?: IEvent
   isEditing?: boolean
 }
 
@@ -74,6 +75,7 @@ export default function EventForm({ onSubmit, initialData, isEditing = false }: 
         entryFee: initialData.entryFee || "",
         facilities: initialData.facilities,
         category: initialData.category,
+        status: initialData.status,
       }
     }
 
@@ -89,6 +91,7 @@ export default function EventForm({ onSubmit, initialData, isEditing = false }: 
       entryFee: "",
       facilities: [],
       category: "art",
+      status: "draft",
     }
   })
 

@@ -1,4 +1,3 @@
-// src/models/Event.ts
 import mongoose, { Schema, type Document } from "mongoose"
 import type { IUser } from "./User"
 
@@ -13,7 +12,16 @@ export interface IStall {
   status: "available" | "reserved" | "blocked" | "booked"
 }
 
+export interface IStatusHistory {
+  status: string
+  timestamp: Date
+  updatedBy: mongoose.Types.ObjectId | IUser | "system"
+  updatedByModel: "User" | "system"
+  reason?: string
+}
+
 export interface IEvent extends Document {
+  _id: mongoose.Types.ObjectId
   title: string
   description: string
   venue: string
@@ -28,11 +36,13 @@ export interface IEvent extends Document {
   layout?: string
   thumbnail?: string
   organizerId: mongoose.Types.ObjectId | IUser
-  status: "draft" | "published" | "completed" | "cancelled"
+  status: "draft" | "pending_review" | "approved" | "published" | "ongoing" | "completed" | "cancelled"
   stallConfiguration: IStall[]
   configurationComplete: boolean
+  statusHistory: IStatusHistory[]
   createdAt: Date
   updatedAt: Date
+  updateStatus(): string
 }
 
 const StallSchema = new Schema({
@@ -56,6 +66,25 @@ const StallSchema = new Schema({
   },
 })
 
+const StatusHistorySchema = new Schema(
+  {
+    status: { type: String, required: true },
+    timestamp: { type: Date, default: Date.now },
+    updatedBy: {
+      type: Schema.Types.Mixed,
+      required: true,
+      refPath: "statusHistory.updatedByModel",
+    },
+    updatedByModel: {
+      type: String,
+      required: true,
+      enum: ["User", "system"],
+    },
+    reason: String,
+  },
+  { _id: false },
+)
+
 const EventSchema = new Schema(
   {
     title: { type: String, required: true },
@@ -78,7 +107,7 @@ const EventSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["draft", "published", "completed", "cancelled"],
+      enum: ["draft", "pending_review", "approved", "published", "ongoing", "completed", "cancelled"],
       default: "draft",
     },
     stallConfiguration: {
@@ -89,11 +118,45 @@ const EventSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    statusHistory: [StatusHistorySchema],
   },
   {
     timestamps: true,
   },
 )
+
+EventSchema.methods.updateStatus = function (this: IEvent) {
+  const now = new Date()
+  const startDate = new Date(this.startDate)
+  const endDate = new Date(this.endDate)
+
+  let newStatus = this.status
+
+  if (now < startDate) {
+    if (this.status === "published") {
+      newStatus = "published"
+    } else if (this.status !== "draft" && this.status !== "pending_review") {
+      newStatus = "approved"
+    }
+  } else if (now >= startDate && now <= endDate) {
+    newStatus = "ongoing"
+  } else if (now > endDate) {
+    newStatus = "completed"
+  }
+
+  if (newStatus !== this.status) {
+    this.status = newStatus
+    this.statusHistory.push({
+      status: newStatus,
+      timestamp: now,
+      updatedBy: "system",
+      updatedByModel: "system",
+      reason: "Automatic status update",
+    })
+  }
+
+  return this.status
+}
 
 // Helper function to normalize dates for comparison
 const normalizeDate = (date: Date) => {
@@ -147,6 +210,19 @@ EventSchema.pre(["updateOne", "findOneAndUpdate"], async function (next) {
 EventSchema.pre("save", function (next) {
   if (this.stallConfiguration.length > this.numberOfStalls) {
     return next(new Error("Stall configuration exceeds the number of stalls"))
+  }
+  next()
+})
+
+// Add a new pre-save hook to update status history
+EventSchema.pre("save", function (next) {
+  if (this.isModified("status")) {
+    this.statusHistory.push({
+      status: this.status,
+      timestamp: new Date(),
+      updatedBy: this.organizerId,
+      updatedByModel: "User",
+    })
   }
   next()
 })
