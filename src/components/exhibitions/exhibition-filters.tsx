@@ -19,7 +19,63 @@ import {
 } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import type { FilterState } from "@/components/events/types/types"
-import { categories, facilities, venues, stallTypes } from "./mock"
+
+
+export const categories = [
+  "Trade Shows",
+  "Art Exhibitions",
+  "Food Festivals",
+  "Tech Conferences",
+  "Fashion Shows",
+  "Business Expos",
+  "Cultural Events",
+  "Education Fairs",
+]
+
+export const facilities = [
+  "Wi-Fi",
+  "Power Backup",
+  "Security",
+  "Parking",
+  "Food Court",
+  "Air Conditioning",
+  "Loading/Unloading",
+  "Storage Space",
+]
+
+export const venues = [
+  "Mumbai",
+  "Delhi",
+  "Bangalore",
+  "Chennai",
+  "Hyderabad",
+  "Kolkata",
+  "Pune",
+  "Ahmedabad",
+]
+
+export const statusFilters = [
+  { value: "draft", label: "Draft" },
+  { value: "published", label: "Upcoming" },
+  { value: "completed", label: "Past Events" },
+  { value: "cancelled", label: "Cancelled" },
+];
+
+export const stallTypes = [
+  { value: "standard", label: "Standard Stalls" },
+  { value: "premium", label: "Premium Stalls" },
+  { value: "corner", label: "Corner Stalls" },
+];
+
+ const tags = [
+  { id: "popular", label: "Popular" },
+  { id: "featured", label: "Featured" },
+  { id: "early-bird", label: "Early Bird Discount" },
+  { id: "last-minute", label: "Last Minute Deals" },
+  { id: "free-entry", label: "Free Entry" },
+  { id: "weekend", label: "Weekend Events" },
+  { id: "family", label: "Family Friendly" },
+  { id: "international", label: "International" }];
 
 interface FiltersProps {
   filters: FilterState

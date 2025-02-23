@@ -12,9 +12,21 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import Image from "next/image"
 import type { FilterState } from "@/components/events/types/types"
 import type { IEvent } from "@/models/Event"
-import { tags } from "./mock"
 import { ExhibitionFilters } from "./exhibition-filters"
 import Link from "next/link"
+
+
+
+export const tags = [
+  { id: "popular", label: "Popular" },
+  { id: "featured", label: "Featured" },
+  { id: "early-bird", label: "Early Bird Discount" },
+  { id: "last-minute", label: "Last Minute Deals" },
+  { id: "free-entry", label: "Free Entry" },
+  { id: "weekend", label: "Weekend Events" },
+  { id: "family", label: "Family Friendly" },
+  { id: "international", label: "International" },
+];
 
 interface ExhibitionComponentsProps {
   exhibitions?: IEvent[],

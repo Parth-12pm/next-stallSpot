@@ -13,7 +13,7 @@ import { useEffect, useState } from "react"
 import { EventsTable } from "@/components/events/EventsTable"
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Event } from "@/components/events/types/types"
+import { IEvent } from "@/models/Event"
 import { OrganizerApplicationsTable } from '../applications/OrganizerApplicationsTable'
 
 interface DashboardStats {
@@ -22,7 +22,7 @@ interface DashboardStats {
   completedEvents: number
   totalStalls: number
   bookedStalls: number
-  recentEvents: Event[]
+  recentEvents: IEvent[]
 }
 
 export function OrganizerDashboard({ user }: DashboardProps) {
@@ -145,7 +145,7 @@ export function OrganizerDashboard({ user }: DashboardProps) {
                     <ScrollArea className="h-[300px]">
                       <div className="space-y-8">
                         {stats?.recentEvents.map((event) => (
-                          <div key={event._id} className="flex items-center">
+                          <div key={event._id.toString()} className="flex items-center">
                             <div className="space-y-1 flex-1">
                               <p className="text-sm font-medium leading-none">{event.title}</p>
                               <div className="flex items-center text-sm text-muted-foreground">

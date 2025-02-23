@@ -8,7 +8,7 @@ import EventForm from "@/components/events/EventForm";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import type { Event } from '@/components/events/types/types';
+import type { IEvent } from '@/models/Event';
 
 type Props = {
   id: string;
@@ -17,7 +17,7 @@ type Props = {
 export default function EditEventContent({ id }: Props) {
   const router = useRouter();
   const { session } = useAuth(['organizer']);
-  const [event, setEvent] = useState<Event | null>(null);
+  const [event, setEvent] = useState<IEvent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

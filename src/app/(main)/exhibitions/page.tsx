@@ -3,8 +3,19 @@ import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { FilterProvider } from "@/components/exhibitions/filter-context"
 import { ExhibitionComponents } from "@/components/exhibitions/exhibition-components"
-import { categories } from "@/components/exhibitions/mock"
-import { Event } from "@/components/events/types/types"
+import { IEvent } from "@/models/Event"
+
+
+const categories = [
+  "Trade Shows",
+  "Art Exhibitions",
+  "Food Festivals",
+  "Tech Conferences",
+  "Fashion Shows",
+  "Business Expos",
+  "Cultural Events",
+  "Education Fairs",
+]
 
 async function getExhibitions() {
   const res = await fetch(`${process.env.NEXTAUTH_PUBLIC_URL}/api/exhibitions`, {
@@ -16,7 +27,7 @@ async function getExhibitions() {
   }
 
   const data = await res.json()
-  return data.events as Event[]
+  return data.events as IEvent[]
 }
 
 export default async function ExhibitionsPage() {

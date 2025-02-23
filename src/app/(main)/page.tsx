@@ -34,6 +34,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { useEffect } from "react"
+
 
 const SwirlyBackground = () => {
   return (
@@ -141,7 +143,6 @@ const SwirlyBackground = () => {
 };
 
 export default function App() {
-
 
   const upcomingEvents = [
     {

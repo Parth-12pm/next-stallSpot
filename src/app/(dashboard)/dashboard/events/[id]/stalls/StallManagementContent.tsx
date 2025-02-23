@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { Stall } from '@/components/events/types/types';
+import { IStall } from '@/models/Event';
 
 interface EventDetails {
   _id: string;
@@ -112,7 +112,7 @@ export default function StallManagementContent({ id }: Props) {
       </div>
     );
   }
-  const handleStallsSave = async (stalls: Stall[]) => {
+  const handleStallsSave = async (stalls: IStall[]) => {
     try {
       const response = await fetch(`/api/events/${id}/stalls`, {
         method: 'POST',
