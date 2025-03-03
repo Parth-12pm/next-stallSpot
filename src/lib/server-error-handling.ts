@@ -15,7 +15,7 @@ export class ApiError extends Error {
 }
 
 export const handleServerError = (error: unknown): ApiError => {
-  console.error("Server error:", error)
+  console.error("Server parth error:", error)
 
   if (error instanceof ApiError) {
     return error
@@ -51,7 +51,7 @@ export const handleServerError = (error: unknown): ApiError => {
 }
 
 export const logServerError = (error: unknown) => {
-  console.error("Server error:", error)
+  console.error(" Server parth error:", error)
   // You can add more sophisticated logging here, such as sending to a logging service
 }
 

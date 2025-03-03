@@ -66,6 +66,8 @@ export async function POST(request: Request) {
         },
       })
 
+      console.log("Payment successful:", payment)
+
       // Update stall status in the event
       await Event.updateOne(
         {
@@ -97,7 +99,9 @@ export async function POST(request: Request) {
         paymentId: razorpay_payment_id,
         redirectUrl: "/dashboard/applications",
       })
-    } else {
+    } 
+    else {
+      console.log("Payment failed:", payment)
       // Payment failed
       await Application.findByIdAndUpdate(order.notes.applicationId, {
         status: "payment_failed",
@@ -109,6 +113,8 @@ export async function POST(request: Request) {
           failureReason: payment.error_description || "Payment failed",
         },
       })
+
+      console.log("Payment failed:", payment)
 
       // Send payment failure notification
       await sendPaymentFailureNotification(

@@ -110,18 +110,13 @@ export async function POST(
           rejectionReason: status === "rejected" ? rejectionReason : undefined,
           approvalDate: status === "approved" ? new Date() : undefined,
           paymentDeadline: status === "approved" ? new Date(Date.now() + 24 * 60 * 60 * 1000) : undefined,
-          statusHistory: {
-            status: status === "approved" ? "payment_pending" : "rejected",
-            updatedAt: new Date(),
-            updatedBy: session.user.id,
-          },
         }
 
         const updatedApplication = await Application.findByIdAndUpdate(
           applicationId,
           {
             $set: updates,
-            $push: { statusHistory: updates.statusHistory },
+            $push: { statusHistory: updates },
           },
           { new: true, session: sess },
         )

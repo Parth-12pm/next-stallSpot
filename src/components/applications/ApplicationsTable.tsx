@@ -13,6 +13,11 @@ import { useRouter } from "next/navigation"
 import type { IApplication } from "@/models/Application"
 import type { IEvent } from "@/models/Event"
 import type { Types } from "mongoose"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
+import { Skeleton } from "@/components/ui/skeleton"
+import Razorpay from "razorpay"
 
 interface RazorpayOptions {
   key: string
@@ -39,6 +44,7 @@ interface RazorpayResponse {
 
 interface RazorpayInstance {
   open: () => void
+  on: (event: string, handler: () => void) => void
 }
 
 declare global {
@@ -130,6 +136,10 @@ export function ApplicationsTable() {
             } else {
               throw new Error(verifyData.error || "Payment verification failed")
             }
+
+
+
+
           } catch (error) {
             console.error("Error verifying payment:", error)
             toast({
@@ -155,6 +165,13 @@ export function ApplicationsTable() {
       }
 
       const paymentObject = new window.Razorpay(options)
+      paymentObject.on('modal:close', () => {
+        toast({
+          title: "Payment Cancelled",
+          description: "You closed the payment window. Please try again if you wish to complete the payment.",
+        })
+      })
+      
       paymentObject.open()
     } catch (error) {
       console.error("Error initiating payment:", error)
@@ -178,10 +195,35 @@ export function ApplicationsTable() {
       </Alert>
     )
   }
-
-  if (loading) {
-    return (
-      <div className="space-y-4">
+  loading && (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-4 w-[150px]" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-8 w-[100px]" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-4 w-[150px]" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-8 w-[100px]" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-4 w-[150px]" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-8 w-[100px]" />
+          </CardContent>
+        </Card>
+      </div>
+      <div className="rounded-lg border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -198,26 +240,26 @@ export function ApplicationsTable() {
               <TableRow key={index}>
                 <TableCell>
                   <div className="space-y-2">
-                    <div className="h-5 w-[180px] animate-pulse rounded-md bg-gray-200" />
-                    <div className="h-4 w-[140px] animate-pulse rounded-md bg-gray-100" />
+                    <Skeleton className="h-4 w-[250px]" />
+                    <Skeleton className="h-3 w-[200px]" />
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="h-4 w-[60px] animate-pulse rounded-md bg-gray-200" />
+                  <Skeleton className="h-4 w-[60px]" />
                 </TableCell>
                 <TableCell>
-                  <div className="h-4 w-[120px] animate-pulse rounded-md bg-gray-200" />
+                  <Skeleton className="h-4 w-[100px]" />
                 </TableCell>
                 <TableCell>
-                  <div className="h-4 w-[100px] animate-pulse rounded-md bg-gray-200" />
+                  <Skeleton className="h-4 w-[80px]" />
                 </TableCell>
                 <TableCell>
-                  <div className="h-6 w-[100px] animate-pulse rounded-full bg-gray-200" />
+                  <Skeleton className="h-6 w-[100px] rounded-full" />
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-2">
-                    <div className="h-8 w-[90px] animate-pulse rounded-md bg-gray-200" />
-                    <div className="h-8 w-[90px] animate-pulse rounded-md bg-gray-200" />
+                  <div className="flex space-x-2">
+                    <Skeleton className="h-9 w-[90px] rounded-md" />
+                    <Skeleton className="h-9 w-[90px] rounded-md" />
                   </div>
                 </TableCell>
               </TableRow>
@@ -225,8 +267,8 @@ export function ApplicationsTable() {
           </TableBody>
         </Table>
       </div>
-    )
-  }
+    </div>
+  )
 
   return (
     <div className="space-y-4">
@@ -299,30 +341,98 @@ export function ApplicationsTable() {
           </DialogHeader>
           {selectedApplication && (
             <div className="space-y-6">
-              <div>
-                <h3 className="font-semibold">Event Details</h3>
-                <p>Title: {selectedApplication.eventId.title}</p>
-                <p>Venue: {selectedApplication.eventId.venue}</p>
-                <p>Date: {format(new Date(selectedApplication.eventId.startDate), "MMM d, yyyy")}</p>
-              </div>
-              <div>
-                <h3 className="font-semibold">Stall Details</h3>
-                <p>Stall ID: {selectedApplication.stallId}</p>
-                <p>Status: {selectedApplication.status.replace("_", " ").toUpperCase()}</p>
-              </div>
-              <div>
-                <h3 className="font-semibold">Fee Details</h3>
-                <p>Stall Price: ₹{selectedApplication.fees.stallPrice.toLocaleString()}</p>
-                <p>Platform Fee: ₹{selectedApplication.fees.platformFee.toLocaleString()}</p>
-                <p>Entry Fee: ₹{selectedApplication.fees.entryFee.toLocaleString()}</p>
-                <p>GST: ₹{selectedApplication.fees.gst.toLocaleString()}</p>
-                <p className="font-bold">Total Amount: ₹{selectedApplication.fees.totalAmount.toLocaleString()}</p>
-              </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Event Information</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-muted-foreground">Event Title</Label>
+                      <p className="font-medium">{selectedApplication.eventId.title}</p>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground">Venue</Label>
+                      <p className="font-medium">{selectedApplication.eventId.venue}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Event Date</Label>
+                    <p className="font-medium">
+                      {format(new Date(selectedApplication.eventId.startDate), "MMMM d, yyyy")}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Stall Details</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-muted-foreground">Stall ID</Label>
+                      <p className="font-medium">#{selectedApplication.stallId}</p>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground">Status</Label>
+                      <Badge className={statusStyles[selectedApplication.status]} variant="secondary">
+                        {selectedApplication.status.replace("_", " ").toUpperCase()}
+                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Fee Breakdown</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-2 p-4 rounded-lg bg-muted">
+                      <div className="space-y-1">
+                        <Label className="text-muted-foreground">Stall Price</Label>
+                        <p className="text-lg font-semibold">₹{selectedApplication.fees.stallPrice.toLocaleString()}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-muted-foreground">Platform Fee</Label>
+                        <p className="text-lg font-semibold">
+                          ₹{selectedApplication.fees.platformFee.toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-muted-foreground">Entry Fee</Label>
+                        <p className="text-lg font-semibold">₹{selectedApplication.fees.entryFee.toLocaleString()}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-muted-foreground">GST (18%)</Label>
+                        <p className="text-lg font-semibold">₹{selectedApplication.fees.gst.toLocaleString()}</p>
+                      </div>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between items-center p-4">
+                      <span className="text-lg font-semibold">Total Amount</span>
+                      <span className="text-2xl font-bold">
+                        ₹{selectedApplication.fees.totalAmount.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
               {selectedApplication.status === "payment_pending" && (
-                <div className="space-y-4">
-                  <Button onClick={() => handlePayment(selectedApplication._id)}>Proceed to Payment</Button>
-                </div>
+                <Card>
+                  <CardContent className="pt-6">
+                    <Button className="w-full" size="lg" onClick={() => handlePayment(selectedApplication._id)}>
+                      <CreditCard className="mr-2 h-5 w-5" />
+                      Proceed to Payment
+                    </Button>
+                  </CardContent>
+                </Card>
               )}
+
               {selectedApplication.status === "payment_failed" && (
                 <Alert variant="destructive">
                   <AlertTriangle className="h-4 w-4" />
@@ -331,18 +441,37 @@ export function ApplicationsTable() {
                   </AlertDescription>
                 </Alert>
               )}
+
               {selectedApplication.status === "payment_completed" && selectedApplication.paymentDetails && (
-                <div>
-                  <h3 className="font-semibold">Payment Details</h3>
-                  <p>Transaction ID: {selectedApplication.paymentDetails.razorpayPaymentId || "N/A"}</p>
-                  <p>Paid Amount: ₹{(selectedApplication.paymentDetails.amount || 0).toLocaleString()}</p>
-                  <p>
-                    Paid At:{" "}
-                    {selectedApplication.paymentDetails.paidAt
-                      ? format(new Date(selectedApplication.paymentDetails.paidAt), "MMM d, yyyy HH:mm:ss")
-                      : "N/A"}
-                  </p>
-                </div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Payment Information</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid gap-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-muted-foreground">Transaction ID</Label>
+                        <p className="font-mono text-sm">
+                          {selectedApplication.paymentDetails.razorpayPaymentId || "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-muted-foreground">Amount Paid</Label>
+                        <p className="font-semibold">
+                          ₹{(selectedApplication.paymentDetails.amount || 0).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground">Payment Date</Label>
+                      <p className="font-medium">
+                        {selectedApplication.paymentDetails.paidAt
+                          ? format(new Date(selectedApplication.paymentDetails.paidAt), "MMMM d, yyyy 'at' h:mm a")
+                          : "N/A"}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
               )}
             </div>
           )}

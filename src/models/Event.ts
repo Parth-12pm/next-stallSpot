@@ -12,13 +12,7 @@ export interface IStall {
   status: "available" | "reserved" | "blocked" | "booked"
 }
 
-export interface IStatusHistory {
-  status: string
-  timestamp: Date
-  updatedBy: mongoose.Types.ObjectId | IUser | "system"
-  updatedByModel: "User" | "system"
-  reason?: string
-}
+
 
 export interface IEvent extends Document {
   _id: mongoose.Types.ObjectId
@@ -39,7 +33,6 @@ export interface IEvent extends Document {
   status: "draft" | "pending_review" | "approved" | "published" | "ongoing" | "completed" | "cancelled"
   stallConfiguration: IStall[]
   configurationComplete: boolean
-  statusHistory: IStatusHistory[]
   createdAt: Date
   updatedAt: Date
   updateStatus(): string
@@ -66,24 +59,6 @@ const StallSchema = new Schema({
   },
 })
 
-const StatusHistorySchema = new Schema(
-  {
-    status: { type: String, required: true },
-    timestamp: { type: Date, default: Date.now },
-    updatedBy: {
-      type: Schema.Types.Mixed,
-      required: true,
-      refPath: "statusHistory.updatedByModel",
-    },
-    updatedByModel: {
-      type: String,
-      required: true,
-      enum: ["User", "system"],
-    },
-    reason: String,
-  },
-  { _id: false },
-)
 
 const EventSchema = new Schema(
   {
@@ -118,7 +93,6 @@ const EventSchema = new Schema(
       type: Boolean,
       default: false,
     },
-    statusHistory: [StatusHistorySchema],
   },
   {
     timestamps: true,
@@ -146,13 +120,6 @@ EventSchema.methods.updateStatus = function (this: IEvent) {
 
   if (newStatus !== this.status) {
     this.status = newStatus
-    this.statusHistory.push({
-      status: newStatus,
-      timestamp: now,
-      updatedBy: "system",
-      updatedByModel: "system",
-      reason: "Automatic status update",
-    })
   }
 
   return this.status
@@ -215,17 +182,7 @@ EventSchema.pre("save", function (next) {
 })
 
 // Add a new pre-save hook to update status history
-EventSchema.pre("save", function (next) {
-  if (this.isModified("status")) {
-    this.statusHistory.push({
-      status: this.status,
-      timestamp: new Date(),
-      updatedBy: this.organizerId,
-      updatedByModel: "User",
-    })
-  }
-  next()
-})
+
 
 // Export model
 const Event = mongoose.models.Event || mongoose.model<IEvent>("Event", EventSchema)
