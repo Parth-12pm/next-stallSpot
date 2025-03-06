@@ -47,12 +47,7 @@ const eventFormSchema = z.object({
 
 export async function GET(request: Request) {
   try {
-    await limiter.check(request, 10, "CACHE_TOKEN") // Max 10 requests per minute per IP
-
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return apiResponse(false, null, "Unauthorized", 401)
-    }
+    await limiter.check(request, 10, "CACHE_TOKEN")
 
     await dbConnect()
 
@@ -61,16 +56,36 @@ export async function GET(request: Request) {
     const limit = Number.parseInt(searchParams.get("limit") || "10")
     const skip = (page - 1) * limit
 
-    const isOrganizer = (session.user as { role?: string })?.role === "organizer"
+    // Get session but don't require it
+    const session = await getServerSession(authOptions)
+    const isOrganizer = (session?.user as { role?: string })?.role === "organizer"
 
-    const query = isOrganizer
-      ? { organizerId: session.user.id }
-      : {
+    // Define query based on authentication status
+    let query = {}
+    
+    if (session?.user) {
+      if (isOrganizer) {
+        // Organizer sees their own events
+        query = { organizerId: session.user.id }
+      } else {
+        // Logged in users see published, ongoing, and completed events
+        query = {
           status: { $in: ["published", "ongoing", "completed"] },
           configurationComplete: true,
         }
+      }
+    } else {
+      // Public users only see published and ongoing events
+      query = {
+        status: { $in: ["published", "ongoing"] },
+        configurationComplete: true,
+      }
+    }
 
-    let events = await Event.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit)
+    let events = await Event.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
 
     // Update status for each event
     events = await Promise.all(
@@ -80,7 +95,7 @@ export async function GET(request: Request) {
           await event.save()
         }
         return event
-      }),
+      })
     )
 
     const total = await Event.countDocuments(query)

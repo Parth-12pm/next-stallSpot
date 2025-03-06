@@ -20,8 +20,6 @@ import { Eye, Mail } from "lucide-react"
 import { format } from "date-fns"
 import { toast } from "@/hooks/use-toast"
 import { handleApiError } from "@/lib/error-handling"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
 import type { IContact } from "@/models/Contact"
 
 interface PaginatedResponse<T> {
@@ -42,11 +40,8 @@ export function ContactsTable() {
   const [error, setError] = useState<string | null>(null)
   const [selectedContact, setSelectedContact] = useState<ContactWithId | null>(null)
   const [showDetails, setShowDetails] = useState(false)
-  const [showReplyForm, setShowReplyForm] = useState(false)
-  const [replyMessage, setReplyMessage] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-  const [actionLoading, setActionLoading] = useState(false)
 
   const fetchContacts = async (page = 1) => {
     setIsLoading(true)
@@ -107,71 +102,11 @@ export function ContactsTable() {
     fetchContacts(currentPage)
   }, [currentPage])
 
-  const handleViewContact = async (contact: ContactWithId) => {
+  const handleViewContact = (contact: ContactWithId) => {
     setSelectedContact(contact)
     setShowDetails(true)
-
-    // If the contact is new, mark it as read
-    if (contact.status === "new") {
-      try {
-        const response = await fetch(`/api/admin/contacts/${contact._id}/mark-read`, {
-          method: "POST",
-        })
-
-        if (response.ok) {
-          // Update the contact status locally
-          setContacts(contacts.map((c) => (c._id === contact._id ? { ...c, status: "read" } : c)))
-        }
-      } catch (error) {
-        // Silently fail - not critical
-        console.error("Failed to mark contact as read:", error)
-      }
-    }
   }
 
-  const handleReplyToContact = () => {
-    if (!selectedContact) return
-    setShowReplyForm(true)
-  }
-
-  const handleSendReply = async () => {
-    if (!selectedContact || !replyMessage.trim()) return
-
-    setActionLoading(true)
-    try {
-      const response = await fetch(`/api/admin/contacts/${selectedContact._id}/reply`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ message: replyMessage }),
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to send reply")
-      }
-
-      toast({
-        title: "Success",
-        description: "Reply sent successfully",
-      })
-
-      // Update the contact status locally
-      setContacts(contacts.map((c) => (c._id === selectedContact._id ? { ...c, status: "responded" } : c)))
-
-      setShowReplyForm(false)
-      setReplyMessage("")
-    } catch (error) {
-      const apiError = handleApiError(error)
-      toast({
-        title: "Error",
-        description: apiError.message,
-        variant: "destructive",
-      })
-    } finally {
-      setActionLoading(false)
-    }
-  }
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage)
@@ -255,8 +190,8 @@ export function ContactsTable() {
             ) : (
               // Map through contacts when available
               contacts.map((contact) => (
-                <TableRow 
-                  key={contact._id} 
+                <TableRow
+                  key={contact._id}
                   className={contact.status === "new" ? "bg-blue-50 dark:bg-blue-900/20" : ""}
                 >
                   <TableCell className="font-medium">{contact.name}</TableCell>
@@ -343,58 +278,14 @@ export function ContactsTable() {
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-3 pt-4">
-                <Button
-                  variant="outline"
-                  onClick={handleReplyToContact}
-                  className="bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900 hover:text-blue-800 dark:hover:text-blue-200 px-6"
-                >
-                  <Mail className="h-4 w-4 mr-2" />
-                  Reply
-                </Button>
-              </div>
+
             </div>
           )}
         </DialogContent>
       </Dialog>
 
       {/* Reply Form Dialog */}
-      <Dialog open={showReplyForm} onOpenChange={setShowReplyForm}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reply to {selectedContact?.name}</DialogTitle>
-            <DialogDescription>Send an email response to this inquiry</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-6">
-            <div>
-              <Label htmlFor="reply-message" className="text-base">
-                Your Reply
-              </Label>
-              <Textarea
-                id="reply-message"
-                value={replyMessage}
-                onChange={(e) => setReplyMessage(e.target.value)}
-                placeholder="Type your reply here..."
-                className="min-h-[180px] mt-2"
-              />
-            </div>
 
-            <DialogFooter className="gap-3">
-              <Button
-                variant="outline"
-                onClick={() => setShowReplyForm(false)}
-                disabled={actionLoading}
-                className="px-6"
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleSendReply} disabled={actionLoading || !replyMessage.trim()} className="px-6">
-                {actionLoading ? "Sending..." : "Send Reply"}
-              </Button>
-            </DialogFooter>
-          </div>
-        </DialogContent>
-      </Dialog>
     </Card>
   )
 }

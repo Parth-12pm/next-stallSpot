@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { Eye, Edit, Trash2, AlertTriangle } from "lucide-react"
+import { Eye } from "lucide-react"
 import { format } from "date-fns"
 import { toast } from "@/hooks/use-toast"
 import { handleApiError } from "@/lib/error-handling"
@@ -33,10 +33,8 @@ export function EventsTable() {
   const [error, setError] = useState<string | null>(null)
   const [selectedEvent, setSelectedEvent] = useState<EventWithId | null>(null)
   const [showDetails, setShowDetails] = useState(false)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-  const [actionLoading, setActionLoading] = useState(false)
 
   const fetchEvents = async (page = 1) => {
     setIsLoading(true)
@@ -100,49 +98,6 @@ export function EventsTable() {
   const handleViewEvent = (event: EventWithId) => {
     setSelectedEvent(event)
     setShowDetails(true)
-  }
-
-  const handleEditEvent = (eventId: string) => {
-    // Navigate to edit page or open edit modal
-    window.location.href = `/admin/events/edit/${eventId}`
-  }
-
-  const handleDeleteEvent = async () => {
-    if (!selectedEvent) return
-
-    setActionLoading(true)
-    try {
-      const response = await fetch(`/api/admin/events/${selectedEvent._id}`, {
-        method: "DELETE",
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to delete event")
-      }
-
-      toast({
-        title: "Success",
-        description: "Event deleted successfully",
-      })
-
-      // Refresh the events list
-      fetchEvents(currentPage)
-      setShowDeleteConfirm(false)
-    } catch (error) {
-      const apiError = handleApiError(error)
-      toast({
-        title: "Error",
-        description: apiError.message,
-        variant: "destructive",
-      })
-    } finally {
-      setActionLoading(false)
-    }
-  }
-
-  const confirmDelete = (event: EventWithId) => {
-    setSelectedEvent(event)
-    setShowDeleteConfirm(true)
   }
 
   const handlePageChange = (newPage: number) => {
@@ -232,19 +187,6 @@ export function EventsTable() {
                       <Button variant="outline" size="sm" onClick={() => handleViewEvent(event)}>
                         <Eye className="h-4 w-4" />
                         <span className="sr-only">View</span>
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleEditEvent(event._id)}>
-                        <Edit className="h-4 w-4" />
-                        <span className="sr-only">Edit</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => confirmDelete(event)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        <span className="sr-only">Delete</span>
                       </Button>
                     </div>
                   </TableCell>
@@ -353,46 +295,12 @@ export function EventsTable() {
               </div>
 
               <div className="flex justify-end space-x-2 pt-4">
-                <Button variant="outline" onClick={() => handleEditEvent(selectedEvent._id)}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit Event
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() => {
-                    setShowDetails(false)
-                    confirmDelete(selectedEvent)
-                  }}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Event
+                <Button variant="outline" onClick={() => setShowDetails(false)}>
+                  Close
                 </Button>
               </div>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Deletion</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this event? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex items-center justify-center py-4">
-            <AlertTriangle className="h-16 w-16 text-red-500" />
-          </div>
-          <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={() => setShowDeleteConfirm(false)} disabled={actionLoading}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteEvent} disabled={actionLoading}>
-              {actionLoading ? "Deleting..." : "Delete Event"}
-            </Button>
-          </div>
         </DialogContent>
       </Dialog>
     </Card>

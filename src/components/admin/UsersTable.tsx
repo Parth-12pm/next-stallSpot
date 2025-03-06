@@ -7,16 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { Eye, UserCog, Ban, AlertTriangle } from "lucide-react"
+import { Eye } from "lucide-react"
 import { format } from "date-fns"
 import { toast } from "@/hooks/use-toast"
 import { handleApiError } from "@/lib/error-handling"
@@ -40,10 +33,8 @@ export function UsersTable() {
   const [error, setError] = useState<string | null>(null)
   const [selectedUser, setSelectedUser] = useState<UserWithId | null>(null)
   const [showDetails, setShowDetails] = useState(false)
-  const [showSuspendConfirm, setShowSuspendConfirm] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-  const [actionLoading, setActionLoading] = useState(false)
 
   const fetchUsers = async (page = 1) => {
     setIsLoading(true)
@@ -107,44 +98,6 @@ export function UsersTable() {
   const handleViewUser = (user: UserWithId) => {
     setSelectedUser(user)
     setShowDetails(true)
-  }
-
-  const handleSuspendUser = async () => {
-    if (!selectedUser) return
-
-    setActionLoading(true)
-    try {
-      const response = await fetch(`/api/admin/users/${selectedUser._id}/suspend`, {
-        method: "POST",
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to suspend user")
-      }
-
-      toast({
-        title: "Success",
-        description: "User suspended successfully",
-      })
-
-      // Refresh the users list
-      fetchUsers(currentPage)
-      setShowSuspendConfirm(false)
-    } catch (error) {
-      const apiError = handleApiError(error)
-      toast({
-        title: "Error",
-        description: apiError.message,
-        variant: "destructive",
-      })
-    } finally {
-      setActionLoading(false)
-    }
-  }
-
-  const confirmSuspend = (user: UserWithId) => {
-    setSelectedUser(user)
-    setShowSuspendConfirm(true)
   }
 
   const handlePageChange = (newPage: number) => {
@@ -231,15 +184,6 @@ export function UsersTable() {
                       <Button variant="outline" size="sm" onClick={() => handleViewUser(user)}>
                         <Eye className="h-4 w-4" />
                         <span className="sr-only">View</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => confirmSuspend(user)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <Ban className="h-4 w-4" />
-                        <span className="sr-only">Suspend</span>
                       </Button>
                     </div>
                   </TableCell>
@@ -393,51 +337,12 @@ export function UsersTable() {
 
               {/* Action Buttons */}
               <div className="flex justify-end space-x-2 pt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => (window.location.href = `/admin/users/edit/${selectedUser._id}`)}
-                  className="bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800"
-                >
-                  <UserCog className="h-4 w-4 mr-2" />
-                  Edit User
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowDetails(false)
-                    confirmSuspend(selectedUser)
-                  }}
-                  className="bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800"
-                >
-                  <Ban className="h-4 w-4 mr-2" />
-                  Suspend User
+                <Button variant="outline" onClick={() => setShowDetails(false)}>
+                  Close
                 </Button>
               </div>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Suspend Confirmation Dialog */}
-      <Dialog open={showSuspendConfirm} onOpenChange={setShowSuspendConfirm}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Suspension</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to suspend this user? They will no longer be able to access the platform.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex items-center justify-center py-4">
-            <AlertTriangle className="h-16 w-16 text-red-500" />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowSuspendConfirm(false)} disabled={actionLoading}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleSuspendUser} disabled={actionLoading}>
-              {actionLoading ? "Processing..." : "Suspend User"}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </Card>

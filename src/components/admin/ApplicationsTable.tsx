@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { Eye, CheckCircle, XCircle } from "lucide-react"
+import { Eye } from "lucide-react"
 import { format } from "date-fns"
 import { toast } from "@/hooks/use-toast"
 import { handleApiError } from "@/lib/error-handling"
@@ -35,8 +35,6 @@ export function ApplicationsTable() {
   const [showDetails, setShowDetails] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-  const [actionLoading, setActionLoading] = useState(false)
-  const [rejectionReason, setRejectionReason] = useState("")
 
   const fetchApplications = async (page = 1) => {
     setIsLoading(true)
@@ -100,77 +98,6 @@ export function ApplicationsTable() {
   const handleViewApplication = (application: ApplicationWithId) => {
     setSelectedApplication(application)
     setShowDetails(true)
-  }
-
-  const handleApproveApplication = async () => {
-    if (!selectedApplication) return
-
-    setActionLoading(true)
-    try {
-      const response = await fetch(`/api/admin/applications/${selectedApplication._id}/approve`, {
-        method: "POST",
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to approve application")
-      }
-
-      toast({
-        title: "Success",
-        description: "Application approved successfully",
-      })
-
-      // Refresh the applications list
-      fetchApplications(currentPage)
-      setShowDetails(false)
-    } catch (error) {
-      const apiError = handleApiError(error)
-      toast({
-        title: "Error",
-        description: apiError.message,
-        variant: "destructive",
-      })
-    } finally {
-      setActionLoading(false)
-    }
-  }
-
-  const handleRejectApplication = async () => {
-    if (!selectedApplication) return
-
-    setActionLoading(true)
-    try {
-      const response = await fetch(`/api/admin/applications/${selectedApplication._id}/reject`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ rejectionReason }),
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to reject application")
-      }
-
-      toast({
-        title: "Success",
-        description: "Application rejected successfully",
-      })
-
-      // Refresh the applications list
-      fetchApplications(currentPage)
-      setShowDetails(false)
-      setRejectionReason("")
-    } catch (error) {
-      const apiError = handleApiError(error)
-      toast({
-        title: "Error",
-        description: apiError.message,
-        variant: "destructive",
-      })
-    } finally {
-      setActionLoading(false)
-    }
   }
 
   const handlePageChange = (newPage: number) => {
@@ -437,28 +364,11 @@ export function ApplicationsTable() {
               )}
 
               {/* Action Buttons */}
-              {selectedApplication.status === "pending" && (
-                <div className="flex justify-end space-x-2 pt-4">
-                  <Button
-                    variant="outline"
-                    onClick={handleApproveApplication}
-                    disabled={actionLoading}
-                    className="bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800"
-                  >
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    {actionLoading ? "Processing..." : "Approve Application"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={handleRejectApplication}
-                    disabled={actionLoading}
-                    className="bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800"
-                  >
-                    <XCircle className="h-4 w-4 mr-2" />
-                    {actionLoading ? "Processing..." : "Reject Application"}
-                  </Button>
-                </div>
-              )}
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button variant="outline" onClick={() => setShowDetails(false)}>
+                  Close
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>

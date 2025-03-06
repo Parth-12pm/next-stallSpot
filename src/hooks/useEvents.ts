@@ -61,36 +61,33 @@ export function useEvents(options: UseEventsOptions = {}) {
         const url = `/api/events?${queryParams.toString()}`
         const response = await fetch(url)
 
+        // Handle different status codes
+        if (response.status === 401) {
+          // For unauthorized requests, fetch only public events
+          const publicResponse = await fetch(`/api/events/public?${queryParams.toString()}`)
+          if (!publicResponse.ok) {
+            throw new Error('Failed to fetch public events')
+          }
+          const publicData = await publicResponse.json()
+          setEvents(publicData.data.events || [])
+          if (publicData.data.pagination) {
+            setPagination(publicData.data.pagination)
+          }
+          return
+        }
+
         if (!response.ok) {
           throw new Error(`Failed to fetch events: ${response.status}`)
         }
 
         const result = await response.json()
-        console.log("API Response:", result) // Debug log
 
-        // Handle different response formats
-        if (Array.isArray(result)) {
-          setEvents(result)
-          setPagination({
-            total: result.length,
-            pages: 1,
-            page: 1,
-            limit: result.length,
-          })
-        } else if (result && result.data && Array.isArray(result.data)) {
-          setEvents(result.data)
-          if (result.pagination) {
-            setPagination(result.pagination)
-          }
-        } else if (result && result.success && result.data && Array.isArray(result.data.events)) {
-          // Handle the specific nested structure from your API
-          setEvents(result.data.events)
+        if (result && result.success) {
+          setEvents(result.data.events || [])
           if (result.data.pagination) {
             setPagination(result.data.pagination)
           }
         } else {
-          // If the response is not in any of the expected formats, set empty events
-          console.log("Unexpected response format:", result)
           setEvents([])
         }
 
