@@ -136,9 +136,6 @@ export function ApplicationsTable() {
               throw new Error(verifyData.error || "Payment verification failed")
             }
 
-
-
-
           } catch (error) {
             console.error("Error verifying payment:", error)
             toast({
@@ -271,8 +268,8 @@ export function ApplicationsTable() {
 }
 
   return (
-    <div className="space-y-4">
-      <Table>
+    <div className="space-y-4 w-full overflow-x-auto">
+      <Table className="min-w-[800px]">
         <TableHeader>
           <TableRow>
             <TableHead>Event</TableHead>
@@ -334,7 +331,7 @@ export function ApplicationsTable() {
       </Table>
 
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Application Details</DialogTitle>
             <DialogDescription>Review your application information</DialogDescription>
@@ -346,7 +343,7 @@ export function ApplicationsTable() {
                   <CardTitle>Event Information</CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label className="text-muted-foreground">Event Title</Label>
                       <p className="font-medium">{selectedApplication.eventId.title}</p>
@@ -370,7 +367,7 @@ export function ApplicationsTable() {
                   <CardTitle>Stall Details</CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label className="text-muted-foreground">Stall ID</Label>
                       <p className="font-medium">#{selectedApplication.stallId}</p>
@@ -389,34 +386,28 @@ export function ApplicationsTable() {
                 <CardHeader>
                   <CardTitle>Fee Breakdown</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-2 p-4 rounded-lg bg-muted">
-                      <div className="space-y-1">
-                        <Label className="text-muted-foreground">Stall Price</Label>
-                        <p className="text-lg font-semibold">₹{selectedApplication.fees.stallPrice.toLocaleString()}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-muted-foreground">Platform Fee</Label>
-                        <p className="text-lg font-semibold">
-                          ₹{selectedApplication.fees.platformFee.toLocaleString()}
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-muted-foreground">Entry Fee</Label>
-                        <p className="text-lg font-semibold">₹{selectedApplication.fees.entryFee.toLocaleString()}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-muted-foreground">GST (18%)</Label>
-                        <p className="text-lg font-semibold">₹{selectedApplication.fees.gst.toLocaleString()}</p>
-                      </div>
+                <CardContent className="p-3 sm:p-6">
+                  <div className="space-y-2 text-sm sm:text-base">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                      <span>Base Price:</span>
+                      <span className="font-medium">₹{selectedApplication.fees.stallPrice.toLocaleString()}</span>
                     </div>
-                    <Separator />
-                    <div className="flex justify-between items-center p-4">
-                      <span className="text-lg font-semibold">Total Amount</span>
-                      <span className="text-2xl font-bold">
-                        ₹{selectedApplication.fees.totalAmount.toLocaleString()}
-                      </span>
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1 text-muted-foreground">
+                      <span>Platform Fee:</span>
+                      <span>₹{selectedApplication.fees.platformFee.toLocaleString()}</span>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1 text-muted-foreground">
+                      <span>Entry Fee:</span>
+                      <span>₹{selectedApplication.fees.entryFee.toLocaleString()}</span>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1 text-muted-foreground">
+                      <span>GST (18%):</span>
+                      <span>₹{selectedApplication.fees.gst.toLocaleString()}</span>
+                    </div>
+                    <Separator className="my-2" />
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1 font-bold pt-2">
+                      <span>Total Amount:</span>
+                      <span>₹{selectedApplication.fees.totalAmount.toLocaleString()}</span>
                     </div>
                   </div>
                 </CardContent>

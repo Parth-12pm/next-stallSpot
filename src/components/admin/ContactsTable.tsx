@@ -188,11 +188,23 @@ export function ContactsTable() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "new":
-        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">New</Badge>
+        return (
+          <Badge className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800">
+            New
+          </Badge>
+        )
       case "read":
-        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">Read</Badge>
+        return (
+          <Badge className="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 hover:bg-yellow-200 dark:hover:bg-yellow-800">
+            Read
+          </Badge>
+        )
       case "responded":
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Responded</Badge>
+        return (
+          <Badge className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 hover:bg-green-200 dark:hover:bg-green-800">
+            Responded
+          </Badge>
+        )
       default:
         return <Badge variant="outline">{status}</Badge>
     }
@@ -243,7 +255,10 @@ export function ContactsTable() {
             ) : (
               // Map through contacts when available
               contacts.map((contact) => (
-                <TableRow key={contact._id} className={contact.status === "new" ? "bg-blue-50" : ""}>
+                <TableRow 
+                  key={contact._id} 
+                  className={contact.status === "new" ? "bg-blue-50 dark:bg-blue-900/20" : ""}
+                >
                   <TableCell className="font-medium">{contact.name}</TableCell>
                   <TableCell className="px-4">
                     <span className="truncate max-w-[200px] block">{contact.email}</span>
@@ -323,7 +338,7 @@ export function ContactsTable() {
 
               <div className="space-y-2">
                 <p className="text-sm font-medium">Message</p>
-                <div className="mt-2 p-4 bg-muted rounded-md">
+                <div className="mt-2 p-4 bg-muted rounded-md dark:bg-muted/50">
                   <p className="whitespace-pre-wrap">{selectedContact.message}</p>
                 </div>
               </div>
@@ -332,7 +347,7 @@ export function ContactsTable() {
                 <Button
                   variant="outline"
                   onClick={handleReplyToContact}
-                  className="bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 px-6"
+                  className="bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900 hover:text-blue-800 dark:hover:text-blue-200 px-6"
                 >
                   <Mail className="h-4 w-4 mr-2" />
                   Reply
