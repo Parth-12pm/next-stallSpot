@@ -477,13 +477,13 @@ export default function StallForm({
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="stallStatus" className="text-gray-700 dark:text-gray-300">
+                      <Label htmlFor="stallStatus" className="text-gray-700 dark:text-gray-300 pr-6">
                         Status
                       </Label>
                       {!isOrganizer ? (
                         <Badge
                           variant="default"
-                          className={`mt-1 ${
+                          className={`mt-1  h-auto justify-center text-xs  ${
                             selectedStall.status === "available"
                               ? "bg-green-500 text-white"
                               : "bg-gray-300 text-gray-800 dark:bg-gray-600 dark:text-gray-200"

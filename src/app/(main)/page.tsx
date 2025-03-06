@@ -1,15 +1,9 @@
-"use client";
+"use client"
 
-import mockupImage from "@/assets/mockup2.png";
-import Image from "next/image";
-import {
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
-import Link from "next/link";
-import React from "react";
+import mockupImage from "@/assets/mockup2.png"
+import Image from "next/image"
+import { CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
+import Link from "next/link"
 import {
   MapPin,
   ArrowRight,
@@ -22,52 +16,28 @@ import {
   Clock,
   Bell,
   Shield,
-
   Plus,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-
+} from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { Skeleton } from "@/components/ui/skeleton"
+import { format } from "date-fns"
+import { useEvents } from "@/hooks/useEvents"
 
 const SwirlyBackground = () => {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      <svg
-        className="w-full h-full opacity-20"
-        viewBox="0 0 1000 1000"
-        preserveAspectRatio="xMidYMid slice"
-      >
+      <svg className="w-full h-full opacity-20" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
         <defs>
           <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop
-              offset="0%"
-              stopColor="hsl(var(--primary))"
-              stopOpacity="0.3"
-            />
-            <stop
-              offset="100%"
-              stopColor="hsl(var(--primary))"
-              stopOpacity="0"
-            />
+            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
           </linearGradient>
           <linearGradient id="gradient2" x1="100%" y1="0%" x2="0%" y2="100%">
-            <stop
-              offset="0%"
-              stopColor="hsl(var(--secondary))"
-              stopOpacity="0.3"
-            />
-            <stop
-              offset="100%"
-              stopColor="hsl(var(--secondary))"
-              stopOpacity="0"
-            />
+            <stop offset="0%" stopColor="hsl(var(--secondary))" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="hsl(var(--secondary))" stopOpacity="0" />
           </linearGradient>
         </defs>
         <g>
@@ -108,59 +78,43 @@ const SwirlyBackground = () => {
             />
           </path>
         </g>
-        <circle
-          cx="200"
-          cy="300"
-          r="3"
-          fill="hsl(var(--primary))"
-          className="animate-pulse"
-        >
-          <animate
-            attributeName="opacity"
-            values="0;1;0"
-            dur="4s"
-            repeatCount="indefinite"
-          />
+        <circle cx="200" cy="300" r="3" fill="hsl(var(--primary))" className="animate-pulse">
+          <animate attributeName="opacity" values="0;1;0" dur="4s" repeatCount="indefinite" />
         </circle>
-        <circle
-          cx="600"
-          cy="400"
-          r="3"
-          fill="hsl(var(--secondary))"
-          className="animate-pulse"
-        >
-          <animate
-            attributeName="opacity"
-            values="0;1;0"
-            dur="3s"
-            repeatCount="indefinite"
-          />
+        <circle cx="600" cy="400" r="3" fill="hsl(var(--secondary))" className="animate-pulse">
+          <animate attributeName="opacity" values="0;1;0" dur="3s" repeatCount="indefinite" />
         </circle>
       </svg>
     </div>
-  );
-};
+  )
+}
 
 export default function App() {
+  // Use our custom hook to fetch upcoming events
+  const {
+    events: upcomingEvents,
+    isLoading,
+    error,
+  } = useEvents({
+    limit: 2,
+    status: "published",
+  })
 
-  const upcomingEvents = [
-    {
-      title: "Modern Art Exhibition",
-      location: "New York City",
-      date: "Mar 15-20, 2024",
-      image:
-        "https://images.unsplash.com/photo-1594122230689-45899d9e6f69?auto=format&fit=crop&q=80",
-    },
-    {
-      title: "Tech Innovation Summit",
-      location: "San Francisco",
-      date: "Apr 5-8, 2024",
-      image:
-        "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&q=80",
-    },
-  ];
+  // Format date range for display
+  const formatDateRange = (startDate: string, endDate: string) => {
+    try {
+      const start = new Date(startDate)
+      const end = new Date(endDate)
 
+      // Format: "Mar 15-20, 2024"
+      return `${format(start, "MMM d")}-${format(end, "d")}, ${format(end, "yyyy")}`
+    } catch (error) {
+      return "Date not available"
+    }
+  }
 
+  // Default placeholder image
+  const defaultImage = "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&q=80"
 
   const benefits = [
     {
@@ -178,9 +132,7 @@ export default function App() {
       title: "Intuitive Experience",
       description: "User-friendly interface for seamless navigation",
     },
-  ];
-
-
+  ]
 
   const faqs = [
     {
@@ -196,7 +148,7 @@ export default function App() {
     {
       question: "Is pricing transparent?",
       answer:
-        "Absolutely! We believe in complete transparency. All costs, including booking fees and any additional services, are clearly displayed before you commit. No hidden charges, no surprises - just straightforward pricing that helps you make informed decisions.",
+        "We believe in complete transparency. All costs, including booking fees and any additional services, are clearly displayed before you commit. No hidden charges, no surprises - just straightforward pricing that helps you make informed decisions.",
     },
     {
       question: "What if I need help?",
@@ -213,20 +165,25 @@ export default function App() {
       answer:
         "StallSpot is designed with user experience in mind. Our intuitive interface, step-by-step guidance, and helpful tooltips make it easy for anyone to use the platform, regardless of their technical expertise. We regularly update our features based on user feedback.",
     },
-  ];
+  ]
+
+  // Debug logs
+  console.log("isLoading:", isLoading)
+  console.log("error:", error)
+  console.log("upcomingEvents:", upcomingEvents)
 
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section - Reduced spacing */}
       <section className="relative min-h-[80vh] overflow-hidden">
         <div className="absolute inset-0 z-0">
-        <Image
-  src="https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?auto=format&fit=crop&q=80"
-  alt="Exhibition Hall"
-  fill
-  className="object-cover opacity-20"
-  sizes="100vw"
-/>
+          <Image
+            src="https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?auto=format&fit=crop&q=80"
+            alt="Exhibition Hall"
+            fill
+            className="object-cover opacity-20"
+            sizes="100vw"
+          />
           <div className="absolute inset-0 bg-gradient-to-b from-background/50 to-background"></div>
         </div>
 
@@ -236,71 +193,121 @@ export default function App() {
               Discover World-Class Exhibitions
             </h1>
             <p className="text-xl mb-12 text-muted-foreground max-w-2xl mx-auto">
-              Find and book your spot at the most innovative exhibitions worldwide. Join the community of passionate event-goers.
+              Find and book your spot at the most innovative exhibitions worldwide. Join the community of passionate
+              event-goers.
             </p>
             <Link href="/exhibitions">
-            <Button size="lg" className="h-12 px-8" >
-              Explore Events
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button></Link>
+              <Button size="lg" className="h-12 px-8">
+                Explore Events
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
 
-
       {/* Upcoming Events Section */}
       <section className="py-32">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-foreground mb-12">
-            Upcoming Events
-          </h2>
+          <h2 className="text-3xl font-bold text-foreground mb-12">Upcoming Events</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {upcomingEvents.slice(0, 2).map((event) => (
-              <Card key={event.title} className="overflow-hidden group">
-                <div className="relative h-48 overflow-hidden">
-                <Image
-  src={event.image}
-  alt={event.title}
-  fill
-  className="object-cover transition-transform group-hover:scale-105"
-  sizes="100vw"
-/>
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold mb-2 text-foreground">
-                    {event.title}
-                  </h3>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4 mr-2" />
-                    {event.location}
-                  </div>
-                  <Separator className="my-4" />
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">
-                      {event.date}
-                    </span>
-                    <Button variant="ghost" size="sm">
-                      Learn more
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            ))}
-
-            
-            <Card className="overflow-hidden group flex items-center justify-center hover:bg-accent transition-colors cursor-pointer">
-              <Link href={"/exhibitions"}>
-              <div className="p-6 text-center flex flex-col items-center">
-                <h3 className="text-3xl font-extrabold text-foreground mb-4">
-                  View All Events
-                </h3>
-                <ArrowUpRight className="h-12 w-12 text-muted-foreground group-hover:text-foreground transition-colors transform group-hover:scale-110 duration-200" />
+            {isLoading ? (
+              // Show skeleton loaders while loading
+              Array(2)
+                .fill(0)
+                .map((_, index) => (
+                  <Card key={index} className="overflow-hidden">
+                    <div className="relative h-48 overflow-hidden">
+                      <Skeleton className="h-full w-full" />
+                    </div>
+                    <div className="p-6">
+                      <Skeleton className="h-6 w-3/4 mb-2" />
+                      <Skeleton className="h-4 w-1/2 mb-4" />
+                      <Separator className="my-4" />
+                      <div className="flex items-center justify-between">
+                        <Skeleton className="h-4 w-1/3" />
+                        <Skeleton className="h-8 w-24" />
+                      </div>
+                    </div>
+                  </Card>
+                ))
+            ) : error ? (
+              // Show error message
+              <div className="col-span-full text-center py-8">
+                <p className="text-red-500">{error}</p>
+                <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
+                  Try Again
+                </Button>
               </div>
+            ) : upcomingEvents.length === 0 ? (
+              // Show friendly message when no events are found
+              Array(2)
+                .fill(0)
+                .map((_, index) => (
+                  <Card key={index} className="overflow-hidden relative">
+                    <div className="relative h-48 overflow-hidden">
+                      <Skeleton className="h-full w-full" />
+                    </div>
+                    <div className="p-6">
+                      <Skeleton className="h-6 w-3/4 mb-2" />
+                      <Skeleton className="h-4 w-1/2 mb-4" />
+                      <Separator className="my-4" />
+                      <div className="flex items-center justify-between">
+                        <Skeleton className="h-4 w-1/3" />
+                        <Skeleton className="h-8 w-24" />
+                      </div>
+                    </div>
+                    <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
+                      <p className="text-lg font-medium text-primary">Events coming soon!</p>
+                    </div>
+                  </Card>
+                ))
+            ) : (
+              // Map through events when available
+              upcomingEvents.map((event) => (
+                <Card key={event._id} className="overflow-hidden group">
+                  <div className="relative h-48 overflow-hidden">
+                    <Image
+                      src={event.thumbnail || defaultImage}
+                      alt={event.title}
+                      fill
+                      className="object-cover transition-transform group-hover:scale-105"
+                      sizes="(min-width: 768px) 33vw, 100vw"
+                    />
+                  </div>
+                  <div className="p-6">
+                    <h3 className="text-xl font-semibold mb-2 text-foreground">{event.title}</h3>
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <MapPin className="h-4 w-4 mr-2" />
+                      {event.venue}
+                    </div>
+                    <Separator className="my-4" />
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">
+                        {formatDateRange(event.startDate, event.endDate)}
+                      </span>
+                      <Link href={`/exhibitions/${event._id}`}>
+                        <Button variant="ghost" size="sm">
+                          Learn more
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </Card>
+              ))
+            )}
+
+            {/* Always show the "View All Events" card */}
+            <Card className="overflow-hidden group flex items-center justify-center hover:bg-accent transition-colors cursor-pointer">
+              <Link href="/exhibitions">
+                <div className="p-6 text-center flex flex-col items-center">
+                  <h3 className="text-3xl font-extrabold text-foreground mb-4">View All Events</h3>
+                  <ArrowUpRight className="h-12 w-12 text-muted-foreground group-hover:text-foreground transition-colors transform group-hover:scale-110 duration-200" />
+                </div>
               </Link>
             </Card>
-            
           </div>
         </div>
       </section>
@@ -309,9 +316,7 @@ export default function App() {
       <section className="py-36">
         <div className="container mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Why Choose Us
-            </h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Why Choose Us</h2>
             <p className="text-lg text-muted-foreground">
               Experience the advantages of our centralized exhibition platform
             </p>
@@ -327,12 +332,8 @@ export default function App() {
                   <div className="p-6 rounded-full bg-muted w-fit mb-8 group-hover:bg-primary/10 transition-colors">
                     <benefit.icon className="h-8 w-8 text-foreground" />
                   </div>
-                  <h3 className="text-2xl font-semibold mb-4">
-                    {benefit.title}
-                  </h3>
-                  <p className="text-muted-foreground text-lg leading-relaxed">
-                    {benefit.description}
-                  </p>
+                  <h3 className="text-2xl font-semibold mb-4">{benefit.title}</h3>
+                  <p className="text-muted-foreground text-lg leading-relaxed">{benefit.description}</p>
                 </div>
               </Card>
             ))}
@@ -341,7 +342,6 @@ export default function App() {
       </section>
 
       {/* Become an Exhibitor Section */}
-
       <section className="relative overflow-hidden bg-card py-24 ">
         <SwirlyBackground />
         <div className="container mx-auto px-10 py-24">
@@ -350,13 +350,9 @@ export default function App() {
               <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground ">
                 {" "}
                 How it
-                <br /> <span className="text-muted-foreground">
-                  Works.
-                </span>{" "}
+                <br /> <span className="text-muted-foreground">Works.</span>{" "}
               </h2>{" "}
-              <p className="text-xl mb-8 text-muted-foreground">
-                Get started with our platform in three simple steps{" "}
-              </p>
+              <p className="text-xl mb-8 text-muted-foreground">Get started with our platform in three simple steps </p>
               <div className="space-y-6">
                 {" "}
                 <div className="flex items-center gap-4">
@@ -364,12 +360,8 @@ export default function App() {
                     <UserPlus className="h-6 w-6 text-foreground" />{" "}
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-foreground">
-                      Create an Account
-                    </h3>
-                    <p className="text-muted-foreground">
-                      Choose your role as Exhibitor or Vendor
-                    </p>
+                    <h3 className="text-lg font-semibold text-foreground">Create an Account</h3>
+                    <p className="text-muted-foreground">Choose your role as Exhibitor or Vendor</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
@@ -377,12 +369,8 @@ export default function App() {
                     <Compass className="h-6 w-6 text-foreground" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-foreground">
-                      Explore Options
-                    </h3>
-                    <p className="text-muted-foreground">
-                      Browse events or available stalls
-                    </p>{" "}
+                    <h3 className="text-lg font-semibold text-foreground">Explore Options</h3>
+                    <p className="text-muted-foreground">Browse events or available stalls</p>{" "}
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
@@ -390,42 +378,39 @@ export default function App() {
                     <BookCheck className="h-6 w-6 text-foreground" />{" "}
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-foreground">
-                      Book and Manage
-                    </h3>
-                    <p className="text-muted-foreground">
-                      Real-time stall booking and management
-                    </p>
+                    <h3 className="text-lg font-semibold text-foreground">Book and Manage</h3>
+                    <p className="text-muted-foreground">Real-time stall booking and management</p>
                   </div>
                 </div>
               </div>
-              <Link href={"/auth/signup?role=organizer"}>
-              <Button size="lg" className="mt-10">
-                {" "}
-                Become an Exhibitor
-                <ArrowRight className="ml-2 h-5 w-5" />{" "}
-              </Button>{" "}
+              <Link href="/auth/signup?role=organizer">
+                <Button size="lg" className="mt-10">
+                  {" "}
+                  Become an Exhibitor
+                  <ArrowRight className="ml-2 h-5 w-5" />{" "}
+                </Button>{" "}
               </Link>
             </div>
 
-           <div className="relative hidden md:block">
-  <div className="rounded-2xl overflow-hidden">
-    <div className="relative w-[780px] h-[650px]"> {/* Fixed dimensions */}
-      <Image
-        src={mockupImage}
-        alt="Exhibition Space"
-        fill
-        priority
-        className="object-contain"
-        sizes="(min-width: 1024px) 800px, 100vw"
-        quality={100}
-      />
-    </div>
-  </div>
-</div>
-        </div>
+            <div className="relative hidden md:block">
+              <div className="rounded-2xl overflow-hidden">
+                <div className="relative w-[780px] h-[650px]">
+                  {" "}
+                  {/* Fixed dimensions */}
+                  <Image
+                    src={mockupImage || "/placeholder.svg"}
+                    alt="Exhibition Space"
+                    fill
+                    priority
+                    className="object-contain"
+                    sizes="(min-width: 1024px) 800px, 100vw"
+                    quality={100}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
-       
+        </div>
       </section>
 
       {/* FAQ Section */}
@@ -433,12 +418,9 @@ export default function App() {
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto">
             <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Got Questions?
-              </h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Got Questions?</h2>
               <p className="text-lg text-muted-foreground">
-                We&apos;ve got answers! Check out our FAQs to clear up any confusion
-                and get the most out of StallSpot.
+                We&apos;ve got answers! Check out our FAQs to clear up any confusion and get the most out of StallSpot.
               </p>
             </div>
 
@@ -463,14 +445,12 @@ export default function App() {
             </div>
 
             <div className="text-center mt-12">
-              <p className="text-muted-foreground mb-4">
-                Still have questions? We&apos;re here to help!
-              </p>
-              <Link href={"/contact"}>
-              <Button size="lg" variant="outline">
-                Contact Support
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              <p className="text-muted-foreground mb-4">Still have questions? We&apos;re here to help!</p>
+              <Link href="/contact">
+                <Button size="lg" variant="outline">
+                  Contact Support
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
               </Link>
             </div>
           </div>
@@ -480,30 +460,20 @@ export default function App() {
       <div className="py-24 flex items-center justify-center p-6">
         <div className="max-w-5xl w-full">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold tracking-tight">
-              Choose Your Role
-            </h1>
-            <p className="text-muted-foreground mt-3 text-base">
-              Select how you want to use StallSpot
-            </p>
+            <h1 className="text-4xl font-bold tracking-tight">Choose Your Role</h1>
+            <p className="text-muted-foreground mt-3 text-base">Select how you want to use StallSpot</p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8">
             <Card className="relative cursor-pointer hover:border-primary transition-colors p-5">
-              <Link
-                href="/auth/signup?role=organizer"
-                className="absolute inset-0"
-              />
+              <Link href="/auth/signup?role=organizer" className="absolute inset-0" />
               <CardHeader className="pb-6">
                 <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                   <Building2 className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle className="text-xl mb-2">
-                  Exhibition Organizer
-                </CardTitle>
+                <CardTitle className="text-xl mb-2">Exhibition Organizer</CardTitle>
                 <CardDescription className="text-sm">
-                  Create and manage exhibitions, handle vendor applications, and
-                  oversee event operations
+                  Create and manage exhibitions, handle vendor applications, and oversee event operations
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -513,27 +483,19 @@ export default function App() {
                   <li>• Access detailed analytics</li>
                   <li>• Manage floor plans and layouts</li>
                 </ul>
-                <Button className="w-full mt-4 py-4 text-base">
-                  Continue as Organizer
-                </Button>
+                <Button className="w-full mt-4 py-4 text-base">Continue as Organizer</Button>
               </CardContent>
             </Card>
 
             <Card className="relative cursor-pointer hover:border-primary transition-colors p-5">
-              <Link
-                href="/auth/signup?role=vendor"
-                className="absolute inset-0"
-              />
+              <Link href="/auth/signup?role=vendor" className="absolute inset-0" />
               <CardHeader className="pb-6">
                 <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                   <Users className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle className="text-xl mb-2">
-                  Vendor
-                </CardTitle>
+                <CardTitle className="text-xl mb-2">Vendor</CardTitle>
                 <CardDescription className="text-sm">
-                  Book stalls, manage your presence, and connect with exhibition
-                  organizers
+                  Book stalls, manage your presence, and connect with exhibition organizers
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -543,14 +505,13 @@ export default function App() {
                   <li>• Track performance metrics</li>
                   <li>• Connect with organizers</li>
                 </ul>
-                <Button className="w-full mt-4 py-4 text-base">
-                  Continue as Vendor
-                </Button>
+                <Button className="w-full mt-4 py-4 text-base">Continue as Vendor</Button>
               </CardContent>
             </Card>
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }
+

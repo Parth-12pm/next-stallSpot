@@ -14,7 +14,7 @@ const sections = [
     title: "For Businesses",
     links: [
       { name: "Organizers", href: "/organizer/dashboard" },
-      { name: "Vendors", href: "/vendor/dashboard" },
+      { name: "Vendors", href: "/dashboard" },
     ],
   },
   {

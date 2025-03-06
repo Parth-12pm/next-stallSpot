@@ -17,11 +17,30 @@ async function getEvent(id: string) {
     const res = await fetch(`${process.env.NEXTAUTH_URL}/api/exhibitions/${id}`, {
       cache: 'no-store'
     });
-    if (!res.ok) throw new Error('Failed to fetch event');
+
+    if (res.status === 401) {
+      throw new Error('Please login to view this exhibition');
+    }
+
+    if (res.status === 403) {
+      throw new Error('You don\'t have permission to view this exhibition');
+    }
+
+    if (res.status === 404) {
+      throw new Error('Exhibition not found');
+    }
+
+    if (!res.ok) {
+      throw new Error('Failed to fetch exhibition details');
+    }
+
     return res.json();
   } catch (error) {
     console.error('[EVENT_GET]', error);
-    return null;
+    return {
+      error: true,
+      message: error instanceof Error ? error.message : 'Something went wrong'
+    };
   }
 }
 
@@ -29,20 +48,36 @@ export default async function ExhibitionPage({ params, searchParams }: PageProps
   const session = await getServerSession();
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
-  const event = await getEvent(resolvedParams.id);
+  const response = await getEvent(resolvedParams.id);
 
-  if (!event) {
+  if (response?.error) {
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>
+          {response.message === 'Please login to view this exhibition' ? (
+            <>
+              Please <a href="/auth/login" className="underline font-medium">login</a> to view this exhibition
+            </>
+          ) : (
+            response.message
+          )}
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (!response) {
     return notFound();
   }
 
   // Only published events are visible to vendors
-  if (!session?.user && event.status !== 'published') {
+  if (!session?.user && response.status !== 'published') {
     return notFound();
   }
 
   // Organizer can see their own events regardless of status
   const isOrganizer = (session?.user as any)?.role === 'organizer';
-  if (isOrganizer && event.organizerId !== session?.user?.id) {
+  if (isOrganizer && response.organizerId !== session?.user?.id) {
     return (
       <Alert variant="destructive">
         <AlertDescription>You don&apos;t have permission to view this event.</AlertDescription>

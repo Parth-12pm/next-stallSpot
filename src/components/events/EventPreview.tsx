@@ -1,6 +1,5 @@
 "use client";
 
-
 import React, { useEffect, useState } from "react";
 import { CalendarIcon, Clock, MapPin, Users, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -27,7 +26,24 @@ export default function EventPreview({ eventId, isOrganizer = false }: EventPrev
     const fetchEventDetails = async () => {
       try {
         const response = await fetch(`/api/events/${eventId}`);
-        if (!response.ok) throw new Error("Failed to fetch event details");
+        
+        if (response.status === 401) {
+          router.push(`/auth/login?callbackUrl=/exhibitions/${eventId}`);
+          throw new Error("Please login to view this event");
+        }
+
+        if (response.status === 403) {
+          throw new Error("You don't have permission to view this event");
+        }
+
+        if (response.status === 404) {
+          throw new Error("Event not found or has been removed");
+        }
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch event details");
+        }
+
         const data = await response.json();
         setEvent(data);
       } catch (err) {
@@ -38,7 +54,7 @@ export default function EventPreview({ eventId, isOrganizer = false }: EventPrev
     };
 
     fetchEventDetails();
-  }, [eventId]);
+  }, [eventId, router]);
 
   const handlePublish = async () => {
     try {
@@ -51,6 +67,15 @@ export default function EventPreview({ eventId, isOrganizer = false }: EventPrev
       const response = await fetch(`/api/events/${eventId}/publish`, {
         method: "POST",
       });
+
+      if (response.status === 401) {
+        router.push('/auth/login?callbackUrl=/dashboard/events');
+        throw new Error("Session expired. Please login again");
+      }
+
+      if (response.status === 403) {
+        throw new Error("You don't have permission to publish this event");
+      }
 
       if (!response.ok) {
         const data = await response.json();
@@ -113,10 +138,30 @@ export default function EventPreview({ eventId, isOrganizer = false }: EventPrev
 
   if (error || !event) {
     return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>{error || "Failed to load event"}</AlertDescription>
-      </Alert>
+      <div className="min-h-[400px] flex items-center justify-center">
+        <Alert variant="destructive" className="max-w-md">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="flex flex-col gap-2">
+            <span>{error || "Failed to load event"}</span>
+            {error?.includes("login") && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push(`/auth/login?callbackUrl=/exhibitions/${eventId}`)}
+              >
+                Login to Continue
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.back()}
+            >
+              Go Back
+            </Button>
+          </AlertDescription>
+        </Alert>
+      </div>
     );
   }
 
