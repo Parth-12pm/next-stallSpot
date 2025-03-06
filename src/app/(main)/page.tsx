@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
+
 "use client"
 
 import mockupImage from "@/assets/mockup2.png"
