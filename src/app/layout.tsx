@@ -17,10 +17,8 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Pass the auth options to getServerSession
   const session = await getServerSession(authOptions);
 
-  // Add this console log to debug server-side session
   console.log('Server-side session:', JSON.stringify(session, null, 2));
 
   return (

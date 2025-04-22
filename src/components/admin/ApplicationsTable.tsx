@@ -15,6 +15,8 @@ import { toast } from "@/hooks/use-toast"
 import { handleApiError } from "@/lib/error-handling"
 import type { IApplication } from "@/models/Application"
 
+
+
 interface PaginatedResponse<T> {
   data: T[]
   pagination: {
@@ -24,6 +26,8 @@ interface PaginatedResponse<T> {
     limit: number
   }
 }
+
+
 
 type ApplicationWithId = IApplication & { _id: string }
 
@@ -59,6 +63,8 @@ export function ApplicationsTable() {
         return
       }
 
+
+
       // Handle both array responses and paginated responses
       if (Array.isArray(result)) {
         setApplications(result)
@@ -76,6 +82,8 @@ export function ApplicationsTable() {
         })
         return
       }
+
+      
 
       setError(null)
     } catch (error) {
