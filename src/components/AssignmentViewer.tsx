@@ -1,6 +1,8 @@
 // components/AssignmentViewer.tsx
 "use client";
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import React from "react";
 import {
   Eye,
