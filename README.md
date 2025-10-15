@@ -109,7 +109,7 @@ next-stallSpot/
 ├── styles/          # CSS & Tailwind styles
 ├── lib/             # Helper functions, APIs
 ├── models/          # Mongoose schemas
-└── controllers/     # Server-side logic & routes
+└── api/     # Server-side logic & routes
 
 
 ---
@@ -182,8 +182,25 @@ git push origin feature/your-feature-name
 
 5. 🔃 Create a Pull Request on GitHub
 
+---
 
 
+⚖️ License & Usage Terms
+© 2025 Parth Mahadik. All Rights Reserved.
+
+This project and its source code are protected under a Custom License:
+
+❌ You may NOT copy, publish, distribute, upload, or post this code (in full or in part) on any public or private platform without explicit written permission from the author.
+
+🧩 Usage is strictly limited to local testing, learning, and evaluation purposes only.
+
+🚫 Commercial, academic, or public redistribution is prohibited.
+
+⚙️ You may run, test, or modify the project on your local machine for personal learning only.
+
+⚖️ Any violation will be treated as a copyright infringement under applicable law.
+
+For special permissions or collaborations, contact the author at parthsmahadik12027@gmail.com.
 
 ---
 
