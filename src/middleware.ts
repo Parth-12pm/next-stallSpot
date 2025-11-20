@@ -1,18 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // middleware.ts
 import withAuth from "next-auth/middleware";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { NextRequestWithAuth } from "next-auth/middleware";
 
 export default withAuth(
-  function middleware(req: {
-    nextauth: { token: any };
-    nextUrl: { pathname: any };
-    url: string | URL | undefined;
-  }) {
+  // `withAuth` augments your `Request` with the user's token.
+  function middleware(req: NextRequestWithAuth) {
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
 
-    // Public paths that don't require authentication
+    // Public paths are handled by the matcher config, so we don't need to check them here.
+    // withAuth will not run on public paths.
     const publicPaths = [
       "/",
       "/auth/login",
@@ -20,9 +19,8 @@ export default withAuth(
       "/auth/role-select",
       "/A372",
     ];
-    if (publicPaths.includes(path)) return NextResponse.next();
-
-    // Check if user is authenticated
+    // The `authorized` callback in withAuth handles this.
+    // If we are in this function, the token is guaranteed to exist.
     if (!token) {
       return NextResponse.redirect(new URL("/auth/login", req.url));
     }
@@ -67,7 +65,10 @@ export default withAuth(
   },
   {
     callbacks: {
-      authorized: ({ token }: { token: any | null }) => !!token,
+      // The `authorized` callback determines if a user is authorized to access a page.
+      // It runs before the middleware function.
+      // Returning !!token is the default behavior and is sufficient for checking if the user is logged in.
+      authorized: ({ token }) => !!token,
     },
   }
 );
@@ -80,5 +81,14 @@ export const config = {
     "/vendor/:path*",
     "/profile/:path*",
     "/admin/:path*",
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - and the public paths defined above.
+     */
+    "/((?!api|_next/static|_next/image|favicon.ico|auth/login|auth/signup|auth/role-select|A372|$).*)",
   ],
 };
