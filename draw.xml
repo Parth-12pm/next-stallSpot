@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net">
+  <diagram name="STALLSPOT - PROPOSED SOLUTION">
+    <mxGraphModel dx="1000" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Title -->
+        <mxCell id="title" value="<div style='font-family:Arial;font-size:24px;font-weight:bold;color:#1565C0;'>❖ Proposed Solution</div>" style="text;html=1;strokeColor=none;align=center;verticalAlign=top;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+        <mxCell id="title" value="&lt;div style='font-family:Arial;font-size:24px;font-weight:bold;color:#1565C0;'&gt;❖ Proposed Solution&lt;/div&gt;" style="text;html=1;strokeColor=none;align=center;verticalAlign=top;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="40" y="16" width="920" height="44" as="geometry"/>
+        </mxCell>
+
+        <!-- Left Card: What is StallSpot? -->
+        <mxCell id="card1" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#BBDEFB;shadow=1;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="80" width="440" height="160" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="card1_title" value="<div style='font-family:Arial;font-size:16px;font-weight:bold;color:#0D47A1;'>📋 What is StallSpot?</div>" style="text;html=1;strokeColor=none;align=left;verticalAlign=top;whiteSpace=wrap;" vertex="1" parent="card1">
+        <mxCell id="card1_title" value="&lt;div style='font-family:Arial;font-size:16px;font-weight:bold;color:#0D47A1;'&gt;📋 What is StallSpot?&lt;/div&gt;" style="text;html=1;strokeColor=none;align=left;verticalAlign=top;whiteSpace=wrap;" vertex="1" parent="card1">
+          <mxGeometry x="12" y="12" width="416" height="22" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="card1_body" value="<div style='font-family:Arial;font-size:14px;color:#1A237E;line-height:1.4;'><ul style='margin:6px 0 0 18px;padding:0;'><li>Comprehensive Exhibition Management Platform</li><li>Real-time floor plan management</li><li>Streamlined vendor coordination</li><li>Digital booking and payment integration</li></ul></div>" style="text;html=1;strokeColor=none;align=left;verticalAlign=top;whiteSpace=wrap;" vertex="1" parent="card1">
+        <mxCell id="card1_body" value="&lt;div style='font-family:Arial;font-size:14px;color:#1A237E;line-height:1.4;'&gt;&lt;ul style='margin:6px 0 0 18px;padding:0;'&gt;&lt;li&gt;Comprehensive Exhibition Management Platform&lt;/li&gt;&lt;li&gt;Real-time floor plan management&lt;/li&gt;&lt;li&gt;Streamlined vendor coordination&lt;/li&gt;&lt;li&gt;Digital booking and payment integration&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;" style="text;html=1;strokeColor=none;align=left;verticalAlign=top;whiteSpace=wrap;" vertex="1" parent="card1">
+          <mxGeometry x="12" y="44" width="416" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- Right Card: Problem Addressed -->
+        <mxCell id="card2" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#C8E6C9;shadow=1;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="520" y="80" width="440" height="160" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="card2_title" value="<div style='font-family:Arial;font-size:16px;font-weight:bold;color:#2E7D32;'>🎯 Problem Addressed</div>" style="text;html=1;strokeColor=none;align=left;verticalAlign=top;whiteSpace=wrap;" vertex="1" parent="card2">
+        <mxCell id="card2_title" value="&lt;div style='font-family:Arial;font-size:16px;font-weight:bold;color:#2E7D32;'&gt;🎯 Problem Addressed&lt;/div&gt;" style="text;html=1;strokeColor=none;align=left;verticalAlign=top;whiteSpace=wrap;" vertex="1" parent="card2">
+          <mxGeometry x="12" y="12" width="416" height="22" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="card2_body" value="<div style='font-family:Arial;font-size:14px;color:#1B5E20;line-height:1.4;'><ul style='margin:6px 0 0 18px;padding:0;'><li>Fragmented exhibition planning processes</li><li>Lack of real-time monitoring tools</li><li>Poor coordination between stakeholders</li><li>Manual and error-prone management</li></ul></div>" style="text;html=1;strokeColor=none;align=left;verticalAlign=top;whiteSpace=wrap;" vertex="1" parent="card2">
+        <mxCell id="card2_body" value="&lt;div style='font-family:Arial;font-size:14px;color:#1B5E20;line-height:1.4;'&gt;&lt;ul style='margin:6px 0 0 18px;padding:0;'&gt;&lt;li&gt;Fragmented exhibition planning processes&lt;/li&gt;&lt;li&gt;Lack of real-time monitoring tools&lt;/li&gt;&lt;li&gt;Poor coordination between stakeholders&lt;/li&gt;&lt;li&gt;Manual and error-prone management&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;" style="text;html=1;strokeColor=none;align=left;verticalAlign=top;whiteSpace=wrap;" vertex="1" parent="card2">
+          <mxGeometry x="12" y="44" width="416" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- Full-width card: Innovation & Uniqueness -->
+        <mxCell id="card3" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#E1BEE7;shadow=1;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="260" width="920" height="220" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="card3_title" value="<div style='font-family:Arial;font-size:16px;font-weight:bold;color:#6A1B9A;'>✨ Innovation &amp; Uniqueness</div>" style="text;html=1;strokeColor=none;align=left;verticalAlign=top;whiteSpace=wrap;" vertex="1" parent="card3">
+        <mxCell id="card3_title" value="&lt;div style='font-family:Arial;font-size:16px;font-weight:bold;color:#6A1B9A;'&gt;✨ Innovation &amp;amp; Uniqueness&lt;/div&gt;" style="text;html=1;strokeColor=none;align=left;verticalAlign=top;whiteSpace=wrap;" vertex="1" parent="card3">
+          <mxGeometry x="12" y="12" width="896" height="22" as="geometry"/>
+        </mxCell>
+
+        <!-- Grid inside card3: 3 columns of items -->
+        <!-- Column 1 -->
+        <mxCell id="col1" value="<div style='font-family:Arial;font-size:14px;line-height:1.4;'><ul style='margin:0 0 0 16px;padding:0;'><li>Interactive floor plan designer</li><li>Automated booth allocation</li></ul></div>" style="text;html=1;strokeColor=none;align=left;verticalAlign=top;whiteSpace=wrap;" vertex="1" parent="card3">
+        <mxCell id="col1" value="&lt;div style='font-family:Arial;font-size:14px;line-height:1.4;'&gt;&lt;ul style='margin:0 0 0 16px;padding:0;'&gt;&lt;li&gt;Interactive floor plan designer&lt;/li&gt;&lt;li&gt;Automated booth allocation&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;" style="text;html=1;strokeColor=none;align=left;verticalAlign=top;whiteSpace=wrap;" vertex="1" parent="card3">
+          <mxGeometry x="12" y="44" width="292" height="156" as="geometry"/>
+        </mxCell>
+
+        <!-- Column 2 -->
+        <mxCell id="col2" value="<div style='font-family:Arial;font-size:14px;line-height:1.4;'><ul style='margin:0 0 0 16px;padding:0;'><li>Real-time analytics dashboard</li><li>Multi-stakeholder ecosystem</li></ul></div>" style="text;html=1;strokeColor=none;align=left;verticalAlign=top;whiteSpace=wrap;" vertex="1" parent="card3">
+        <mxCell id="col2" value="&lt;div style='font-family:Arial;font-size:14px;line-height:1.4;'&gt;&lt;ul style='margin:0 0 0 16px;padding:0;'&gt;&lt;li&gt;Real-time analytics dashboard&lt;/li&gt;&lt;li&gt;Multi-stakeholder ecosystem&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;" style="text;html=1;strokeColor=none;align=left;verticalAlign=top;whiteSpace=wrap;" vertex="1" parent="card3">
+          <mxGeometry x="320" y="44" width="292" height="156" as="geometry"/>
+        </mxCell>
+
+        <!-- Column 3 -->
+        <mxCell id="col3" value="<div style='font-family:Arial;font-size:14px;line-height:1.4;'><ul style='margin:0 0 0 16px;padding:0;'><li>Integrated communication hub</li><li>ROI tracking for exhibitors</li></ul></div>" style="text;html=1;strokeColor=none;align=left;verticalAlign=top;whiteSpace=wrap;" vertex="1" parent="card3">
+        <mxCell id="col3" value="&lt;div style='font-family:Arial;font-size:14px;line-height:1.4;'&gt;&lt;ul style='margin:0 0 0 16px;padding:0;'&gt;&lt;li&gt;Integrated communication hub&lt;/li&gt;&lt;li&gt;ROI tracking for exhibitors&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;" style="text;html=1;strokeColor=none;align=left;verticalAlign=top;whiteSpace=wrap;" vertex="1" parent="card3">
+          <mxGeometry x="628" y="44" width="292" height="156" as="geometry"/>
+        </mxCell>
+
+        <!-- Decorative subtle shadows/outline around groups (optional) -->
+        <mxCell id="outline1" style="rounded=1;dashed=0;editable=0;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="32" y="72" width="936" height="420" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
