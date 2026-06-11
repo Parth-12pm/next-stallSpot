@@ -31,15 +31,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    console.log("Processing status update:", { eventId, applicationId })
-
     await dbConnect()
-
-    console.log("Processing status update:", {
-      eventId,
-      applicationId,
-      userId: session.user.id,
-    })
 
     const body: StatusUpdateBody = await request.json()
     const { status, rejectionReason } = body

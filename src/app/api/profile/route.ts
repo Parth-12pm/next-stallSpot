@@ -57,7 +57,11 @@ export async function PUT(req: Request) {
 
     await user.save()
 
-    return NextResponse.json({ message: "Profile updated successfully", user })
+    // Exclude password from response
+    const userResponse = user.toObject()
+    delete userResponse.password
+
+    return NextResponse.json({ message: "Profile updated successfully", user: userResponse })
   } catch (error) {
     const apiError = handleServerError(error)
     return NextResponse.json(

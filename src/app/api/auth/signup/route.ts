@@ -4,9 +4,18 @@ import bcrypt from "bcryptjs"
 import dbConnect from "@/lib/mongodb"
 import User from "@/models/User"
 import { handleServerError } from "@/lib/server-error-handling"
+import { rateLimit } from "@/lib/rate-limit"
+
+const limiter = rateLimit({
+  interval: 60 * 1000, // 1 minute
+  uniqueTokenPerInterval: 500,
+})
 
 export async function POST(req: Request) {
   try {
+    const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "anonymous"
+    await limiter.check(req, 5, `signup_${clientIp}`)
+
     const { name, email, password, role } = await req.json()
 
     if (!email?.trim()) {
@@ -15,6 +24,10 @@ export async function POST(req: Request) {
 
     if (!password?.trim()) {
       return NextResponse.json({ message: "Password is required" }, { status: 400 })
+    }
+
+    if (password.length < 8) {
+      return NextResponse.json({ message: "Password must be at least 8 characters long" }, { status: 400 })
     }
 
     if (!name?.trim()) {

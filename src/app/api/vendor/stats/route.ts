@@ -10,7 +10,7 @@ import dbConnect from "@/lib/mongodb"
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    if (!session?.user?.id || (session.user as { role?: string })?.role !== "vendor") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 

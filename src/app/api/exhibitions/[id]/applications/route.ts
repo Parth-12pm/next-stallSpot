@@ -40,15 +40,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const pathParts = pathname.split("/").filter(Boolean)
     const id = pathParts[pathParts.length - 2] // Get the exhibition ID from the URL
 
-    console.log("Session data:", {
-      userId: session.user.id,
-      role: session.user.role,
-    })
-
     connection = await dbConnect()
 
     const body = await request.json()
-    console.log("Request body:", body)
 
     const sess = await connection.startSession()
 
@@ -90,8 +84,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         if (existingApplication) {
           throw new Error("You already have an active application for this exhibition")
         }
-
-        console.log("Creating application with vendor ID:", session.user.id)
 
         const application = await Application.create(
           [

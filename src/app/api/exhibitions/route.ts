@@ -27,7 +27,8 @@ export async function GET(request: NextRequest) {
 
     // Build query conditionally
     if (search) {
-      query.title = { $regex: search, $options: 'i' };
+      const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      query.title = { $regex: escapedSearch, $options: 'i' };
     }
 
     if (category) {

@@ -160,6 +160,7 @@ function isValidStatusTransition(currentStatus: string, newStatus: string): bool
     draft: ["pending_review", "cancelled"],
     pending_review: ["approved", "rejected", "cancelled"],
     approved: ["published", "cancelled"],
+    published: ["ongoing", "cancelled"],
     ongoing: ["completed", "cancelled"],
     completed: [],
     cancelled: [],

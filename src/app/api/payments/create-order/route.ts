@@ -47,8 +47,6 @@ export async function POST(request: Request) {
     }
 
     const { totalAmount } = application.fees;
-    console.log("razorpay key id:", process.env.RAZORPAY_KEY_ID);
-    console.log("razorpay key secret:", process.env.RAZORPAY_KEY_SECRET);
 
     const order = await razorpay.orders.create({
       amount: totalAmount * 100, // Razorpay expects amount in paise

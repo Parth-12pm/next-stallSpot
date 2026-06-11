@@ -5,6 +5,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/auth-options";
 import dbConnect from "@/lib/mongodb";
 import Document from "@/models/documents";
 import { v2 as cloudinary } from "cloudinary";
@@ -16,9 +18,19 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
 // GET - Fetch all documents
 export async function GET(req: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
     await dbConnect();
     const { searchParams } = new URL(req.url);
     const type = searchParams.get("type"); // 'assignment' or 'experiment'
@@ -38,6 +50,14 @@ export async function GET(req: NextRequest) {
 // POST - Upload new document
 export async function POST(req: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
     await dbConnect();
     const formData = await req.formData();
     const file = formData.get("file") as File;
@@ -47,6 +67,31 @@ export async function POST(req: NextRequest) {
     if (!file || !name || !type) {
       return NextResponse.json(
         { success: false, error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    // Validate file type
+    if (!["assignment", "experiment"].includes(type)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid document type" },
+        { status: 400 }
+      );
+    }
+
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { success: false, error: "File size exceeds 10MB limit" },
+        { status: 400 }
+      );
+    }
+
+    // Validate file MIME type
+    const allowedMimeTypes = ["application/pdf"];
+    if (!allowedMimeTypes.includes(file.type)) {
+      return NextResponse.json(
+        { success: false, error: "Only PDF files are allowed" },
         { status: 400 }
       );
     }
@@ -92,6 +137,14 @@ export async function POST(req: NextRequest) {
 // DELETE - Delete document
 export async function DELETE(req: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
     await dbConnect();
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
@@ -127,3 +180,4 @@ export async function DELETE(req: NextRequest) {
     );
   }
 }
+

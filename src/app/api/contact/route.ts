@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Contact from '@/models/Contact';
 import { z } from 'zod';
+import { rateLimit } from '@/lib/rate-limit';
+
+const limiter = rateLimit({
+  interval: 60 * 1000, // 1 minute
+  uniqueTokenPerInterval: 500,
+});
 
 // Zod schema for input validation
 const ContactSchema = z.object({
@@ -13,6 +19,8 @@ const ContactSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "anonymous"
+    await limiter.check(req, 3, `contact_${clientIp}`)
     // Connect to the database
     await dbConnect();
 

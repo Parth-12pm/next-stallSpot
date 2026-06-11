@@ -138,6 +138,7 @@ const ApplicationSchema = new Schema(
         "payment_completed",
         "cancelled",
         "expired",
+        "payment_failed",
       ],
       default: "pending",
     },

@@ -85,8 +85,19 @@ export async function PUT(req: Request) {
       return NextResponse.json({ message: "Company details are required for organizers" }, { status: 400 })
     }
 
-    // Update user data
-    Object.assign(user, validatedData)
+    // Update user data — explicitly pick allowed fields to prevent mass assignment
+    user.name = validatedData.name
+    user.dateOfBirth = new Date(validatedData.dateOfBirth)
+    user.contact = validatedData.contact
+    user.address = validatedData.address
+    user.selfDescription = validatedData.selfDescription
+    user.accountDetails = validatedData.accountDetails
+    if (validatedData.profilePicture !== undefined) {
+      user.profilePicture = validatedData.profilePicture
+    }
+    if (validatedData.companyDetails !== undefined) {
+      user.companyDetails = validatedData.companyDetails
+    }
 
     user.profileComplete = true
     await user.save()

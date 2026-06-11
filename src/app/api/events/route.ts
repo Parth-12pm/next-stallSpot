@@ -46,7 +46,8 @@ const eventFormSchema = z.object({
 
 export async function GET(request: Request) {
   try {
-    await limiter.check(request, 10, "CACHE_TOKEN")
+    const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "anonymous"
+    await limiter.check(request, 10, `events_get_${clientIp}`)
 
     await dbConnect()
 
@@ -89,8 +90,9 @@ export async function GET(request: Request) {
     // Update status for each event
     events = await Promise.all(
       events.map(async (event) => {
-        const updatedEvent = event.updateStatus()
-        if (updatedEvent !== event.status) {
+        const previousStatus = event.status
+        event.updateStatus()
+        if (event.status !== previousStatus) {
           await event.save()
         }
         return event
@@ -119,7 +121,8 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    await limiter.check(request, 5, "CACHE_TOKEN") // Max 5 POST requests per minute per IP
+    const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "anonymous"
+    await limiter.check(request, 5, `events_post_${clientIp}`) // Max 5 POST requests per minute per IP
 
     const session = await getServerSession(authOptions)
 
