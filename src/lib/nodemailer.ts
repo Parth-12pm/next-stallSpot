@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer"
+import nodemailer, { SentMessageInfo } from "nodemailer"
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -14,7 +14,11 @@ const transporter = nodemailer.createTransport({
   },
 })
 
-export async function sendEmail(to: string, subject: string, html: string) {
+export async function sendEmail(
+  to: string,
+  subject: string,
+  html: string
+): Promise<SentMessageInfo> {
   try {
     const info = await transporter.sendMail({
       from: '"StallSpot" <stallspot.info@gmail.com>',

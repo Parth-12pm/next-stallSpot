@@ -3,6 +3,7 @@ import type { Configuration } from 'webpack';
 
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
+  turbopack: {},
   images: {
     unoptimized: true,
     remotePatterns: [
