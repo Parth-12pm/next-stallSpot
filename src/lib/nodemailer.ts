@@ -1,4 +1,5 @@
-import nodemailer, { SentMessageInfo } from "nodemailer"
+import nodemailer, { SentMessageInfo } from "nodemailer";
+import DOMPurify from "isomorphic-dompurify";
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -12,26 +13,25 @@ const transporter = nodemailer.createTransport({
     // Only bypass SSL verification in development
     rejectUnauthorized: process.env.NODE_ENV === "production",
   },
-})
+});
 
 export async function sendEmail(
   to: string,
   subject: string,
-  html: string
+  html: string,
 ): Promise<SentMessageInfo> {
   try {
     const info = await transporter.sendMail({
-      from: '"StallSpot" <stallspot.info@gmail.com>',
+      from: '"StallSpot" <[EMAIL_ADDRESS]>',
       to,
       subject,
-      html,
-    })
+      html: DOMPurify.sanitize(html),
+    });
 
-    console.log("Message sent: %s", info.messageId)
-    return info
+    console.log("Message sent: %s", info.messageId);
+    return info;
   } catch (error) {
-    console.error("Error sending email:", error)
-    throw error
+    console.error("Error sending email:", error);
+    throw error;
   }
 }
-

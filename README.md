@@ -1,8 +1,15 @@
 ---
 
-# 🏢 Next StallSpot: Interactive Exhibition Management Platform
+# 🏢 StallSpot: Interactive Exhibition Management Platform
 
-![Project Banner](https://via.placeholder.com/1200x300.png?text=Next+StallSpot)
+```text
+  ____  _        _ _  ____             _   
+ / ___|| |_ __ _| | |/ ___|_ __   ___ | |_ 
+ \___ \| __/ _` | | |\___ \| '_ \ / _ \| __|
+  ___) | || (_| | | | ___) | |_) | (_) | |_ 
+ |____/ \__\__,_|_|_||____/| .__/ \___/ \__|
+                           |_|              
+```
 
 > 🚧 Currently in active development – contributions and feedback are welcome!
 
@@ -10,9 +17,9 @@
 
 ## 🌟 Project Overview
 
-**Next StallSpot** is a powerful and user-friendly web platform built to **streamline stall booking and exhibition space management**. Designed for **organizers, vendors, and exhibitors**, this platform combines real-time interaction with a modern tech stack to make managing exhibitions a breeze.
+**StallSpot** is a powerful and user-friendly web platform built to **streamline stall booking and exhibition space management**. Designed for **organizers, vendors, and exhibitors**, this platform combines real-time interaction with a modern tech stack to make managing exhibitions a breeze.
 
-Whether you're booking a stall, planning an entire event, or monitoring exhibitor activity, Next StallSpot simplifies it all.
+Whether you're booking a stall, planning an entire event, or monitoring exhibitor activity, StallSpot simplifies it all.
 
 ---
 
