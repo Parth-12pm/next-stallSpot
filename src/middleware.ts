@@ -19,6 +19,8 @@ export default withAuth(
       "/auth/login",
       "/auth/signup",
       "/auth/role-select",
+      "/auth/forgot-password",
+      "/auth/reset-password",
       "/A372",
     ];
     // The `authorized` callback in withAuth handles this.
@@ -91,6 +93,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * - and the public paths defined above.
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|auth/login|auth/signup|auth/role-select|A372|$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|auth/login|auth/signup|auth/role-select|auth/forgot-password|auth/reset-password|A372|$).*)",
   ],
 };
